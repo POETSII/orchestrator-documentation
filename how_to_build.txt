@@ -1,0 +1,3 @@
+Use pandoc (https://pandoc.org/), I build PDFs with:
+
+  pandoc -i README.md -o README.pdf
