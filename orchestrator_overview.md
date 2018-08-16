@@ -13,13 +13,12 @@ This document defines the following, in a high-level way:
 
  - Components of the Orchestrator, and their features
 
-This document assumes that you understand:
+This document assumes that you have a working knowledge of:
 
- - The POETS project in the general sense
+ - The POETS project
 
  - The Message-Passing Interface (MPI,
-   [https://www.mpi-forum.org/docs/](https://www.mpi-forum.org/docs/)), on a
-   basic level.
+   [https://www.mpi-forum.org/docs/](https://www.mpi-forum.org/docs/)).
 
 This document does not explain:
 
