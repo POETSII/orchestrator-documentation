@@ -79,9 +79,11 @@ responsibilities of the Orchestrator are:
 
 The Orchestrator consists of disparate components, which are logically arranged
 to achieve the objectives of the Orchestrator as a whole, while maintaining a
-sensible degree of modularity. These components are:
+sensible degree of modularity. These components are (numbers in parentheses
+denote the corresponding section in the implementation documentation that
+describes these components in more detail):
 
- - "Root" (See 4.2): While the Orchestrator is comprised of a series of modular
+ - "Root" (4.2): While the Orchestrator is comprised of a series of modular
    components, the "Root" uses these components to achieve the features of the
    Orchestrator. Precisely, the Root component:
 
@@ -97,6 +99,20 @@ sensible degree of modularity. These components are:
 
    - Can, on command, build binaries to be executed on the cores of the Engine,
      and to stage them for execution on those cores.
+
+ - "LogServer" (4.4): The LogServer component records logging messages sent to
+   it from other components, either for post-mortem purposes, or for elementary
+   real-time system observation.
+
+ - "RTCL" (4.5): Mark couldn't come up with an elegant explanation of what this
+   is for. <!>
+
+ - "Injector" (4.6): The Root component allows the Orchestrator to be
+   controlled by a batch of commands. The Injector component is a developer
+   tool that supports this functionality, but where the batch of commands is
+   run in the context of the Orchestrator. This allows developers to "script"
+   the behaviour of the Orchestrator in response to changes in the state of
+   the Orchestrator, as opposed to a naive batch.
 
 All of these components exist as separate processes in the same MPI universe,
 so that each component is able to communicate with each other component. All
