@@ -40,10 +40,10 @@ POETS consists of three layers. Here are two:
 
  - Application layer: The application is domain-specific problem (with
    context), which is to be solved on the POETS Engine. The role of the
-   application layer is to translate the application into a problem that can be
-   easily understood by a computer. The application layer defines a problem as
-   a graph of devices, where devices are unit of compute that can send signals
-   to other devices in the graph to solve a problem.
+   application layer is to translate the application into a task that can be
+   easily understood by a computer. The application layer defines a task as a
+   contextless graph of devices, where devices are unit of compute that can
+   send signals to other devices in the graph to solve a problem.
 
  - Engine Layer: The highly-distributed hardware on which the application is
    solved. The POETS Engine (or just "Engine") has no idea about context. The
@@ -51,7 +51,7 @@ POETS consists of three layers. Here are two:
    FPGA boards, and a "typical" x86 machine used to control them (termed a
    "Mothership").
 
-With only these two layers, POETS still requires a way to map the problem
+With only these two layers, POETS still requires a way to map the task
 (application layer) onto the hardware (Engine layer). POETS also lacks any way
 for the user to start, stop, observe, get results from, or otherwise generally
 interact with the Engine. Enter the Orchestrator!
@@ -62,8 +62,8 @@ The Orchestrator is a middleware that interfaces between the Application Layer
 and the Engine Layer, and between the user and the Engine Layer. The core
 responsibilities of the Orchestrator are:
 
- - To efficiently map the problem (from the application layer) onto the Engine,
-   and to deploy and "undeploy" problems onto the Engine.
+ - To efficiently map the task (from the application layer) onto the Engine,
+   and to deploy and "undeploy" tasks onto the Engine.
 
  - To allow the user to start and stop applications running on the Engine.
 
