@@ -76,3 +76,29 @@ responsibilities of the Orchestrator are:
    files).
 
 # Components of the Orchestrator
+
+The Orchestrator consists of disparate components, which are logically arranged
+to achieve the objectives of the Orchestrator as a whole, while maintaining a
+sensible degree of modularity. These components are:
+
+ - "Root" (See 4.2): While the Orchestrator is comprised of a series of modular
+   components, the "Root" uses these components to achieve the features of the
+   Orchestrator. Precisely, the Root component:
+
+   - Can interface with a user, via a command prompt, or via batch commands.
+
+   - Manages an internal model of the Engine (the "hardware graph" of how
+     cores, threads, mailboxes, FPGA boards, and supervisors are
+     connected). This is either achieved through prior knowledge, or through a
+     dynamic hardware-discovery mechanism.
+
+   - Can, on command, map a task onto the internal model of the Engine in an
+     efficient manner (placement).
+
+   - Can, on command, build binaries to be executed on the cores of the Engine,
+     and to stage them for execution on those cores.
+
+All of these components exist as separate processes in the same MPI universe,
+so that each component is able to communicate with each other component. All
+components of the Orchestrator make use of the communications broken
+"CommonBase" (see the implementation documentation).
