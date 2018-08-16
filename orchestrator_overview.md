@@ -31,6 +31,10 @@ This document does not explain:
 - The Orchestrator is a middleware that interfaces between the Application
   Layer and the Engine Layer, and between the user and the Engine Layer.
 
+- The Orchestrator allows tasks (contextless descriptions of applications) to
+  be mapped onto the Engine, to start and stop tasks on the engine, to view the
+  state of the Engine, and to retrieve results computed by the Engine.
+
 # Orchestrator Introduction
 
 ## Motivating the Orchestrator
@@ -64,7 +68,7 @@ responsibilities of the Orchestrator are:
  - To efficiently map the task (from the application layer) onto the Engine,
    and to deploy and "undeploy" tasks onto the Engine.
 
- - To allow the user to start and stop applications running on the Engine.
+ - To allow the user to start and stop tasks running on the Engine.
 
  - To allow the user to view the current state of the Engine.
 
