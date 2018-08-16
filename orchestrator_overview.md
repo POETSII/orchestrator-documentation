@@ -114,6 +114,13 @@ describes these components in more detail):
    the behaviour of the Orchestrator in response to changes in the state of
    the Orchestrator, as opposed to a naive batch.
 
+ - "NameServer" (4.7): In the Orchestrator, devices in the Engine are referred
+   to by flat numeric addresses. The NameServer stores a mapping between these
+   addresses, and colloquial, hierarchy-based device identifiers. User-facing
+   components in the Orchestrator can query this component to determine a
+   correct address for a packet they may wish to send. The NameServer also
+   enables lookup in either direction.
+
 All of these components exist as separate processes in the same MPI universe,
 so that each component is able to communicate with each other component. All
 components of the Orchestrator make use of the communications broken
