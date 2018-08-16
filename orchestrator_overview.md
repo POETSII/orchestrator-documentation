@@ -17,14 +17,13 @@ This document assumes that you have a working knowledge of:
 
  - The POETS project
 
- - The Message-Passing Interface (MPI,
-   [https://www.mpi-forum.org/docs/](https://www.mpi-forum.org/docs/)).
+ - The
 
 This document does not explain:
 
- - The implementation of the Orchestrator, more than it needs to.
+ - The implementation of the Orchestrator in detail
 
- - Development strategy and timelines.
+ - Development strategy and timelines
 
 # Too long, didn't read
 
@@ -34,6 +33,9 @@ This document does not explain:
 - The Orchestrator allows tasks (contextless descriptions of applications) to
   be mapped onto the Engine, to start and stop tasks on the engine, to view the
   state of the Engine, and to retrieve results computed by the Engine.
+
+- The Orchestrator is a modular system; it is divided into a series of
+  components each responsible for a unit of functionality.
 
 # Orchestrator Introduction
 
@@ -74,6 +76,11 @@ responsibilities of the Orchestrator are:
 
  - To allow the user to retrieve results computed by the Engine (as a set of
    files).
+
+Desirable features for the Orchestrator are:
+
+ - To allow developers to better diagnose problems using logging and debugging
+   tools.
 
 # Components of the Orchestrator
 
@@ -121,7 +128,19 @@ describes these components in more detail):
    correct address for a packet they may wish to send. The NameServer also
    enables lookup in either direction.
 
-All of these components exist as separate processes in the same MPI universe,
+ - "Monitor" (4.8): The Monitor component displays information about the
+   current activity of the Engine, and other useful details from the
+   Orchestrator.
+
+ - "User Input and User Output" (4.9): The User Input component handles inputs
+   from the application frontend, by translating them into instructions
+   (messages) for other components to execute. The User Output component
+   handles messages from components to be displayed in the application
+   frontend.
+
+All of these components exist as separate processes in the same MPI
+(Message-Passing Interface,
+[https://www.mpi-forum.org/docs/](https://www.mpi-forum.org/docs/)) universe,
 so that each component is able to communicate with each other component. All
-components of the Orchestrator make use of the communications broken
+components of the Orchestrator make use of the communications broker
 "CommonBase" (see the implementation documentation).
