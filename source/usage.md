@@ -30,12 +30,12 @@ In order to compile the Orchestrator, you will need:
  - An implementation of the MPI-3 standard (Message Passing Interface). This is
    used to connect the Orchestrator components together. Mark uses mpich 3.2.1.
 
- - Qt (>5, =<5.6). This is used by the XML parser, and will eventually
+ - Qt (5.6). This is used by the XML parser, and will eventually
    disappear from this list of requirements.
 
- - Tinsel (https://github.com/poetsii/tinsel).
+ - Tinsel (from https://github.com/poetsii/tinsel).
 
- - QuartusPro, which Mark doesn't know anything about <!>.
+ - QuartusPro, which Mark doesn't know much about <!>.
 
 There may be more dependencies.
 
@@ -45,13 +45,10 @@ There may be more dependencies.
 
 In short, there should have been a Makefile provided in the source of the
 Orchestrator you have obtained. As appropriate, you will need to define the
-paths to your dependencies in the makefile.
-
-When running the makefile (by commanding "Make" in your shell), if any warnings
-are raised, please shout loudly at one of the maintainers.
-
-The build process creates a series of disparate executables in the `bin`
-directory.
+paths to your dependencies in the makefile. When running the makefile (by
+commanding `make` in your shell), if any warnings are raised, please shout
+loudly at one of the maintainers. The build process creates a series of
+disparate executables in the `bin` directory.
 
 ### Without Make
 
@@ -66,6 +63,8 @@ Orchestrator Overview). Each of these components is built into a separate
 binary. To execute these binaries so that they can communicate with each other
 using MPI, you will need to use the MIMD syntax (look at the man page for your
 MPI distribution). By way of example, using mpich, command:
+
+    # NB: The backslash (\) is a linebreak, and is not essential.
 
     mpirun ./orchestrator : ./logserver : ./rtcl : ./injector :\
            ./nameserver : ./supervisor : ./mothership
@@ -99,7 +98,26 @@ reconnect to any jobs started in this way.
 
 ## Usage Examples
 
-## Overview of Simple Commands
+Here are some common usage examples of the Orchestrator. The individual
+commands are more fully described in the implementation documentation.
+
+### Verifying all Orchestrator Components are Loaded
+
+Once built, you may wish to verify that the components of the Orchestrator have
+been started correctly, and can be communicated with. In the `POETS>` prompt,
+command:
+
+    system \show
+
+which will print something like:
+
+    Processes for comm 0
+    Rank 00,            Root:OrchBase:CommonBase, created 12:05:16 Aug  8 2018
+    Rank 02,                     RTCL:CommonBase, created 12:05:16 Aug  8 2018
+    Rank 01,                LogServer:CommonBase, created 12:05:16 Aug  8 2018
+
+In this case, the Root, RTCL, and LogServer components of the Orchestrator have
+been started.
 
 # Further Reading
 
