@@ -6,17 +6,17 @@ This document assumes that you have a working knowledge of The POETS project,
 and defines the following, in a high-level way:
 
  - What the Orchestrator is, and its role in the POETS project ([Orchestrator
-   Introduction][])
+   Introduction][]).
 
  - Components of the Orchestrator, and their features ([Components of the
-   Orchestrator][])
+   Orchestrator][]).
 
 This document does not explain:
 
- - The implementation of the Orchestrator in detail (see the implementation
-   documentation)
+ - The implementation of the Orchestrator in detail. This can be found in the
+   implementation documentation (big Word document).
 
- - Development strategy and timelines
+ - Development strategy and timelines.
 
 # Orchestrator Introduction
 
@@ -182,3 +182,10 @@ handlers.
 
 - Supervisors are components of the Orchestrator that exist at the interface
   between the Orchestartor and the Engine.
+
+# Further Reading
+
+ - The implementation documentation (big Word document). Seriously, do read
+   this.
+
+ - Orchestrator Usage (in this repository).
