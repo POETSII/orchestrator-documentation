@@ -10,15 +10,17 @@ TARGETS_DIR := build
 TARGETS := $(patsubst $(SOURCES_DIR)/%.md,\
                       $(TARGETS_DIR)/%.pdf,\
                       $(wildcard $(SOURCES_DIR)/*.md))
+PDF_FRONTMATTER := $(SOURCES_DIR)/include/latex.md
 
 all: $(TARGETS)
 
 clean:
 	$(RM) $(TARGETS)
 
-# Builds one PDF from one markdown file.
-$(TARGETS_DIR)/%.pdf:: $(SOURCES_DIR)/%.md
+# Builds one PDF from one markdown file, using the frontmatter (dependency
+# order matters).
+$(TARGETS_DIR)/%.pdf:: $(SOURCES_DIR)/%.md $(PDF_FRONTMATTER)
 	mkdir --parents "$(TARGETS_DIR)"
-	"$(BUILDER)" "$(BUILDER_FLAGS)" --output="$@" "$^"
+	"$(BUILDER)" "$(BUILDER_FLAGS)" --output="$@" $^
 
 .PHONY: all clean

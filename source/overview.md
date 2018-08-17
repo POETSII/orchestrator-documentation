@@ -1,8 +1,4 @@
 % Orchestrator Overview
----
-header-includes:
-  - \usepackage{fullpage}
----
 
 # Overview
 
