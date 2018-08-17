@@ -96,8 +96,11 @@ documentation:
    it from other components, either for post-mortem purposes, or for elementary
    real-time system observation.
 
- - "RTCL" (4.5): Mark couldn't come up with an elegant explanation of what this
-   is for. <!>
+ - "RTCL" (4.5): The "Real-Time Clock" component manages an internal clock. A
+   unit of functionality of this clock is to support a rudimentary "delay"
+   command, which can be used as part of a command batch. This allows the user
+   to stage a series of packets to be added to the Engine at a given time, to
+   support controlled "bursts" of activity.
 
  - "Injector" (4.6): The Root component allows the Orchestrator to be
    controlled by a batch of commands. The Injector component is a developer
