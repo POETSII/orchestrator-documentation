@@ -5,16 +5,20 @@
 
 BUILDER := "pandoc"
 BUILDER_FLAGS := "--number-sections"
-SOURCES := $(wildcard ./*.md)
-TARGETS := $(patsubst ./%.md,./%.pdf,$(SOURCES))
+SOURCES_DIR := source
+TARGETS_DIR := build
+TARGETS := $(patsubst $(SOURCES_DIR)/%.md,\
+                      $(TARGETS_DIR)/%.pdf,\
+                      $(wildcard $(SOURCES_DIR)/*.md))
 
 all: $(TARGETS)
 
 clean:
-	rm --force $(TARGETS)
+	$(RM) $(TARGETS)
 
 # Builds one PDF from one markdown file.
-%.pdf:: %.md
+$(TARGETS_DIR)/%.pdf:: $(SOURCES_DIR)/%.md
+	mkdir --parents "$(TARGETS_DIR)"
 	"$(BUILDER)" "$(BUILDER_FLAGS)" --output="$@" "$^"
 
 .PHONY: all clean
