@@ -126,9 +126,48 @@ documentation:
 All of these components exist as separate processes in the same MPI
 (Message-Passing Interface,
 [https://www.mpi-forum.org/docs/](https://www.mpi-forum.org/docs/)) universe,
-so that each component is able to communicate with each other component. All
-components of the Orchestrator make use of the communications broker
-"CommonBase" (see the implementation documentation).
+so that each component is able to communicate with each other component. A
+fully-functioning Orchestrator must have exactly one running instance of each
+of these component processes. All components of the Orchestrator make use of
+the communications broker "CommonBase" (see the implementation documentation).
+
+## The Supervisor (3.3)
+
+The Supervisor^[Note that "Supervisor" in the context of POETS is not related
+to supervisors in the context of UNIX-likes; the concepts are completely
+different.] is one further component of the Orchestrator, but is unique in that
+it must execute on a POETS box, as part of the mothership. The Supervisor is
+uniquely positioned at interface between the message-based (MPI) communication
+of the Orchestrator, and the packet-based communication of the Engine. Due to
+this positioning, the primary purpose of the Supervisor is to broker
+communication over this interface. This purpose enables the Supervisor to
+conduct its responsibilities, which are:
+
+ - Input targetted data into the Engine (on the POETS box the Supervisor is
+   running on).
+
+ - Collect data from the Engine (on the POETS box the Supervisor is running on)
+   requested by another component of the Orchestrator, or the user.
+
+Note that an Orchestrator can contain multiple Supervisors in Engines with
+multiple POETS boxes.
+
+### Supervisor-Device Duality
+
+While a Supervisor is a component of the Orchestrator (reachable by messages
+from the Orchestrator), a Supervisor is also a device in the Engine (reachable
+by packets from the Engine). Unlike other devices:
+
+ - Supervisors cannot be explicitly defined in a task graph (Application
+   Layer), as they are "added" to the graph while the Orchestrator processes
+   it.
+
+ - On the task graph, Supervisors are always connected to all devices that are
+   mapped inside the box it is supervising, by one input edge and one output
+   edge.
+
+As a device, Supervisors can be provisioned with application-specific packet
+handlers.
 
 # Too long, didn't read
 
@@ -141,3 +180,6 @@ components of the Orchestrator make use of the communications broker
 
 - The Orchestrator is a modular system; it is divided into a series of
   components each responsible for a unit of functionality.
+
+- Supervisors are components of the Orchestrator that exist at the interface
+  between the Orchestartor and the Engine.
