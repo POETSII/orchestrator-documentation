@@ -131,17 +131,17 @@ fully-functioning Orchestrator must have exactly one running instance of each
 of these component processes. All components of the Orchestrator make use of
 the communications broker "CommonBase" (see the implementation documentation).
 
-## The Supervisor (3.3)
+## The Supervisor
 
 The Supervisor^[Note that "Supervisor" in the context of POETS is not related
 to supervisors in the context of UNIX-likes; the concepts are completely
-different.] is one further component of the Orchestrator, but is unique in that
-it must execute on a POETS box, as part of the mothership. The Supervisor is
-uniquely positioned at interface between the message-based (MPI) communication
-of the Orchestrator, and the packet-based communication of the Engine. Due to
-this positioning, the primary purpose of the Supervisor is to broker
-communication over this interface. This purpose enables the Supervisor to
-conduct its responsibilities, which are:
+different.] (3.3) is one further component of the Orchestrator, but is unique
+in that it must execute on a POETS box, as part of the mothership. The
+Supervisor is uniquely positioned at interface between the message-based (MPI)
+communication of the Orchestrator, and the packet-based communication of the
+Engine. Due to this positioning, the primary purpose of the Supervisor is to
+broker communication over this interface. This purpose enables the Supervisor
+to conduct its responsibilities, which are:
 
  - Input targetted data into the Engine (on the POETS box the Supervisor is
    running on).

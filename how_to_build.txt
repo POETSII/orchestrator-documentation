@@ -1,3 +1,0 @@
-Use pandoc (https://pandoc.org/), I build PDFs with:
-
-  pandoc -i overview.md -o overview.pdf
