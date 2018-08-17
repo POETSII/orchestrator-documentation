@@ -18,6 +18,8 @@ level. This document does not:
 
 # Building the Orchestrator
 
+The only way to use the Orchestrator is to build it from its sources.
+
 ## System Requirements
 
 In order to compile the Orchestrator, you will need:
@@ -39,6 +41,8 @@ There may be more dependencies.
 
 ## Building
 
+### With Make
+
 In short, there should have been a Makefile provided in the source of the
 Orchestrator you have obtained. As appropriate, you will need to define the
 paths to your dependencies in the makefile.
@@ -46,13 +50,56 @@ paths to your dependencies in the makefile.
 When running the makefile (by commanding "Make" in your shell), if any warnings
 are raised, please shout loudly at one of the maintainers.
 
+The build process creates a series of disparate executables in the `bin`
+directory.
+
+### Without Make
+
+Perhaps ADB can weigh in here.
+
 # Usage
 
 ## Execution
 
-## Overview of Simple Commands
+The Orchestrator is comprised of a series of disparate components (see
+Orchestrator Overview). Each of these components is built into a separate
+binary. To execute these binaries so that they can communicate with each other
+using MPI, you will need to use the MIMD syntax (look at the man page for your
+MPI distribution). By way of example, using mpich, command:
+
+    mpirun ./orchestrator : ./logserver : ./rtcl : ./injector :\
+           ./nameserver : ./supervisor : ./mothership
+
+The order of executables doesn't matter, save for the `orchestrator`
+executable, which must be first (corresponding to MPI rank zero). Each
+executable should be run with a single process (hence the lack of the typical
+`-n` flag).
+
+Once executed, the Orchestrator states something to the effect of:
+
+    Attach debugger to Root process 0 (0).....
+
+which pauses execution of the Orchestrator, and invites you to connect a
+debugging process, using your debugger of choice, to the process you created in
+the execution step. Whether or not you attach a debugger, enter a newline
+character into your shell to continue execution.
+
+You will then reach the Orchestrator prompt:
+
+    POETS>
+
+at which commands can be executed. See Usage Examples for what to do from
+here. Once you are finished with your Orchestrator session, command
+
+    exit
+
+then hit any key to end the Orchestrator process. Note that this will
+effectively disown any jobs running on the Engine, so you will be unable to
+reconnect to any jobs started in this way.
 
 ## Usage Examples
+
+## Overview of Simple Commands
 
 # Further Reading
 
