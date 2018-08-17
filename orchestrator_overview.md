@@ -6,36 +6,21 @@ header-includes:
 
 # Overview
 
-This document defines the following, in a high-level way:
+This document assumes that you have a working knowledge of The POETS project,
+and defines the following, in a high-level way:
 
  - What the Orchestrator is, and its role in the POETS project ([Orchestrator
-   Overview][])
+   Introduction][])
 
- - Components of the Orchestrator, and their features
-
-This document assumes that you have a working knowledge of:
-
- - The POETS project
-
- - The
+ - Components of the Orchestrator, and their features ([Components of the
+   Orchestrator][])
 
 This document does not explain:
 
- - The implementation of the Orchestrator in detail
+ - The implementation of the Orchestrator in detail (see the implementation
+   documentation)
 
  - Development strategy and timelines
-
-# Too long, didn't read
-
-- The Orchestrator is a middleware that interfaces between the Application
-  Layer and the Engine Layer, and between the user and the Engine Layer.
-
-- The Orchestrator allows tasks (contextless descriptions of applications) to
-  be mapped onto the Engine, to start and stop tasks on the engine, to view the
-  state of the Engine, and to retrieve results computed by the Engine.
-
-- The Orchestrator is a modular system; it is divided into a series of
-  components each responsible for a unit of functionality.
 
 # Orchestrator Introduction
 
@@ -43,23 +28,23 @@ This document does not explain:
 
 POETS consists of three layers. Here are two:
 
- - Application layer: The application is domain-specific problem (with
+ - Application Layer: The application is domain-specific problem (with
    context), which is to be solved on the POETS Engine. The role of the
-   application layer is to translate the application into a task that can be
-   easily understood by a computer. The application layer defines a task as a
-   contextless graph of devices, where devices are unit of compute that can
-   send signals to other devices in the graph to solve a problem.
+   Application Layer is to translate the application into a task that can be
+   easily understood by a computer, where a task as a contextless graph of
+   connected devices. These devices are units of compute that can send signals
+   to other devices in the graph to solve a problem.
 
  - Engine Layer: The highly-distributed hardware on which the application is
    solved. The POETS Engine (or just "Engine") has no idea about context. The
-   engine layer consists of a POETS box, which contains some interconnected
+   Engine Layer consists of a POETS box, which contains some interconnected
    FPGA boards, and a "typical" x86 machine used to control them (termed a
    "Mothership").
 
 With only these two layers, POETS still requires a way to map the task
-(application layer) onto the hardware (Engine layer). POETS also lacks any way
+(Application Layer) onto the hardware (Engine Layer). POETS also lacks any way
 for the user to start, stop, observe, get results from, or otherwise generally
-interact with the Engine. Enter the Orchestrator!
+interact with the Engine during operation. Enter the Orchestrator!
 
 ## Features of the Orchestrator
 
@@ -77,7 +62,7 @@ responsibilities of the Orchestrator are:
  - To allow the user to retrieve results computed by the Engine (as a set of
    files).
 
-Desirable features for the Orchestrator are:
+Some desirable features of the Orchestrator are:
 
  - To allow developers to better diagnose problems using logging and debugging
    tools.
@@ -86,9 +71,9 @@ Desirable features for the Orchestrator are:
 
 The Orchestrator consists of disparate components, which are logically arranged
 to achieve the objectives of the Orchestrator as a whole, while maintaining a
-sensible degree of modularity. These components are (numbers in parentheses
-denote the corresponding section in the implementation documentation that
-describes these components in more detail):
+sensible degree of modularity. These components are as follows, where the
+numbers in parentheses denote the corresponding section in the implementation
+documentation:
 
  - "Root" (4.2): While the Orchestrator is comprised of a series of modular
    components, the "Root" uses these components to achieve the features of the
@@ -144,3 +129,15 @@ All of these components exist as separate processes in the same MPI
 so that each component is able to communicate with each other component. All
 components of the Orchestrator make use of the communications broker
 "CommonBase" (see the implementation documentation).
+
+# Too long, didn't read
+
+- The Orchestrator is a middleware that interfaces between the Application
+  Layer and the Engine Layer, and between the user and the Engine Layer.
+
+- The Orchestrator allows tasks (contextless descriptions of applications) to
+  be mapped onto the Engine, to start and stop tasks on the engine, to view the
+  state of the Engine, and to retrieve results computed by the Engine.
+
+- The Orchestrator is a modular system; it is divided into a series of
+  components each responsible for a unit of functionality.
