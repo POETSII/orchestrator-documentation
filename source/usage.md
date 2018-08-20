@@ -119,6 +119,25 @@ which will print something like:
 In this case, the Root, RTCL, and LogServer components of the Orchestrator have
 been started.
 
+### Loading a task (XML)
+
+In order to perform compute tasks on POETS using the Orchestrator, a task
+(graph, XML) must first be loaded. At the `POETS>` prompt, command:
+
+    task /load = /path/to/the/task/graph.xml
+
+or alternatively,
+
+    task /path = /path/to/the/task/
+    task /load = graph.xml
+
+Note that you may need to double-quote your path. Verify your task is loaded
+correctly with
+
+    task /show
+
+### We need more examples! Any ideas? <!>
+
 # Further Reading
 
  - The implementation documentation, specifically Chapter 5 (Console
