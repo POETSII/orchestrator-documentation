@@ -118,7 +118,8 @@ which will print something like:
     Rank 01,                LogServer:CommonBase, created 12:05:16 Aug  8 2018
 
 In this case, the Root, RTCL, and LogServer components of the Orchestrator have
-been started.
+been started. Note that all components of the Orchestrator exist on the same
+MPI communicator.
 
 ### Loading a task (XML)
 
