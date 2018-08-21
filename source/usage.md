@@ -64,26 +64,23 @@ binary. To execute these binaries so that they can communicate with each other
 using MPI, you will need to use the MIMD syntax (look at the man page for your
 MPI distribution). By way of example, using mpich, command:
 
-    # NB: The backslash (\) is a linebreak, and is not essential.
+    # NB: The backslash (\) is a linebreak, included for typesetting reasons.
 
     mpirun ./orchestrator : ./logserver : ./rtcl : ./injector :\
            ./nameserver : ./supervisor : ./mothership
 
 The order of executables doesn't matter, save for the `orchestrator`
 executable, which must be first (corresponding to MPI rank zero). Each
-executable should be run with a single process (hence the lack of the typical
-`-n` flag).
-
-Once executed, the Orchestrator states something to the effect of:
+executable should be run with a single process, hence the `-n` flag is not
+used. Once executed, the Orchestrator states something to the effect of:
 
     Attach debugger to Root process 0 (0).....
 
 which pauses execution of the Orchestrator, and invites you to connect a
 debugging process, using your debugger of choice, to the process you created in
 the execution step. Whether or not you attach a debugger, enter a newline
-character into your shell to continue execution.
-
-You will then reach the Orchestrator prompt:
+character into your shell to continue execution. You will then reach the
+Orchestrator prompt:
 
     POETS>
 
@@ -95,6 +92,10 @@ here. Once you are finished with your Orchestrator session, command
 then hit any key to end the Orchestrator process. Note that this will
 effectively disown any jobs running on the Engine, so you will be unable to
 reconnect to any jobs started in this way.
+
+While your session is running, if you include the LogServer component, a log
+file will be written in the current directory containing details of the
+Orchestrator session.
 
 ## Usage Examples
 
@@ -138,8 +139,7 @@ correctly with
 
 TODO: Some example output is needed here.
 
-### TODO: We need more examples! How about a sequence of examples that results
-### in a task being run on POETS, and pulling out the results?
+### TODO: We need more examples! How about a sequence of examples that results in a task being run on POETS, and pulling out the results?
 
 # Further Reading
 
