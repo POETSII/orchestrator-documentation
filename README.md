@@ -1,5 +1,7 @@
 This repository contains documentation on the Orchestrator component of POETS.
 
+Build status: [![CircleCI](https://circleci.com/gh/POETSII/orchestrator-documentation.svg?style=svg)](https://circleci.com/gh/POETSII/orchestrator-documentation)
+
 The documentation is in plain text, specifically pandoc markdown. The supported
 builder is pandoc (https://pandoc.org), but you should be able to use pretty
 much any builder you like.
