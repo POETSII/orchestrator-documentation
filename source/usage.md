@@ -35,7 +35,7 @@ In order to compile the Orchestrator, you will need:
 
  - Tinsel (from https://github.com/poetsii/tinsel).
 
- - QuartusPro, which Mark doesn't know much about <!>.
+ - QuartusPro. TODO: A description is needed here
 
 There may be more dependencies.
 
@@ -52,7 +52,7 @@ disparate executables in the `bin` directory.
 
 ### Without Make
 
-Perhaps ADB can weigh in here.
+TODO: Perhaps ADB can weigh in here.
 
 # Usage
 
@@ -136,7 +136,10 @@ correctly with
 
     task /show
 
-### We need more examples! Any ideas? <!>
+TODO: Some example output is needed here.
+
+### TODO: We need more examples! How about a sequence of examples that results
+### in a task being run on POETS, and pulling out the results?
 
 # Further Reading
 
