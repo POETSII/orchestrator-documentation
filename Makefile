@@ -1,26 +1,56 @@
 # Makes PDFs from all markdown files in the root directory.
 
-# Requires pandoc (https://pandoc.org), but you can just read the plaintext if
-# you want.
+# General requirements:
+#  - pandoc (https://pandoc.org).
+#
+# Build-specific requirements:
+#  - PDF: requires LaTeX (texlive is fine).
 
 BUILDER := "pandoc"
 BUILDER_FLAGS := "--number-sections"
 SOURCES_DIR := source
 TARGETS_DIR := build
-TARGETS := $(patsubst $(SOURCES_DIR)/%.md,\
-                      $(TARGETS_DIR)/%.pdf,\
-                      $(wildcard $(SOURCES_DIR)/*.md))
-PDF_FRONTMATTER := $(SOURCES_DIR)/include/latex.md
 
-all: $(TARGETS)
+# Defines targets using a given extension. Arguments:
+#  - $1: Desired extension (e.g. "doc").
+define targets_for_filetype
+    $(patsubst $(SOURCES_DIR)/%.md,\
+	    $(TARGETS_DIR)/%.$1,\
+        $(wildcard $(SOURCES_DIR)/*.md))
+endef
 
-clean:
-	$(RM) $(TARGETS)
-
-# Builds one PDF from one markdown file, using the frontmatter (dependency
-# order matters).
-$(TARGETS_DIR)/%.pdf:: $(SOURCES_DIR)/%.md $(PDF_FRONTMATTER)
+# Build a document using pandoc. Use only in a rule definition. Takes no
+# arguments.
+define pandoc_build
 	mkdir --parents "$(TARGETS_DIR)"
 	"$(BUILDER)" "$(BUILDER_FLAGS)" --output="$@" $^
+endef
 
-.PHONY: all clean
+# Define targets and backmatter dependencies. Backmatter dependencies are stuck
+# on the end of markdown files (literally cat-style) before pandoc parses them.
+DOC_TARGETS := $(call targets_for_filetype,doc)
+PDF_TARGETS := $(call targets_for_filetype,pdf)
+PDF_BACKMATTER := $(SOURCES_DIR)/include/latex.md
+ALL_TARGETS := $(DOC_TARGETS) $(PDF_TARGETS)
+
+# General targets
+all: $(ALL_TARGETS)
+
+clean:
+	$(RM) $(ALL_TARGETS)
+
+# Targets for document types.
+doc: $(DOC_TARGETS)
+
+pdf: $(PDF_TARGETS)
+
+# Builds one PDF from one markdown file, using the backmatter (dependency
+# order matters).
+$(TARGETS_DIR)/%.pdf:: $(SOURCES_DIR)/%.md $(PDF_BACKMATTER)
+	$(call pandoc_build)
+
+# Builds one DOC file from one markdown file, using no backmatter.
+$(TARGETS_DIR)/%.doc:: $(SOURCES_DIR)/%.md
+	$(call pandoc_build)
+
+.PHONY: all clean doc pdf
