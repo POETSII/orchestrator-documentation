@@ -193,16 +193,16 @@ POETS>task /show
 
 Orchestrator has 1 tasks loaded:
 
-    |Task       |Supervisor |Linked   |Devices  |Channels |Declare    |PoL? |PoL type   |Parameters
-    +-----------+-----------+---------+---------+---------+-----------+-----+-----------+------------+----....
-  0 | graph     |graph_sup_unknown_inst |      no |    4687 |    7811 |graph |User |           |/path/to/the/task/graph.xml  |
-    +-----------+-----------+---------+---------+---------+-----------+-----+-----------+------------+----....
+    |Task       |Supervisor |Linked   |Devices  |Channels |Declare     |PoL? |PoL type   |Parameters
+    +-----------+-----------+---------+---------+---------+----------- +-----+-----------+------------+----....
+  0 | graph     |graph_sup_unknown_inst |      no |    4687 |    7811  |graph |User |           |/path/to/the/task/graph.xml  |
+    +-----------+-----------+---------+---------+---------+----------- +-----+-----------+------------+----....
 Default display filepath ||/path/to/the/task||
 
 POETS> 08:57:18.53:  23(I) task /show
 ~~~
 
-This output shows that:
+This output is a table (which is difficult to typeset). This output shows that:
 
  - The Orchestrator has parsed the XML, so the task has been loaded.
 
