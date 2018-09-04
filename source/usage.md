@@ -43,13 +43,14 @@ In order to compile and use the Orchestrator, you will need:
 TODO: There may be more dependencies.
 
 To operate the Orchestrator, these environment variables must be defined and be
-available to subprocesses (i.e. `export`ed):
+available to subprocesses (i.e. `export`-ed):
 
  - `RISCV_PATH`: Path to the directory in which RISCV C compiler was installed
    (the level before the binary directory).
 
  - `PATH`: The `PATH` should be appended with the `bin` directory of your MPI
-   installation, and the `bin` directory of your RISCV compiler.
+   installation, and the `bin` directory of your RISCV compiler. For example,
+   `PATH=$HOME/mpich-3-2-1/bin:$RISCV_PATH/bin:$PATH`.
 
  - `TRIVIAL_LOG_HANDLER`: Must be set to `1`.
 
