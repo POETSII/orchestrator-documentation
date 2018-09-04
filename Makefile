@@ -28,10 +28,10 @@ endef
 
 # Define targets and backmatter dependencies. Backmatter dependencies are stuck
 # on the end of markdown files (literally cat-style) before pandoc parses them.
-DOC_TARGETS := $(call targets_for_filetype,doc)
+DOCX_TARGETS := $(call targets_for_filetype,docx)
 PDF_TARGETS := $(call targets_for_filetype,pdf)
 PDF_BACKMATTER := $(SOURCES_DIR)/include/latex.md
-ALL_TARGETS := $(DOC_TARGETS) $(PDF_TARGETS)
+ALL_TARGETS := $(DOCX_TARGETS) $(PDF_TARGETS)
 
 # General targets
 all: $(ALL_TARGETS)
@@ -40,7 +40,7 @@ clean:
 	$(RM) $(ALL_TARGETS)
 
 # Targets for document types.
-doc: $(DOC_TARGETS)
+docx: $(DOCX_TARGETS)
 
 pdf: $(PDF_TARGETS)
 
@@ -49,8 +49,8 @@ pdf: $(PDF_TARGETS)
 $(TARGETS_DIR)/%.pdf:: $(SOURCES_DIR)/%.md $(PDF_BACKMATTER)
 	$(call pandoc_build)
 
-# Builds one DOC file from one markdown file, using no backmatter.
-$(TARGETS_DIR)/%.doc:: $(SOURCES_DIR)/%.md
+# Builds one DOCX file from one markdown file, using no backmatter.
+$(TARGETS_DIR)/%.docx:: $(SOURCES_DIR)/%.md
 	$(call pandoc_build)
 
-.PHONY: all clean doc pdf
+.PHONY: all clean docx pdf
