@@ -117,7 +117,7 @@ been started correctly, and can be communicated with. In the `POETS>` prompt,
 command:
 
 ~~~ {.bash}
-system \show
+system /show
 ~~~
 
 which will print something like:
