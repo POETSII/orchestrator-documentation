@@ -7,7 +7,7 @@
 #  - PDF: requires LaTeX (texlive is fine).
 
 BUILDER := "pandoc"
-BUILDER_FLAGS := "--number-sections"
+BUILDER_FLAGS := "--number-sections --highlight-style tango"
 SOURCES_DIR := source
 TARGETS_DIR := build
 
