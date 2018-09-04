@@ -22,10 +22,13 @@ The only way to use the Orchestrator is to build it from its sources.
 
 ## System Requirements
 
-In order to compile the Orchestrator, you will need:
+In order to compile and use the Orchestrator, you will need:
 
  - A C++ compiler. We aim to support as wide a range of compilers as is
    reasonably possible. The Orchestrator is written to use the C++98 standard.
+
+ - A RISCV C compiler, for compiling the source fragments in task graphs for
+   the RISCV cores on FPGAs.
 
  - An implementation of the MPI-3 standard (Message Passing Interface). This is
    used to connect the Orchestrator components together. Mark uses mpich 3.2.1.
@@ -37,7 +40,26 @@ In order to compile the Orchestrator, you will need:
 
  - QuartusPro. TODO: A description is needed here
 
-There may be more dependencies.
+TODO: There may be more dependencies.
+
+To operate the Orchestrator, these environment variables must be defined and be
+available to subprocesses (i.e. `export`ed):
+
+ - `RISCV_PATH`: Path to the directory in which RISCV C compiler was installed
+   (the level before the binary directory).
+
+ - `PATH`: The `PATH` should be appended with the `bin` directory of your MPI
+   installation, and the `bin` directory of your RISCV compiler.
+
+ - `TRIVIAL_LOG_HANDLER`: Must be set to `1`.
+
+ - `LM_LICENSE_FILE`: Must be set to `:27012@localhost:27001@localhost` TODO:
+   What does this do? Should it be different on different boxes? (this works on
+   Aesop)
+
+You will also need to have sourced the appropriate Quartus setup script for
+your version of Quartus. On Aesop, this is at
+`/local/ecad/setup-quartus17v0.bash`. TODO: Needs more explanation.
 
 ## Building
 
@@ -65,10 +87,13 @@ using MPI, you will need to use the MIMD syntax (look at the man page for your
 MPI distribution). By way of example, using mpich, command:
 
 ~~~ {.bash}
-# NB: The backslash (\) is a linebreak, included for typesetting reasons.
+# NB: You will need to define these environment variables appropriately for your setup. These work on Aesop.
 
-mpirun ./orchestrator : ./logserver : ./rtcl : ./injector :\
-       ./nameserver : ./supervisor : ./mothership
+QT_LIB_PATH="/path/to/QtLib_gcc64"
+MPI_LIB_PATH="/path/to/mpi/installation/lib"
+GCC_LIB_PATH="/path/to/gcc-7.3.0/lib64"
+
+mpirun -genv LD_LIBRARY_PATH ./:$QT_LIB_PATH:$MPI_LIB_PATH:$GCC_LIB_PATH ./orchestrator : ./logserver : ./rtcl : ./injector : ./nameserver : ./supervisor : ./mothership
 ~~~
 
 The order of executables doesn't matter, save for the `orchestrator`
