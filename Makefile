@@ -4,7 +4,7 @@
 #  - pandoc (https://pandoc.org).
 #
 # Build-specific requirements:
-#  - PDF: requires LaTeX (texlive is fine).
+#  - PDF: requires LaTeX (I use texlive, texlive-latex-extra is sufficient).
 
 BUILDER := "pandoc"
 BUILDER_FLAGS := "--number-sections --highlight-style tango"
