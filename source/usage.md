@@ -267,9 +267,8 @@ sequentially, how to:
  3. How to generate binary files, from the C sources defined in the XML, which
     will run on the cores of the POETS engine.
 
- 4. How to load these binary files onto their respective cores.
-
- 5. How to start an application, once the binary files have been loaded.
+ 4. How to load these binary files onto their respective cores, and to start an
+    application once the binary files have been loaded.
 
 #### Defining hardware topology in the Orchestrator
 
@@ -372,16 +371,37 @@ example):
 ~~~ {.bash}
 POETS> task /build = "clock_5_5"
 POETS> 12:03:31.70:  23(I) task /build = "clock_5_5"
-POETS> 12:03:31.70: 801(D) P_builder::Add(name=clock_5_5,file=/home/mv1g18/Aesop_image/application_source/clock_tree_5_5.xml)
+POETS> 12:03:31.70: 801(D) P_builder::Add(name=clock_5_5, file=/home/mv1g18/Aesop_image/application_source/clock_tree_5_5.xml)
 ~~~
 
-#### Loading binaries into devices for execution (staging)
+#### Loading binaries into devices for execution (staging), and running the application (execution)
 
-TODO: Complete
+With a set of binaries to be loaded onto each core of the POETS engine, the
+application can be run. Firstly, stage each binary onto its appropriate core by
+commanding:
 
-#### Running the application (execution)
+~~~ {.bash}
+task /deploy = "$NAME"
+~~~
 
-TODO: Complete
+where the name of your task (`$NAME`) can be obtained from `task /show` in the
+`Task` column. Once executed, these binaries ready the cores to execute the
+application, but block execution behind a barrier. To ready the cores, command:
+
+~~~ {.bash}
+task /init = "$NAME"
+~~~
+
+Control is returned to the user once this initialisation command is sent,
+though there is no acknowledgement when all of the cores have
+initialised. Commanding:
+
+~~~ {.bash}
+task /run = "$NAME"
+~~~
+
+will start the application once the cores have been initialised; the
+application will not start before the cores have been initialised.
 
 #### Summary
 
