@@ -16,6 +16,12 @@ level. This document does not:
 
  - Provide an exhaustive list of commands.
 
+Since the Orchestrator is under development, it is probable that these commands
+and their output may change. While the development team will make best efforts
+to update this documentation, it is inevitable that some idiosyncrasies are not
+captured in testing. If you encounter a mistake, or a section were output or
+commands do not match, please inform an Orchestrator developer.
+
 # Building the Orchestrator
 
 The only way to use the Orchestrator is to build it from its sources.
@@ -88,7 +94,7 @@ using MPI, you will need to use the MIMD syntax (look at the man page for your
 MPI distribution). By way of example, using mpich, command:
 
 ~~~ {.bash}
-# NB: You will need to define these environment variables appropriately for your setup. These work on Aesop.
+# NB: You will need to define these environment variables appropriately for your setup.
 
 QT_LIB_PATH="/path/to/QtLib_gcc64"
 MPI_LIB_PATH="/path/to/mpi/installation/lib"
@@ -256,10 +262,10 @@ sequentially, how to:
     "hardware graph".
 
  2. Map the devices in the task graph to the hardware graph using the
-    Orchestrator.
+    Orchestrator (linking).
 
  3. How to generate binary files, from the C sources defined in the XML, which
-    will run on the cores on the POETS engine.
+    will run on the cores of the POETS engine.
 
  4. How to load these binary files onto their respective cores.
 
