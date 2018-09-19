@@ -137,7 +137,7 @@ While your session is running, if you include the LogServer component, a log
 file will be written in the current directory containing details of the
 Orchestrator session.
 
-## Usage Examples: An Exemplary Orchestrator Session
+## An Exemplary Orchestrator Session
 
 Here are some common usage examples of the Orchestrator. The individual
 commands are more fully described in the implementation documentation. This
@@ -407,7 +407,10 @@ application will not start before the cores have been initialised.
 
 ## Usage Summary
 
-TODO: Reorganise this section.
+This section has demonstrated how to execute the Orchestrator, and an example
+session for running an application on the POETS engine. The example session
+demonstrates rudimentary Orchestrator operation, and is sufficient to execute
+most tasks of interest.
 
 # Further Reading
 
