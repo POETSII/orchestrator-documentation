@@ -347,6 +347,22 @@ with ID '20325' in the POETS box with ID '20324' as described by the 'Set1'
 topology". For diagnostic information, this mapping, and its inverse, can be
 dumped by commanding `link /dump = "file"`.
 
+#### Building binaries for devices (compilation)
+
+TODO: Complete
+
+#### Loading binaries into devices for execution (staging)
+
+TODO: Complete
+
+#### Running the application (execution)
+
+TODO: Complete
+
+#### Summary
+
+TODO: Reorganise this section.
+
 # Further Reading
 
  - The implementation documentation, specifically Chapter 5 (Console
