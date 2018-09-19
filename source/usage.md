@@ -349,7 +349,31 @@ dumped by commanding `link /dump = "file"`.
 
 #### Building binaries for devices (compilation)
 
-TODO: Complete
+The task definition is comprised of the task graph (how devices are connected
+to each other, and how they communicate), and the device logic (the C fragments
+that define what each device does). Given the hardware mapping from the linking
+step, the Orchestrator can now produce binary files to execute on the cores of
+the POETS engine. To build these binaries in an idempotent manner, command:
+
+~~~ {.bash}
+task /build = "$NAME"
+~~~
+
+where the name of your task (`$NAME`) can be obtained from `task /show` in the
+`Task` column. This creates a directory structure at `task /path`, which you
+may have set earlier in execution. The code fragments defined in the task XML
+are assembled here, and are compiled using the RISCV compiler defined in the
+System Requirements section of this document. Compilation may produce warnings
+or errors, which will be printed to stdout while the command is being executed;
+these should not be ignored in normal operation. Assuming no warnings or errors
+are printed, you should see the following output (again, I am using a clocktree
+example):
+
+~~~ {.bash}
+POETS> task /build = "clock_5_5"
+POETS> 12:03:31.70:  23(I) task /build = "clock_5_5"
+POETS> 12:03:31.70: 801(D) P_builder::Add(name=clock_5_5,file=/home/mv1g18/Aesop_image/application_source/clock_tree_5_5.xml)
+~~~
 
 #### Loading binaries into devices for execution (staging)
 
