@@ -4,7 +4,8 @@ Build status: [![CircleCI](https://circleci.com/gh/POETSII/orchestrator-document
 
 The documentation is in plain text, specifically pandoc markdown. The supported
 builder is pandoc (https://pandoc.org), but you should be able to use pretty
-much any builder you like.
+much any builder you like. A list of dependencies is maintained in the
+Makefile.
 
 If you wish to edit this documentation, branch off development, and raise a
 pull request (https://github.com/POETSII/orchestrator-documentation/compare) so

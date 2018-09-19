@@ -5,6 +5,13 @@ jobs:
       - image: jpbernius/pandoc
     steps:
       - checkout
+
+      # The docker image does not correctly install the fvextra latex
+      # package. We pull fvextra.sty from the maintainer so we can use in the
+      # build process.
+      - run: "git clone https://github.com/gpoore/fvextra.git; cp fvextra/fvextra/fvextra.sty ./"
+
+      # Build our documents.
       - run: make all
       - store_artifacts:
           path: build
