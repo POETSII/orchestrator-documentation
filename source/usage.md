@@ -137,15 +137,36 @@ While your session is running, if you include the LogServer component, a log
 file will be written in the current directory containing details of the
 Orchestrator session.
 
-## Usage Examples
+## Usage Examples: An Exemplary Orchestrator Session
 
 Here are some common usage examples of the Orchestrator. The individual
-commands are more fully described in the implementation documentation.
+commands are more fully described in the implementation documentation. This
+chain of examples describes an example Orchestrator session. These examples
+will show you, sequentially, how to:
+
+ 1. Verify that all components of the Orchestrator have been loaded in the
+    current session.
+
+ 2. Load a task (XML).
+
+ 3. Inform the Orchestrator of the topology of the POETS engine (i.e. how many
+    boxes/boards/threads/cores, and how they are connected). We call this the
+    "hardware graph".
+
+ 4. Map the devices in the task graph to the hardware graph using the
+    Orchestrator (linking).
+
+ 5. How to generate binary files, from the C sources defined in the XML, which
+    will run on the cores of the POETS engine.
+
+ 6. How to load these binary files onto their respective cores, and to start an
+    application once the binary files have been loaded.
+
 
 ### Verifying all Orchestrator Components are Loaded
 
 Once built, you may wish to verify that the components of the Orchestrator have
-been started correctly, and can be communicated with. In the `POETS>` prompt,
+been started correctly, and can be communicated with. At the `POETS>` prompt,
 command:
 
 ~~~ {.bash}
@@ -251,26 +272,7 @@ As a user, you should verify that the information displayed by `task /show` is
 correct for your task. Last minute verification is valuable! Now that you have
 successfully loaded your task, you can run your task on the hardware.
 
-### Running a loaded task
-
-This example assumes you have completed the previous example, and that you have
-an Orchestrator with your loaded task. This example will show you,
-sequentially, how to:
-
- 1. Inform the Orchestrator of the topology of the POETS engine (i.e. how many
-    boxes/boards/threads/cores, and how they are connected). We call this the
-    "hardware graph".
-
- 2. Map the devices in the task graph to the hardware graph using the
-    Orchestrator (linking).
-
- 3. How to generate binary files, from the C sources defined in the XML, which
-    will run on the cores of the POETS engine.
-
- 4. How to load these binary files onto their respective cores, and to start an
-    application once the binary files have been loaded.
-
-#### Defining hardware topology in the Orchestrator
+### Defining hardware topology in the Orchestrator
 
 In order to run an application on the POETS engine, the Orchestrator needs to
 know the topology of the hardware the application is to run on. For a one-box
@@ -313,7 +315,7 @@ POETS> 09:24:59.63:  23(I) topology /dump = "./my_topology_dump"
 The file contains a hierarchical description of the topology, and is mostly
 useful for debugging suspicious behaviour.
 
-#### Mapping the devices in the task graph to the hardware graph (linking)
+### Mapping the devices in the task graph to the hardware graph (linking)
 
 With both a task graph (loaded application), and a hardware graph (POETS engine
 topology), the Orchestrator can map the former onto the latter. Command:
@@ -346,7 +348,7 @@ with ID '20325' in the POETS box with ID '20324' as described by the 'Set1'
 topology". For diagnostic information, this mapping, and its inverse, can be
 dumped by commanding `link /dump = "file"`.
 
-#### Building binaries for devices (compilation)
+### Building binaries for devices (compilation)
 
 The task definition is comprised of the task graph (how devices are connected
 to each other, and how they communicate), and the device logic (the C fragments
@@ -374,7 +376,7 @@ POETS> 12:03:31.70:  23(I) task /build = "clock_5_5"
 POETS> 12:03:31.70: 801(D) P_builder::Add(name=clock_5_5, file=/home/mv1g18/Aesop_image/application_source/clock_tree_5_5.xml)
 ~~~
 
-#### Loading binaries into devices for execution (staging), and running the application (execution)
+### Loading binaries into devices for execution, and running the application
 
 With a set of binaries to be loaded onto each core of the POETS engine, the
 application can be run. Firstly, stage each binary onto its appropriate core by
@@ -403,7 +405,7 @@ task /run = "$NAME"
 will start the application once the cores have been initialised; the
 application will not start before the cores have been initialised.
 
-#### Summary
+## Usage Summary
 
 TODO: Reorganise this section.
 
