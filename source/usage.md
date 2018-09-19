@@ -405,6 +405,10 @@ task /run = "$NAME"
 will start the application once the cores have been initialised; the
 application will not start before the cores have been initialised.
 
+## Batch execution with expect
+
+TODO: Coming soon.
+
 ## Usage Summary
 
 This section has demonstrated how to execute the Orchestrator, and an example
