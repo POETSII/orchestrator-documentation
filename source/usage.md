@@ -339,7 +339,13 @@ XLinking device O_.clock_5_5.clock_5_5_graph.drain_4_2_0_0 to thread O_.Set1.Bx2
 POETS> 09:32:39.98:  23(I) link /link = "clock_5_5"
 ~~~
 
-TODO: Explain this, and mention `link /dump = "file"` in a footnote.
+Each device defined in the task graph is one-to-one mapped to a thread in the
+POETS engine. Note that threads are identified in a hierarchical manner for
+debugging purposes; one can interpret `O_.Set1.Bx20324.Bo20325.Co20326.Th20333`
+as "The thread with ID '20333' on the core with ID '20326' on the FPGA board
+with ID '20325' in the POETS box with ID '20324' as described by the 'Set1'
+topology". For diagnostic information, this mapping, and its inverse, can be
+dumped by commanding `link /dump = "file"`.
 
 # Further Reading
 
