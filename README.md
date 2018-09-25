@@ -1,4 +1,6 @@
-This repository contains documentation on the Orchestrator component of POETS.
+This repository contains documentation on the Orchestrator component of
+POETS. You can download the latest stable documentation from
+[here](https://github.com/POETSII/orchestrator-documentation/releases).
 
 Build status: [![CircleCI](https://circleci.com/gh/POETSII/orchestrator-documentation.svg?style=svg)](https://circleci.com/gh/POETSII/orchestrator-documentation)
 
