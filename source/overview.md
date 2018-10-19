@@ -2,7 +2,7 @@
 
 # Overview
 
-This document assumes that you have a working knowledge of The POETS project,
+This document assumes that you have a working knowledge of the POETS project,
 and defines the following, in a high-level way:
 
  - What the Orchestrator is, and its role in the POETS project ([Orchestrator
