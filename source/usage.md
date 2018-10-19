@@ -75,9 +75,10 @@ your version of Quartus. On Aesop, this is at
 In short, there should have been a Makefile provided in the source of the
 Orchestrator you have obtained. As appropriate, you will need to define the
 paths to your dependencies in the makefile. When running the makefile (by
-commanding `make` in your shell), if any warnings are raised, please shout
-loudly at one of the maintainers. The build process creates a series of
-disparate executables in the `bin` directory.
+commanding `make` in your shell in the appropriate `Build` directory for your
+compiler by changing into it), if any warnings are raised, please shout loudly
+at one of the maintainers. The build process creates a series of disparate
+executables in the `bin` directory.
 
 ### Without Make
 
