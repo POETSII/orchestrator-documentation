@@ -195,7 +195,7 @@ example XML task graph to load, but you can extrapolate the commands used here
 for your purposes.]. At the `POETS>` prompt, command:
 
 ~~~ {.bash}
-task /path = "/path/to/the/task"
+task /path = "/directory/containing/the/task/without/the/trailing/slash"
 ~~~
 
 This command sets the path to load application XMLs from^[You can command this
@@ -203,10 +203,10 @@ multiple times per Orchestrator-session, and the path will change each
 time]. The Orchestrator should respond, and you should see:
 
 ~~~ {.bash}
-POETS>task /path = "/path/to/the/task"
-POETS> 08:49:01.44:  23(I) task /path = "/path/to/the/task"
+POETS>task /path = "/directory/containing/the/task/without/the/trailing/slash"
+POETS> 08:49:01.44:  23(I) task /path = "/directory/containing/the/task/without/the/trailing/slash"
 POETS> 08:49:01.44: 102(I) Task graph default file path is || ||
-POETS> 08:49:01.44: 103(I) New path is ||/path/to/the/task||
+POETS> 08:49:01.44: 103(I) New path is ||/directory/containing/the/task/without/the/trailing/slash||
 ~~~
 
 This output from the Orchestrator is created by the LogServer, and is written
@@ -249,9 +249,9 @@ Orchestrator has 1 tasks loaded:
 
     |Task       |Supervisor |Linked   |Devices  |Channels |Declare     |PoL? |PoL type   |Parameters
     +-----------+-----------+---------+---------+---------+----------- +-----+-----------+------------+----....
-  0 | graph     |graph_sup_unknown_inst |      no |    4687 |    7811  |graph |User |           |/path/to/the/task/graph.xml  |
+  0 | graph     |graph_sup_unknown_inst |      no |    4687 |    7811  |graph |User |           |/directory/containing/the/task/without/the/trailing/slash/graph.xml  |
     +-----------+-----------+---------+---------+---------+----------- +-----+-----------+------------+----....
-Default display filepath ||/path/to/the/task||
+Default display filepath ||/directory/containing/the/task/without/the/trailing/slash||
 
 POETS> 08:57:18.53:  23(I) task /show
 ~~~
