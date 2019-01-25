@@ -168,7 +168,7 @@ by packets from the Engine). Unlike other devices:
 As a device, Supervisors can be provisioned with application-specific packet
 handlers.
 
-# Too long, didn't read
+# Key Points
 
 - The Orchestrator is a middleware that interfaces between the Application
   Layer and the Engine Layer, and between the user and the Engine Layer.
