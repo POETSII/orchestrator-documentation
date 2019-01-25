@@ -22,14 +22,14 @@ This document does not explain:
 
 ## Motivating the Orchestrator
 
-POETS consists of three layers. Here are two:
+POETS consists of three layers (one of which is the Orchestrator). Here are the
+other two:
 
  - Application Layer: The application is domain-specific problem (with
    context), which is to be solved on the POETS Engine. The role of the
-   Application Layer is to translate the application into a task that can be
-   easily understood by a computer, where a task as a contextless graph of
-   connected devices. These devices are units of compute that can send signals
-   to other devices in the graph to solve a problem.
+   Application Layer is to translate the user's problem into a task, which is a
+   contextless graph of connected devices. These devices are units of compute
+   that can send signals to other devices in the graph to solve a problem.
 
  - Engine Layer: The highly-distributed hardware on which the application is
    solved. The POETS Engine (or just "Engine") has no idea about context. The
