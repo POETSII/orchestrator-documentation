@@ -3,7 +3,7 @@
 # Overview
 
 This document assumes that you have a working knowledge of the POETS project,
-and defines the following, in a high-level way:
+and defines the following in a high-level way:
 
  - What the Orchestrator is, and its role in the POETS project ([Orchestrator
    Introduction][]).
@@ -34,7 +34,7 @@ other two:
  - Engine Layer: The highly-distributed hardware on which the application is
    solved. The POETS Engine (or just "Engine") has no idea about context. The
    Engine Layer consists of a POETS box, which contains some interconnected
-   FPGA boards, and a "typical" x86 machine used to control them (termed a
+   FPGA boards, and an x86 machine used to control them (termed a
    "Mothership").
 
 With only these two layers, POETS still requires a way to map the task
