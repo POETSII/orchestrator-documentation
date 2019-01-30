@@ -13,7 +13,7 @@ describes the internals and interfaces of the Orchestrator in considerable
 detail. The most recent version of the implementation documentation exists in
 the `implementation_documentation` directory of this repository, on the master
 branch. You can download this
-[here](https://github.com/POETSII/orchestrator-documentation/tree/master/implementation_documentation)
+[here](https://github.com/POETSII/orchestrator-documentation/tree/master/implementation_documentation).
 This documentation is a work in progress.
 
 ## User Guide
