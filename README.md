@@ -1,18 +1,22 @@
+# Orchestrator Documentation
+
 This repository contains documentation on the Orchestrator component of
 POETS.
 
 Two components of documentation exist: the implementation documentation, and
 the user guide. Both live in this repository.
 
-# Implementation Documentation
+## Implementation Documentation
 
 The implementation documentation motivates POETS and the Orchestrator, and
 describes the internals and interfaces of the Orchestrator in considerable
 detail. The most recent version of the implementation documentation exists in
 the `implementation_documentation` directory of this repository, on the master
-branch. This documentation is a work in progress.
+branch. You can download this
+[here](https://github.com/POETSII/orchestrator-documentation/tree/master/implementation_documentation)
+This documentation is a work in progress.
 
-# User Guide
+## User Guide
 
 You can download the latest stable user guide documentation from
 [here](https://github.com/POETSII/orchestrator-documentation/releases).
