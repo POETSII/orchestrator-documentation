@@ -22,20 +22,21 @@ This document does not explain:
 
 ## Motivating the Orchestrator
 
-POETS consists of three layers (one of which is the Orchestrator). Here are the
-other two:
+Figure 1 (left) shows the POETS stack; POETS consists of major three layers,
+one of which is the Orchestrator. Here are the other two:
 
  - Application Layer: The application is domain-specific problem (with
    context), which is to be solved on the POETS Engine. The role of the
-   Application Layer is to translate the user's problem into a task, which is a
-   contextless graph of connected devices. These devices are units of compute
-   that can send signals to other devices in the graph to solve a problem.
+   Application Layer is provide an interface for the user to translate their
+   problem into a task, which is a contextless graph of connected
+   devices. These devices are units of compute that can send signals to other
+   devices in the graph to solve a problem.
 
  - Engine Layer: The highly-distributed hardware on which the application is
    solved. The POETS Engine (or just "Engine") has no idea about context. The
    Engine Layer consists of a POETS box, which contains some interconnected
    FPGA boards, and an x86 machine used to control them (termed a
-   "Mothership").
+   "Mothership"). Hostlink exists as an API for the Engine.
 
 With only these two layers, POETS still requires a way to map the task
 (Application Layer) onto the hardware (Engine Layer). POETS also lacks any way
@@ -48,30 +49,39 @@ The Orchestrator is a middleware that interfaces between the Application Layer
 and the Engine Layer, and between the user and the Engine Layer. The core
 responsibilities of the Orchestrator are:
 
- - To efficiently map the task (from the application layer) onto the Engine,
-   and to deploy and "undeploy" tasks onto the Engine.
+ - To load and manage tasks passed in from the application layer.
+
+ - To identify the Engine it is operating on.
+
+ - To efficiently map the task (from the application layer) onto the Engine.
+
+ - To deploy and "undeploy" tasks onto the Engine.
 
  - To allow the user to start and stop tasks running on the Engine.
 
  - To allow the user to view the current state of the Engine.
 
- - To allow the user to retrieve results computed by the Engine (as a set of
-   files).
+ - To allow the user to retrieve results computed by the Engine.
 
-Some desirable features of the Orchestrator are:
+Figure 1 (right) shows how the layers of POETS interact to deliver on these
+features.
 
- - To allow developers to better diagnose problems using logging and debugging
-   tools.
+![Layers in the POETS stack](images/stack.png "The POETS Stack"){width=40%}
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ![How the Orchestrator
+interacts with those layers](images/orchestrator_interaction.png "How the
+Orchestrator interacts with the POETS Stack"){width=40%}
+\begin{figure}
+\caption{Left: Layers in the POETS stack. Right: How the Orchestrator interacts
+with those layers to achieve its objectives}
+\end{figure}
 
 # Components of the Orchestrator
 
 The Orchestrator consists of disparate components, which are logically arranged
 to achieve the objectives of the Orchestrator as a whole, while maintaining a
-sensible degree of modularity. These components are as follows, where the
-numbers in parentheses denote the corresponding section in the implementation
-documentation:
+sensible degree of modularity. These components are as follows:
 
- - "Root" (4.2): While the Orchestrator is comprised of a series of modular
+ - "Root": While the Orchestrator is comprised of a series of modular
    components, the "Root" uses these components to achieve the features of the
    Orchestrator. Precisely, the Root component:
 
@@ -88,39 +98,43 @@ documentation:
    - Can, on command, build binaries to be executed on the cores of the Engine,
      and to stage them for execution on those cores.
 
- - "LogServer" (4.4): The LogServer component records logging messages sent to
-   it from other components, either for post-mortem purposes, or for elementary
+ - "LogServer": The LogServer component records logging messages sent to it
+   from other components, either for post-mortem purposes, or for elementary
    real-time system observation.
 
- - "RTCL" (4.5): The "Real-Time Clock" component manages an internal clock. A
-   unit of functionality of this clock is to support a rudimentary "delay"
-   command, which can be used as part of a command batch. This allows the user
-   to stage a series of packets to be added to the Engine at a given time, to
-   support controlled "bursts" of activity.
+ - "RTCL": The "Real-Time Clock" component manages an internal clock. A unit of
+   functionality of this clock is to support a rudimentary "delay" command,
+   which can be used as part of a command batch. This allows the user to stage
+   a series of packets to be added to the Engine at a given time, to support
+   controlled "bursts" of activity.
 
- - "Injector" (4.6): The Root component allows the Orchestrator to be
-   controlled by a batch of commands. The Injector component is a developer
-   tool that supports this functionality, but where the batch of commands is
-   run in the context of the Orchestrator. This allows developers to "script"
-   the behaviour of the Orchestrator in response to changes in the state of
-   the Orchestrator, as opposed to a naive batch.
+ - "Injector": The Root component allows the Orchestrator to be controlled by a
+   batch of commands. The Injector component is a developer tool that supports
+   this functionality, but where the batch of commands is run in the context of
+   the Orchestrator. This allows developers to "script" the behaviour of the
+   Orchestrator in response to changes in the state of the Orchestrator, as
+   opposed to a naive batch.
 
- - "NameServer" (4.7): In the Orchestrator, devices in the Engine are referred
-   to by flat numeric addresses. The NameServer stores a mapping between these
+ - "NameServer": In the Orchestrator, devices in the Engine are referred to by
+   flat numeric addresses. The NameServer stores a mapping between these
    addresses, and colloquial, hierarchy-based device identifiers. User-facing
    components in the Orchestrator can query this component to determine a
    correct address for a packet they may wish to send. The NameServer also
    enables lookup in either direction.
 
- - "Monitor" (4.8): The Monitor component displays information about the
-   current activity of the Engine, and other useful details from the
-   Orchestrator.
+ - "Monitor": The Monitor component displays information about the current
+   activity of the Engine, and other useful details from the Orchestrator.
 
- - "User Input and User Output" (4.9): The User Input component handles inputs
-   from the application frontend, by translating them into instructions
-   (messages) for other components to execute. The User Output component
-   handles messages from components to be displayed in the application
-   frontend.
+ - "User Input and User Output": The User Input component handles inputs from
+   the application frontend, by translating them into instructions (messages)
+   for other components to execute. The User Output component handles messages
+   from components to be displayed in the application frontend.
+
+ - "Mothership": The Orchestrator plays host to a number of mothership
+   processes, which must operate on the various boxes of the Engine. The
+   Mothership process is primarily responsible for managing communications
+   between the Orchestrator processes (MPI), and the hardware (packets), and
+   for loading and unloading of binaries passed to it from the Root process.
 
 All of these components exist as separate processes in the same MPI
 (Message-Passing Interface,
@@ -135,7 +149,7 @@ the communications broker "CommonBase" (see the implementation documentation).
 The Supervisor^[Note that "Supervisor" in the context of POETS is not related
 to supervisors in the context of UNIX-likes; the concepts are completely
 different.] (3.3) is one further component of the Orchestrator, but is unique
-in that it must execute on a POETS box, as part of the mothership. The
+in that it must execute on a POETS box, as part of the Mothership. The
 Supervisor is uniquely positioned at interface between the message-based (MPI)
 communication of the Orchestrator, and the packet-based communication of the
 Engine. Due to this positioning, the primary purpose of the Supervisor is to
