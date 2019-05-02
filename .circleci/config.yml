@@ -15,7 +15,7 @@ jobs:
       # images. The update may fail due to out-of-date PPAs and other things we
       # don't care about, so we suppress it's exit code.
       - run: "apt update || true"
-      - run: "apt install graphviz"
+      - run: "apt --assume-yes install graphviz"
 
       # Build our documents.
       - run: make all
