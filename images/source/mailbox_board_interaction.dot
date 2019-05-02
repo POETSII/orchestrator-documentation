@@ -1,0 +1,127 @@
+graph G {
+    fontname="Inconsolata";
+    fontsize=12
+    margin=0;
+    ranksep=0.1;
+
+    node[color="#000000",
+         fontname="Inconsolata",
+         fontsize=12,
+         height=0,
+         margin=0.05,
+         penwidth=1,
+         shape="rect",
+         width=0];
+
+    edge[arrowsize=0.5,
+         fontname="Inconsolata",
+         fontsize=12;
+         penwidth=1];
+
+    // Mailboxes in board 0
+    subgraph cluster_board_0 {
+        label="Board 0";
+        margin=5;
+        node[label="M",
+             margin=0,
+             shape="circle",
+             style="solid"];
+        M030; M020; M010; M000;
+        M031; M021; M011[color="#ff9999"]; M001;
+        M032; M022; M012; M002;
+        M033; M023; M013; M003;
+    }
+
+    // Multiplex nodes
+    subgraph cluster_multiplex {
+        label="Multiplexer\n(SFP+)";
+        margin=9;
+        node[height=0.005,
+             shape="point",
+             width=0.005];
+        edge[style="invis"];
+        X0; X1[color="#ff9999"]; X2; X3;
+        X0 -- X1;
+        X1 -- X2;
+        X2 -- X3;
+    }
+
+    // Mailboxes in board 1
+    subgraph cluster_board_1 {
+        label="Board 1";
+        margin=5;
+        node[label="M",
+             margin=0,
+             shape="circle",
+             style="solid"];
+        M130; M120; M110; M100;
+        M131; M121; M111; M101;
+        M132[color="#ff9999"]; M122; M112; M102;
+        M133; M123; M113; M103;
+    }
+
+    // Vertical edges
+    M000 -- M001;
+    M001 -- M002;
+    M002 -- M003;
+    M010 -- M011;
+    M011 -- M012;
+    M012 -- M013;
+    M020 -- M021;
+    M021 -- M022;
+    M022 -- M023;
+    M030 -- M031;
+    M031 -- M032;
+    M032 -- M033;
+    M100 -- M101;
+    M101 -- M102;
+    M102 -- M103;
+    M110 -- M111;
+    M111 -- M112;
+    M112 -- M113;
+    M120 -- M121;
+    M121 -- M122;
+    M122 -- M123;
+    M130 -- M131;
+    M131 -- M132[color="#ff9999"];
+    M132 -- M133;
+
+    // Horizontal edges
+    edge[constraint=false];
+    M000 -- M010;
+    M010 -- M020;
+    M020 -- M030;
+    M001 -- M011;
+    M011 -- M021[color="#ff9999"];
+    M021 -- M031[color="#ff9999"];
+    M002 -- M012;
+    M012 -- M022;
+    M022 -- M032;
+    M003 -- M013;
+    M013 -- M023;
+    M023 -- M033;
+
+    M100 -- M110;
+    M110 -- M120;
+    M120 -- M130;
+    M101 -- M111[color="#ff9999"];
+    M111 -- M121[color="#ff9999"];
+    M121 -- M131[color="#ff9999"];
+    M102 -- M112;
+    M112 -- M122;
+    M122 -- M132;
+    M103 -- M113;
+    M113 -- M123;
+    M123 -- M133;
+
+    // Multiplex edges
+    edge[constraint=false];
+    X0 -- M030;
+    X0 -- M100;
+    X1 -- M031[color="#ff9999"];
+    X1 -- M101[color="#ff9999"];
+    X2 -- M032;
+    X2 -- M102;
+    X3 -- M033;
+    X3 -- M103;
+}

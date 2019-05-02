@@ -1,0 +1,40 @@
+graph G {
+    fontname="Inconsolata";
+    fontsize=12;
+    margin=0;
+    ranksep=0;
+
+    node[color="#005500",
+         fillcolor="#dbffde:#a8ff8f",
+         fontname="Inconsolata",
+         fontsize=12,
+         gradientangle=270,
+         height=0,
+         margin=0.05;
+         penwidth=1;
+         shape="rect",
+         style="filled",
+         width=0];
+
+    edge[color="#005500",
+         fontname="Inconsolata",
+         fontsize=12;
+         penwidth=1];
+
+    Engine;
+    Box;
+    Board;
+    Mailbox;
+    Core;
+    Thread;
+
+    Engine -- Box;
+    Engine -- Board[label="(graph)"];
+    Box -- Board;
+    Board -- Mailbox[label="(graph)"];
+    Box -- Mailbox[style="invis"];
+    Mailbox -- Core;
+    Core -- Thread;
+
+    {rank=same; Box; Board}
+}

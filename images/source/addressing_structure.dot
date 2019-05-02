@@ -1,0 +1,98 @@
+digraph G {
+    fontname="Inconsolata";
+    fontsize=12
+    margin=0;
+    ranksep=0;
+    rankdir=LR;
+
+    // Green nodes
+    node[color="#005500",
+         fillcolor="#dbffde:#a8ff8f",
+         fontname="Inconsolata",
+         fontsize=12,
+         gradientangle=270,
+         height=0,
+         margin=0.05,
+         penwidth=1,
+         shape="rect",
+         style="filled",
+         width=0];
+
+    Engine [label="P_engine"];
+    Box [label="P_box"];
+    Board [label="P_board"];
+    Mailbox [label="P_mailbox"];
+    Core [label="P_core"];
+    Thread [label="P_thread"];
+
+    // Red nodes
+    node[color="#550000",
+         fillcolor="#ffdbde:#ffa88f"];
+
+    AddressableItem;
+    HardwareAddress;
+    HardwareAddressFormat;
+
+    // Blue nodes
+    node[color="#000055",
+         fillcolor="#dedbff:#8fa8ff"];
+
+    Components [label="boxComponent\nboardComponent\nmailboxComponent\ncoreComponent\nthreadComponent"];
+    Widths [label="boxWordLength\nboardWordLength\nmailboxWordLength\ncoreWordLength\nthreadWordLength"];
+
+    // Edgeless nodes
+    node[color="#FFFFFF",
+         style="solid"];
+
+    Inherit [label="inherits\nfrom"];
+
+    // Green edges
+    edge[arrowsize=0.5,
+         color="#005500",
+         fontname="Inconsolata",
+         fontsize=12;
+         penwidth=1];
+
+    Box -> Inherit [arrowhead="none", constraint=false];
+    Board -> Inherit [arrowhead="none", constraint=false];
+    Mailbox -> Inherit [arrowhead="none", constraint=false];
+    Core -> Inherit [arrowhead="none", constraint=false];
+    Thread -> Inherit [arrowhead="none", constraint=false];
+    Inherit -> AddressableItem [constraint=false];
+
+    // Red edges
+    edge[color="#550000"];
+
+    AddressableItem -> HardwareAddress [label="contains      ",
+                                        constraint=false];
+    Engine -> HardwareAddressFormat [label="owns a    ",
+                                     constraint=false];
+    HardwareAddress -> HardwareAddressFormat [label="points to       ",
+                                              constraint=false];
+
+    // Blue edges
+    edge[color="#000055"];
+    HardwareAddress -> Components [label="defines"];
+    HardwareAddressFormat -> Widths [label="defines"];
+
+    // Positioning, with invisible edges
+    edge[style="invis"];
+
+    // Hold all the green boxes together vertically.
+    {rank=same;
+        Board -> Mailbox;
+        Mailbox -> Core;
+        Core -> Thread;
+    rankdir=UD}
+
+    // Hold all the red boxes together vertically.
+    {rank=same;
+        Engine -> HardwareAddressFormat;
+        HardwareAddressFormat -> HardwareAddress;
+        HardwareAddress -> AddressableItem;
+    rankdir=UD}
+
+    Board -> Box;
+    Thread -> Inherit;
+    Inherit -> AddressableItem;
+}

@@ -1,0 +1,91 @@
+graph G {
+    fontname="Inconsolata";
+    fontsize=12
+    margin=0;
+    ranksep=0.1;
+
+    node[color="#999999",
+         fontname="Inconsolata",
+         fontsize=12,
+         height=0,
+         margin=0.05,
+         penwidth=1,
+         width=0];
+
+    // Boards
+    node[shape="rect"];
+    B00 [label="Board\n(0,0)"];
+    B10 [label="Board\n(1,0)"];
+    B01 [label="Board\n(0,1)"];
+    B11 [label="Board\n(1,1)"];
+    B02 [label="Board\n(0,2)"];
+    B12 [label="Board\n(1,2)"];
+
+    // Pins
+    node[fillcolor="#000000",
+         height=0.1,
+         shape="point",
+         style="filled",
+         width=0.1];
+    B00R; B10L;
+    B00D; B01U;
+    B10D; B11U;
+    B01R; B11L;
+    B01D; B02U;
+    B11D; B12U;
+    B02R; B12L;
+
+    // Board to pin, vertical
+    edge[color="#999999",
+         constraint=true];
+    B00 -- B00D;
+    B10 -- B10D;
+    B01U -- B01;
+    B11U -- B11;
+    B01 -- B01D;
+    B11 -- B11D;
+    B02U -- B02;
+    B12U -- B12;
+
+    // Pin to pin, vertical
+    edge[color="#000000",
+         constraint=true];
+    B00D -- B01U;
+    B10D -- B11U;
+    B01D -- B02U;
+    B11D -- B12U;
+
+    // Horizontal edges
+    {
+        rankdir="LR";
+
+        // Pin to pin
+        edge[color="#000000"];
+        B00R -- B10L;
+        B01R -- B11L;
+        B02R -- B12L;
+
+        // Board to pin
+        edge[color="#999999"];
+        B00 -- B00R;
+        B10L -- B10;
+        B01 -- B01R;
+        B11L -- B11;
+        B02 -- B02R;
+        B12L -- B12;
+    }
+
+    // Holding vertical rank of horizontal objects.
+    {
+        rankdir="UD"; rank="same"
+        B00; B00R; B10L; B10;
+    }
+    {
+        rankdir="UD"; rank="same"
+        B01; B01R; B11L; B11;
+    }
+    {
+        rankdir="UD"; rank="same"
+        B02; B02R; B12L; B12;
+    }
+}

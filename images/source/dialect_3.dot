@@ -1,0 +1,82 @@
+graph G {
+    fontname="Inconsolata";
+    fontsize=11;
+    margin=0;
+    nodesep=0.3;
+    rankdir="UD";
+    ranksep=0;
+
+    // Board display properties.
+    node[color="#550000",
+         fillcolor="#ffdedb:#ff8fa8",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0,
+         shape="ellipse",
+         style="filled"];
+
+    // Board-connection display properties.
+    edge[fontname="Inconsolata",
+         fontsize=11,
+         color="#550000"];
+
+    // Boxes and the boards they contain.
+    graph[color="#000055",
+          gradientangle=270,
+          style="filled"];
+
+    subgraph cluster_Io {
+        fillcolor="#dbdeff:#a88fff";
+        margin=10;
+        label="Box Io\naddress: 00\ntype: TYPEef752a19";
+        IoB0[label="Board B0\naddress: 00.0\ntype: TYPEd7aefac5"];
+        IoB1[label="Board B1\naddress: 00.1\ntype: TYPEd7aefac5"];
+    }
+
+    subgraph cluster_Europa {
+        fillcolor="#eeeeff:#a8ccff";
+        color="#004455";
+        margin=10;
+        label="Box Europa\naddress: 10\ntype: TYPEc92e3bc1";
+        EuropaB0[label="Board B0\naddress: 10.0\ntype: TYPEb443a014",
+                 fillcolor="#ffeedd:#ffcc33", color="#663300"];
+    }
+
+    graph[labelloc="b",
+          color="#440044";
+          fillcolor="#ddccff:#dd5eff";
+          gradientangle=90];
+
+    subgraph cluster_Ganymede {
+        margin=10;
+        label="Box Ganymede\naddress: 01\ntype: TYPEdcecd67b";
+        GanymedeB0[label="Board B0\naddress: 01.0\ntype: TYPEd7aefac5"];
+        GanymedeB1[label="Board B1\naddress: 01.1\ntype: TYPEd7aefac5"];
+    }
+
+    subgraph cluster_Callisto {
+        margin=10;
+        label="Box Callisto\naddress: 11\ntype: TYPEdcecd67b";
+        CallistoB0[label="Board B0\naddress: 11.0\ntype: TYPEd7aefac5"];
+        CallistoB1[label="Board B1\naddress: 11.1\ntype: TYPEb443a014",
+                   fillcolor="#ffeedd:#ffcc33", color="#663300"];
+    }
+
+    // Formatting
+    node[shape="point", width=0.005, color="#550000", style="filled"];
+    EuropaB0 -- Invis;
+    Invis -- Invis2;
+
+    // Inter-box links
+    IoB0 -- IoB1 [label=" 5"];
+    GanymedeB0 -- GanymedeB1 [label=" 5"];
+    CallistoB0 -- CallistoB1 [label=" 5"];
+
+    // Cross-box links
+    IoB0 -- EuropaB0 [label="20", constraint=false];
+    IoB1 -- GanymedeB0 [label=" 20"];
+    Invis2 -- CallistoB0 [label=" 20"];
+    GanymedeB0 -- CallistoB0 [label="20", constraint=false];
+    GanymedeB1 -- CallistoB1 [label="20", constraint=false];
+}

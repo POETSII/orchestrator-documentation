@@ -1,0 +1,74 @@
+graph G {
+    fontname="Inconsolata";
+    fontsize=11;
+    margin=0;
+    nodesep=0.3;
+    rankdir="UD";
+    ranksep=0;
+
+    // Board display properties.
+    node[color="#550000",
+         fillcolor="#ffdedb:#ff8fa8",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0,
+         shape="ellipse",
+         style="filled"];
+
+    // Board-connection display properties.
+    edge[fontname="Inconsolata",
+         fontsize=11,
+         color="#550000"];
+
+    // Boxes and the boards they contain.
+    graph[color="#000055",
+          fillcolor="#dbdeff:#a88fff",
+          gradientangle=270,
+          style="filled"];
+
+    subgraph cluster_Io {
+        margin=10;
+        label="Box Io\naddress: 00";
+        IoB0[label="Board B0\naddress: 00.0"];
+        IoB1[label="Board B1\naddress: 00.1"];
+    }
+
+    subgraph cluster_Europa {
+        margin=10;
+        label="Box Europa\naddress: 10";
+        EuropaB0[label="Board B0\naddress: 10.0"];
+        EuropaB1[label="Board B1\naddress: 10.1"];
+    }
+
+    graph[labelloc="b",
+          gradientangle=90];
+
+    subgraph cluster_Ganymede {
+        margin=10;
+        label="Box Ganymede\naddress: 01";
+        GanymedeB0[label="Board B0\naddress: 01.0"];
+        GanymedeB1[label="Board B1\naddress: 01.1"];
+    }
+
+    subgraph cluster_Callisto {
+        margin=10;
+        label="Box Callisto\naddress: 11";
+        CallistoB0[label="Board B0\naddress: 11.0"];
+        CallistoB1[label="Board B1\naddress: 11.1"];
+    }
+
+    // Inter-box links
+    IoB0 -- IoB1 [label=" 5"];
+    EuropaB0 -- EuropaB1 [label=" 5"];
+    GanymedeB0 -- GanymedeB1 [label=" 5"];
+    CallistoB0 -- CallistoB1 [label=" 5"];
+
+    // Cross-box links
+    IoB0 -- EuropaB0 [label="20", constraint=false];
+    IoB1 -- EuropaB1 [label="20", constraint=false];
+    IoB1 -- GanymedeB0 [label=" 20"];
+    EuropaB1 -- CallistoB0 [label=" 20"];
+    GanymedeB0 -- CallistoB0 [label="20", constraint=false];
+    GanymedeB1 -- CallistoB1 [label="20", constraint=false];
+}

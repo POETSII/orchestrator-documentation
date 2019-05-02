@@ -1,0 +1,79 @@
+digraph G {
+    fontname="Inconsolata";
+    fontsize=12
+    margin=0;
+    ranksep=0;
+
+    node[fontname="Inconsolata",
+         fontsize=12,
+         gradientangle=270,
+         height=0,
+         margin=0.05,
+         penwidth=1,
+         shape="rect",
+         style="filled",
+         width=0];
+
+    edge[arrowsize=0.5,
+         fontname="Inconsolata",
+         fontsize=12;
+         penwidth=1];
+
+    // Black box nodes
+    node[color="#ffffff",
+         style="solid"];
+
+    Set2 [label="topology /set2\nOrchBase::TopoSet2"];
+    Set1 [label="topology /set1\nOrchBase::TopoSet1"];
+    Load [label="topology /load\nOrchBase::TopoLoad"];
+    Clear [label="topology /clear\nOrchBase::ClearTopo"];
+    Dump [label="topology /dump\nif pE, then pE->Dump()"];
+
+    node[style="filled"];
+
+    subgraph cluster_transient {
+        color="#550000";
+        fillcolor="#ffeeee";
+        style="filled";
+        label="Command-transient objects                  ";
+
+        // Purple nodes
+        node[color="#440044",
+             fillcolor="#ffbeff:#ff7fff"];
+
+        HardwareFileParser;
+
+        // Yellow nodes
+        node[color="#444400",
+             fillcolor="#ffffbe:#ffff7f"];
+
+        MultiAesopDeployer [label="MultiAesopDeployer\n(n=2)"];
+        AesopDeployer;
+        Dialect1Deployer;
+    }
+
+    // Green nodes
+    node[color="#005500",
+         fillcolor="#dbffde:#a8ff8f"];
+
+    Engine [label="OrchBase->pE\n(P_engine)"];
+
+    // Black edges (c&c)
+    Set1 -> AesopDeployer [label=" OrchBase\n creates"];
+    Set2 -> MultiAesopDeployer [label=" OrchBase\n creates"];
+    Load -> HardwareFileParser [label=" creates and\n populates"];
+    Engine -> Clear [label="OrchBase\ndeletes", dir="back"];
+    Engine -> Dump [label="OrchBase\nreads", dir="back"];
+
+    Dialect1Deployer -> Engine [label=" creates and\n populates"];
+
+    // Purple edges (file parser)
+    edge[color="#440044"];
+    HardwareFileParser -> Dialect1Deployer [label="creates and\npopulates"];
+
+    // Yellow edges (inheritance)
+    edge[color="#444400"];
+    MultiAesopDeployer -> AesopDeployer [label="inherits from",
+                                         constraint=false];
+    AesopDeployer -> Dialect1Deployer [label="inherits\nfrom"];
+}
