@@ -11,7 +11,10 @@ jobs:
       # build process.
       - run: "git clone https://github.com/gpoore/fvextra.git; cp fvextra/fvextra/fvextra.sty ./"
 
-      # Docker image is missing graphviz, which we need to use to build images.
+      # Docker image is missing graphviz, which we need to use to build
+      # images. The update may fail due to out-of-date PPAs and other things we
+      # don't care about, so we suppress it's exit code.
+      - run: "apt update || true"
       - run: "apt install graphviz"
 
       # Build our documents.
