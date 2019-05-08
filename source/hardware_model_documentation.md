@@ -1441,8 +1441,140 @@ NameBase id    Name
 P_port O_._3987 ---------------------------------------------------------------
 ```
 
+## HardwareAddress
+`HardwareAddress` represents the hardware address of an item (`P_box`,
+`P_board`, `P_mailbox`, `P_core`, or `P_thread`) in the Engine hierarchy. The
+`HardwareAddress` stores the components of the addresses as defined in the
+Addressing Hardware section, as well as information on which components have
+been defined, and how to produce the address as a 32-bit unsigned.
+
+Members:
+
+ - `HardwareAddressFormat* format`: Points to the hardware address format
+   instance used to define address spacings. A `P_engine` contains a
+   `HardwareAddressFormat`, which is applied to the `HardwareAddress` object
+   held by each item in the Engine. The hardware address format is used to hold
+   the spacing between each component in the hardware address, so that the
+   32-bit unsigned address can be computed.
+
+ - `AddressComponent boxComponent`: Holds the box component of this hardware
+   address.
+
+ - `AddressComponent boardComponent`: Holds the board component of this
+   hardware address.
+
+ - `AddressComponent mailboxComponent`: Holds the mailbox component of this
+   hardware address.
+
+ - `AddressComponent coreComponent`: Holds the core component of this hardware
+   address.
+
+ - `AddressComponent threadComponent`: Holds the thread component of this
+   hardware address.
+
+ - `unsigned definitions`: Holds information on which components have been
+   defined, where each bit represents a different component. If all five bits
+   are `1`, then all components of the address have been defined. Is
+   initialised to `0` in the constructor.
+
+Methods:
+
+ - `HardwareAddress::HardwareAddress(HardwareAddressFormat* format,
+   AddressComponent boxComponent, AddressComponent boardComponent,
+   AddressComponent mailboxComponent, AddressComponent coreComponent,
+   AddressComponent threadComponent)`: Constructor, defines each component of
+   the constructed address, and defines the address format.
+
+ - `HardwareAddress::HardwareAddress(HardwareAddressFormat* format)`:
+   Constructor, only defines the address format, and none of the components of
+   the address.
+
+ - `AddressComponent HardwareAddress::get_box()`: Returns the box component of
+   the address.
+
+ - `AddressComponent HardwareAddress::get_board()`: Returns the board component
+   of the address.
+
+ - `AddressComponent HardwareAddress::get_mailbox()`: Returns the mailbox
+   component of the address.
+
+ - `AddressComponent HardwareAddress::get_core()`: Returns the core component
+   of the address.
+
+ - `AddressComponent HardwareAddress::get_thread()`: Returns the thread
+   component of the address.
+
+ - `void HardwareAddress::set_box(AddressComponent value)`: Defines the box
+   component of the address, throwing an `InvalidAddressException` if the
+   component does not fit the format defined by `HardwareAddress::format`.
+
+ - `void HardwareAddress::set_board(AddressComponent value)`: Defines the board
+   component of the address, throwing an `InvalidAddressException` if the
+   component does not fit the format defined by `HardwareAddress::format`.
+
+ - `void HardwareAddress::set_mailbox(AddressComponent value)`: Defines the
+   mailbox component of the address, throwing an `InvalidAddressException` if
+   the component does not fit the format defined by `HardwareAddress::format`.
+
+ - `void HardwareAddress::set_core(AddressComponent value)`: Defines the core
+   component of the address, throwing an `InvalidAddressException` if the
+   component does not fit the format defined by `HardwareAddress::format`.
+
+ - `void HardwareAddress::set_thread(AddressComponent value)`: Defines the
+   thread component of the address, throwing an `InvalidAddressException` if
+   the component does not fit the format defined by `HardwareAddress::format`.
+
+ - `unsigned HardwareAddress::get_hardware_address()`: Computes and returns the
+   hardware address using the components and `HardwareAddress::format`.
+
+ - `void HardwareAddress::populate_a_software_address(P_addr* target, bool
+   resetFirst)`: Defines the `P_addr` at `target` using the components of this
+   `HardwareAddress`, optionally resetting it first. This exists as a means for
+   the hardware model to interface with other components of the
+   Orchestrator. With my design hat on, I plan to remove `P_addr` in the long
+   term wherever it is used. However, since the source is tightly coupled to
+   it, providing a translation method is the next-best thing.
+
+ - `void HardwareAddress::populate_from_software_address(P_addr* source)`:
+   Component-wise definition of this `HardwareAddress` from the `P_addr` at
+   `source`. Only defines the components of this `HardwareAddress` if they are
+   defined in `source` also. Note that, since this calls `set_box`, `set_board`
+   etc, it will propagate exceptions thrown from those methods.
+
+ - `bool HardwareAddress::is_fully_defined()`: Returns `true` if each component
+   in this `HardwareAddress` has been defined, and `false` otherwise.
+
+ - `bool HardwareAddress::is_box_defined()`: Returns `true` if the box
+   component in this `HardwareAddress` has been defined, and `false` otherwise.
+
+ - `bool HardwareAddress::is_board_defined()`: Returns `true` if the board
+   component in this `HardwareAddress` has been defined, and `false` otherwise.
+
+ - `bool HardwareAddress::is_mailbox_defined()`: Returns `true` if the mailbox
+   component in this `HardwareAddress` has been defined, and `false` otherwise.
+
+ - `bool HardwareAddress::is_core_defined()`: Returns `true` if the core
+   component in this `HardwareAddress` has been defined, and `false` otherwise.
+
+ - `bool HardwareAddress::is_thread_defined()`: Returns `true` if the thread
+   component in this `HardwareAddress` has been defined, and `false` otherwise.
+
+ - `void HardwareAddress::set_defined()`: A convenience method for defining
+   individual bits of `HardwareAddress::definitions`.
+
+An example dump (`HardwareAddress::Dump()`) follows.
+
+```
+Hardware address at 0x00007ffe680218a0 ++++++++++++++++++++++++++++++++++++++++
+boxComponent:     0
+boardComponent:   2
+mailboxComponent: 8
+coreComponent:    14
+threadComponent:  0 (not defined)
+Hardware address at 0x00007ffe680218a0 ----------------------------------------
+```
+
 ## I haven't written up these source definitions yet <!>
- - HardwareAddress
  - HardwareAddressFormat
  - AddressableItem
  - HardwareFileParser
