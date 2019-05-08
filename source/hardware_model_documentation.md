@@ -1442,11 +1442,11 @@ P_port O_._3987 ---------------------------------------------------------------
 ```
 
 ## HardwareAddress
-`HardwareAddress` represents the hardware address of an item (`P_box`,
-`P_board`, `P_mailbox`, `P_core`, or `P_thread`) in the Engine hierarchy. The
-`HardwareAddress` stores the components of the addresses as defined in the
-Addressing Hardware section, as well as information on which components have
-been defined, and how to produce the address as a 32-bit unsigned.
+`HardwareAddress` represents the hardware address of an `AddressableItem` (a
+box, or a board, etc.) in the Engine hierarchy. The `HardwareAddress` stores
+the components of the addresses as defined in the Addressing Hardware section,
+as well as information on which components have been defined, and how to
+produce the address as a 32-bit unsigned.
 
 Members:
 
@@ -1624,8 +1624,42 @@ threadWordLength:  9
 Hardware address format at 0x00007fffb1af6cc0 ---------------------------------
 ```
 
+## AddressableItem
+`AddressableItem` encapsulates the behaviours of items (`P_box`, `P_board`,
+`P_mailbox`, `P_core`, or `P_thread`) relating to addressing.
+
+Members:
+
+ - `HardwareAddress* hardwareAddress`: Holds the hardware address.
+
+ - `bool isAddressBound`: Is `false` if no address has been bound to this
+   `AddressableItem`, and `true` otherwise.
+
+Methods:
+
+ - `AddressableItem::AddressableItem()`: Constructor (obviously).
+
+ - `AddressableItem::~AddressableItem()`: Destructor, deletes any hardware
+   address that hass been assigned to this item (see
+   `AddressableItem::set_hardware_address`).
+
+ - `HardwareAddress* AddressableItem::copy_hardware_address()`: Convenience
+   method to dynamically create a copy of the `hardwareAddress` owned by this
+   `AddressableItem` using copy construction.
+
+ - `HardwareAddress* AddressableItem::get_hardware_address()`: Returns
+   `hardwareAddress`.
+
+ - `void AddressableItem::set_hardware_address(HardwareAddress* value)`: Binds
+   `hardwareAddress` to `value`, and updates `isAddressBound`. Note that the
+   `HardwareAddress` at `value` will be deleted when this `AddressableItem` is
+   constructed, so the memory behind `value` should be allocated dynamically
+   before passing it here.
+
+No dump is defined for `AddressableItem` objects; each object that inherits
+from `AddressableItem` defines its own `Dump` method.
+
 ## I haven't written up these source definitions yet <!>
- - AddressableItem
  - HardwareFileParser
  - Dialect1Deployer
  - AesopDeployer
