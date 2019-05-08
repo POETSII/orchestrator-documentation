@@ -286,7 +286,7 @@ serviced by the first mailbox in the first board (the origin thread), allow
 
  - Increment itself on a thread, core, mailbox, or board level (e.g. by using
    `HardwareIterator::next_X` method, where `X` is either `thread`, `core`,
-   `mailbox`, or `board`. If `HardwareIterator::next_thread` is called while
+   `mailbox`, or `board`). If `HardwareIterator::next_thread` is called while
    the `HardwareIterator` is on the final thread of a core, it will increment
    its `coreIterator`, then set `threadIterator` to the first thread in that
    core. This can "set off" chains of iteration over multiple levels of the
@@ -1389,7 +1389,7 @@ Methods:
 
  - `P_link::P_link(float weight, NameBase* parent)`: Constructor, sets `weight`
    and a `NameBase` parent using the input argument `name` (`P_link`s are
-   typically autonamed.
+   typically autonamed).
 
 An example dump (`P_link::Dump()`) follows.
 
