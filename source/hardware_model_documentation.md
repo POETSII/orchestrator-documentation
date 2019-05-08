@@ -1574,8 +1574,54 @@ threadComponent:  0 (not defined)
 Hardware address at 0x00007ffe680218a0 ----------------------------------------
 ```
 
+## HardwareAddressFormat
+`HardwareAddressFormat` objects simply hold the word-lengths of each component
+of the hardware address for this Engine. These lengths allow an address to be
+"reconstituted" into an unsigned (Tinsel-speak).
+
+Methods:
+
+ - `HardwareAddressFormat::HardwareAddressFormat(unsigned boxWordLength,
+   unsigned boardWordLength, unsigned mailboxWordLength, unsigned
+   coreWordLength, unsigned threadWordLength)`: Constructs a format with
+   defined word lengths.
+
+ - `HardwareAddressFormat::HardwareAddressFormat()`: Constructs a format
+   without any word lengths defined. You won't want to use a
+   `HardwareAddressFormat` constructed in this way without populating it,
+   unless you're trying to make the Orchestrator fall over (you could pass it
+   to a `Dialect1Deployer` for example, which would do that job for you).
+
+Members:
+
+ - `unsigned boxWordLength`: Defines the number of bits dedicated to
+   representing the box component of the hardware address.
+
+ - `unsigned boardWordLength`: Defines the number of bits dedicated to
+   representing the board component of the hardware address.
+
+ - `unsigned mailboxWordLength`: Defines the number of bits dedicated to
+   representing the mailbox component of the hardware address.
+
+ - `unsigned coreWordLength`: Defines the number of bits dedicated to
+   representing the core component of the hardware address.
+
+ - `unsigned threadWordLength`: Defines the number of bits dedicated to
+   representing the thread component of the hardware address.
+
+An example dump (`HardwareAddressFormat::Dump()`) follows.
+
+```
+Hardware address format at 0x00007fffb1af6cc0 +++++++++++++++++++++++++++++++++
+boxWordLength:     4
+boardWordLength:   5
+mailboxWordLength: 6
+coreWordLength:    8
+threadWordLength:  9
+Hardware address format at 0x00007fffb1af6cc0 ---------------------------------
+```
+
 ## I haven't written up these source definitions yet <!>
- - HardwareAddressFormat
  - AddressableItem
  - HardwareFileParser
  - Dialect1Deployer
