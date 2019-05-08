@@ -1489,6 +1489,9 @@ Methods:
    Constructor, only defines the address format, and none of the components of
    the address.
 
+ - `unsigned HardwareAddress::as_uint()`: Synonym of `unsigned
+   HardwareAddress::get_hardware_address()`.
+
  - `AddressComponent HardwareAddress::get_box()`: Returns the box component of
    the address.
 
