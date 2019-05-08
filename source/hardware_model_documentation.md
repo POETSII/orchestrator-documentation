@@ -1632,6 +1632,38 @@ Hardware address format at 0x00007fffb1af6cc0 ---------------------------------
  - MultiAesopDeployer
  - HardwareIterator
 
+An example dump (`HardwareIterator::Dump()`) of a newly-initialised iterator
+follows.
+
+```
+Engine000.Iterator ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+NameBase dump+++++++++++++++++++++++++++++++
+this           0x7ffe4ec4de10
+Name           Iterator
+Id                    216(0x000000d8)
+Parent         0x7ffe4ec4deb0
+Recursion trap Unset
+Unique id      216
+NameBase id    Name
+ ** No map entries **
+NameBase dump-------------------------------
+
+Current board memory address:     0x000056352e245330
+Current board hardware address:   0
+Current mailbox memory address:   0x000056352e248cd0
+Current mailbox hardware address: 0
+Current core memory address:      0x000056352e2486c0
+Current core hardware address:    0
+Current thread memory address:    0x000056352e248810
+Current thread hardware address:  0
+The board has not changed since "has_board_changed" was last called.
+The mailbox has not changed since "has_mailbox_changed" was last called.
+The core has not changed since "has_core_changed" was last called.
+The thread has not changed since "has_thread_changed" was last called.
+This iterator has not wrapped.
+Engine000.Iterator ------------------------------------------------------------
+```
+
 # Appendix B: Input file format (0.3.2)
 This Appendix defines the file format used by the Orchestrator to define its
 internal model of the POETS Engine. Elements of this format are not yet
