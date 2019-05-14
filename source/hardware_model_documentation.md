@@ -1656,11 +1656,106 @@ Methods:
    constructed, so the memory behind `value` should be allocated dynamically
    before passing it here.
 
-No dump is defined for `AddressableItem` objects; each object that inherits
-from `AddressableItem` defines its own `Dump` method.
+No dump method is defined for `AddressableItem` objects; each object that
+inherits from `AddressableItem` defines its own `Dump` method.
+
+## HardwareFileParser
+`HardwareFileParser` reads hardware description input files. Using the
+information in one of these files, `HardwareFileParser` creates and provisions
+a deployer object, which in turn is used to provision a `P_engine`. This class
+inherits from `JNJ`, and hence `UIF` (both in `Generics`), which
+`HardwareFileParser` uses for file parsing and holding the data from the input
+file.
+
+Members:
+
+ - `bool isFileLoaded`: Is `true` if a hardware file has been loaded by this
+   `HardwareFileParser`, and `false` otherwise. You can't provision a deployer
+   without first loading a file.
+
+ - `std::string loadedFile`: Path to the file loaded, or empty if no file is
+   loaded.
+
+Methods:
+
+ - `HardwareFileParser::HardwareFileParser()`: Constructor, calls
+   `set_uif_error_callback`.
+
+ - `HardwareFileParser::HardwareFileParser(const char* filePath, P_engine*
+   engine)`: Convenience constructor. While also setting the syntax error
+   callback method as described above, this constructor also reads the hardware
+   input file at `filePath`, and uses it to provision `engine`.
+
+ - `void HardwareFileParser::load_file(const char* filePath)`: Given that the
+   file at `filePath` exists, this method reads the file using `UIF`, and
+   generates the `JNJ` data structure. Throws a `HardwareFileNotFoundException`
+   if the file does not exist, or throws a `HardwareSyntaxException` (from
+   `on_syntax_error`) if the input file contains a syntax error. This method
+   does not throw anything in the event of a semantic error.
+
+ - `void HardwareFileParser::populate_hardware_model(P_engine* engine)`: Given
+   that a file has been loaded, this method creates and provisions a deployer,
+   and uses it to populate `engine`. This method performs some semantic
+   validation (using `validate_sections` and `provision_deployer`), throwing a
+   `HardwareSemanticException` if one or more is found.
+
+ - `bool HardwareFileParser::does_file_exist(const char* filePath)`: Returns
+   `true` if a file exists at `filePath`, and `false` otherwise.
+
+ - `void HardwareFileParser::set_uif_error_callback()`: Sets a callback method
+   (`on_syntax_error`) to be called by `UIF` when a syntax error is encountered
+   in an input file.
+
+ - `static void HardwareFileParser::on_syntax_error(void* parser, void*
+   uifInstance, int)`: Throws a `HardwareSyntaxException` using error
+   information from `parser` and `uifInstance` (both of which are normally this
+   `HardwareFileParser`).
+
+ - `bool HardwareFileParser::validate_sections(std::string* errorMessage)`:
+   Validates that each mandatory section exists, and that there are no
+   duplicated sections. Appends any errors found to `errorMessage`. Returns
+   `false` if any errors were found, and `true` otherwise.
+
+ - `bool provision_deployer(Dialect1Deployer* deployer, std::string*
+   errorMessage)`: Provisions `deployer` with the configuration stored in this
+   parser from reading a file through a big nested set of cases. Performs
+   type-checking and simple semantic validation on each field, appending any
+   errors found to `errorMessage`. Returns `false` if any errors were found,
+   and `true` otherwise.
+
+ - `bool is_value_at_node_natural(UIF::Node* recordNode, UIF::Node* valueNode,
+   std::string variable, std::string value, std::string sectionName,
+   std::string* errorMessage)`: Returns `true` if the value at `valueNode` is a
+   natural number (including zero), and `false` otherwise. The other input
+   arguments are used to construct an error message if appropriate, which is
+   appended to `errorMessage`.
+
+ - `bool is_value_at_node_floating(UIF::Node* recordNode, UIF::Node* valueNode,
+   std::string variable, std::string value, std::string sectionName,
+   std::string* errorMessage)`: Returns `true` if the value at `valueNode` is a
+   floating-point number, and `false` otherwise. The other input arguments are
+   used to construct an error message if appropriate, which is appended to
+   `errorMessage`.
+
+ - `bool are_values_at_node_natural(UIF::Node* recordNode, UIF::Node*
+   valueNode, std::string variable, std::string value, std::string sectionName,
+   std::string* errorMessage)`: Returns `true` if the multi-valued node
+   `valueNode` contains only natural numbers (including zero), and `false`
+   otherwise. The other input arguments are used to construct an error message
+   if appropriate, which is appended to `errorMessage`.
+
+ - `void invalid_variable_message(std::string* errorMessage, UIF::Node*
+   recordNode, std::string sectionName, std::string variable)`: Appends a
+   passive-aggressive error message to `errorMessage` explaining that the
+   variable name `variable` in section `sectionName` is not recognised by the
+   parser. `recordNode` is used to obtain the line number for the error
+   message.
+
+No dump method is defined for `HardwareFileParser` objects. It doesn't hold
+much state, and the `JNJ` data structure is better understood by interrogating
+the deployer.
 
 ## I haven't written up these source definitions yet <!>
- - HardwareFileParser
  - Dialect1Deployer
  - AesopDeployer
  - MultiAesopDeployer
