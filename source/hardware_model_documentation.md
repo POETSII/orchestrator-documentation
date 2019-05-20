@@ -1658,16 +1658,19 @@ Methods:
 
  - `AddressableItem::AddressableItem()`: Constructor (obviously).
 
- - `AddressableItem::~AddressableItem()`: Destructor, deletes any hardware
-   address that hass been assigned to this item (see
-   `AddressableItem::set_hardware_address`).
+ - `AddressableItem::~AddressableItem()`: Destructor, calls
+   `clear_hardware_address()`.
+
+ - `HardwareAddress* AddressableItem::clear_hardware_address()`: Deletes the
+   hardware address held by this `AddressableItem`, if one has been assigned.
 
  - `HardwareAddress* AddressableItem::copy_hardware_address()`: Convenience
    method to dynamically create a copy of the `hardwareAddress` owned by this
    `AddressableItem` using copy construction.
 
  - `HardwareAddress* AddressableItem::get_hardware_address()`: Returns
-   `hardwareAddress`.
+   `hardwareAddress`. Throws a `MissingAddressException` if `isAddressBound` is
+   not true.
 
  - `void AddressableItem::set_hardware_address(HardwareAddress* value)`: Binds
    `hardwareAddress` to `value`, and updates `isAddressBound`. Note that the
