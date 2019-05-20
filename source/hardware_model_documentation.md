@@ -1448,6 +1448,8 @@ the components of the addresses as defined in the Addressing Hardware section,
 as well as information on which components have been defined, and how to
 produce the address as a 32-bit unsigned.
 
+Note that `HardwareAddressInt` is a `uint32_t`, like `AddressComponent`.
+
 Members:
 
  - `HardwareAddressFormat* format`: Points to the hardware address format
@@ -1489,8 +1491,8 @@ Methods:
    Constructor, only defines the address format, and none of the components of
    the address.
 
- - `unsigned HardwareAddress::as_uint()`: Synonym of `unsigned
-   HardwareAddress::get_hardware_address()`.
+ - `HardwareAddressInt HardwareAddress::as_uint()`: Synonym of
+   `get_hardware_address()`.
 
  - `AddressComponent HardwareAddress::get_box()`: Returns the box component of
    the address.
@@ -1527,8 +1529,9 @@ Methods:
    thread component of the address, throwing an `InvalidAddressException` if
    the component does not fit the format defined by `HardwareAddress::format`.
 
- - `unsigned HardwareAddress::get_hardware_address()`: Computes and returns the
-   hardware address using the components and `HardwareAddress::format`.
+ - `HardwareAddressInt HardwareAddress::get_hardware_address()`: Computes and
+   returns the hardware address using the components and
+   `HardwareAddress::format`.
 
  - `void HardwareAddress::populate_a_software_address(P_addr* target, bool
    resetFirst)`: Defines the `P_addr` at `target` using the components of this
