@@ -18,10 +18,11 @@ are:
    reasonable time.
 
 To support these features, the Orchestrator requires an accurate model of the
-hardware because, without such a model, the application graph cannot be mapped
-to the POETS Engine, so tasks cannot be run efficiently. Figure 1 shows a
-simplified schematic of the hardware model used in the Orchestrator, where each
-green box is a hardware construct, represented in the Orchestrator by a class:
+hardware because, without such a model, the application graph cannot accurately
+be mapped to the POETS Engine, so tasks cannot be run efficiently. Figure 1
+shows a simplified schematic of the hardware model used in the Orchestrator,
+where each green box is a hardware construct, represented in the Orchestrator
+by a class:
 
 ![A simplified schematic of the hardware model used in the Orchestrator. Edges
 indicate containment.](images/engine_structure_simple.pdf)
@@ -38,22 +39,32 @@ indicate containment.](images/engine_structure_simple.pdf)
  - A "Board" (`P_board`) represents a compute FPGA board in the hardware stack,
    which contains a graph of mailboxes.
 
- - A "Mailbox" (`P_mailbox`) is a non-physical component of compute FPGA
-   boards, and is partly responsible for routing packets traversing the POETS
+ - A "Mailbox" (`P_mailbox`) is a component of compute FPGA boards, and is
+   partly responsible for routing packets traversing the POETS
    Engine. Mailboxes are "defined" when the board is synthesized. Mailboxes
    service a series of cores.
 
  - A "Core" (`P_core`) is a compute core in an FPGA board, serviced by a
-   mailbox. Cores are responsible for the compute in the POETS engine, and
-   support a subset of the RV32IMF profile (see the Tinsel documentation for
-   what is excluded). When a task is initialised (with `task /init`), the
-   Mothership process sends instruction and data binaries to each core through
-   the `HostLink` interface.
+   mailbox. Cores are responsible for the compute in the POETS engine. When a
+   task is initialised (with `task /init`), the Mothership process sends
+   instruction and data binaries to each core through the `HostLink` interface.
 
  - Each "Thread" in a given core (`P_thread`) supports concurrent execution of
    devices (nodes in the application graph). The binaries that a core is
    provisioned with defines the Softswitch behaviour that runs on each thread
    of the core.
+
+In the future, it may be desirable to operate the Orchestrator on an
+alternative computing architecture. Then, each of the items enumerated above
+translates to something in that architecture. For example, one can imagine the
+Orchestrator operating on a Graphics Processing Unit (GPU) cluster, where
+boards correspond to GPUs, cores correspond to compute units on those boards,
+and mailboxes act as proxy objects to connect the two layers.
+
+The hardware model has also been designed to be extensible, so that different
+architectures can be accommodated as necessary. For example, the hardware model
+can be extended to support bespoke compute cores, since items in the model can
+be extended to hold attributes that describe these cores.
 
 ## Containment
 Central to the implementation of the hardware model is the notion of
@@ -121,12 +132,14 @@ $$C_{\mathrm{BOX}}\cdot C_{\mathrm{BOARD}}\cdot C_{\mathrm{MAILBOX}}\cdot
 C_{\mathrm{CORE}}\cdot C_{\mathrm{THREAD}}$$
 
 which is again a 32-element bit array, and where $C$ represents a component of
-the hardware address in the Orchestrator. Each component has a fixed width $W$
-for the lifetime of the Orchestrator (e.g. $W_{\mathrm{MAILBOX}}$), and is
-buffered by zeroes so that each component does not overrun into any other
-component. By way of example, the source name of component $C_{\mathrm{BOX}}$
-is `HardwareAddress::boxComponent`, and the source name of the width
-$W_{\mathrm{MAILBOX}}$ is `HardwareAddressFormat::mailboxWordLength`.
+the hardware address in the Orchestrator. A Tinsel 32-bit address is identical
+to the 32-bit address held in the Orchestrator's representation. Each component
+has a fixed width $W$ for the lifetime of the Orchestrator
+(e.g. $W_{\mathrm{MAILBOX}}$), and is buffered by zeroes so that each component
+does not overrun into any other component. By way of example, the source name
+of component $C_{\mathrm{BOX}}$ is `HardwareAddress::boxComponent`, and the
+source name of the width $W_{\mathrm{MAILBOX}}$ is
+`HardwareAddressFormat::mailboxWordLength`.
 
 Figure 2 shows the class structure of how components of the hardware model
 interact with the addressing system. Each item in the Engine hierarchy (apart
@@ -171,15 +184,15 @@ operator can define the model in two ways:
    `topology /set2` in the POETS shell to initialise a default hardware
    configuration. In response to this command, Root clears its existing engine
    (`pE`), and creates a new one dynamically. Root then statically creates an
-   `AesopDeployer` (or a `MultiAesopDeployer`) object, which are
+   `SimpleDeployer` (or a `MultiSimpleDeployer`) object, which are
    pre-provisioned `Dialect1Deployer` classes. The created object is then used
    to deploy the default configuration to the engine (`pE`). The default
    configurations are:
 
-    - Set 1: Deploys a one-box Aesop-like system, which contains one box, which
-      contains three boards connected in a row, which each contain sixteen
-      mailboxes connected in a row, which each contain four cores, which each
-      contain sixteen threads.
+    - Set 1: Deploys a one-box system, which contains one box, which contains
+      three boards connected in a row, which each contain sixteen mailboxes
+      connected in a row, which each contain four cores, which each contain
+      sixteen threads.
 
     - Set 2: As with Set 1, but with two boxes instead of one, connected on the
       short edge.
@@ -676,10 +689,10 @@ follows. It was generated by calling `topology /set1` followed by `topology
 /dump` in the POETS shell.
 
 ```
-P_engine O_.Aesop [1 box] +++++++++++++++++++++++++++++++++++++++++++++++++++++
+P_engine O_.Simple [1 box] ++++++++++++++++++++++++++++++++++++++++++++++++++++
 NameBase dump+++++++++++++++++++++++++++++++
 this           0x558b5b799af0
-Name           Aesop [1 box]
+Name           Simple [1 box]
 Id                      2(0x00000002)
 Parent         0x558b5b77acc0
 Recursion trap Unset
@@ -691,18 +704,18 @@ NameBase dump-------------------------------
 Author: Mark Vousden
 Configuration datetime (YYYYMMDDHHmmss): 201901101712
 Written for parser version: 0.3.1
-Read from file: AesopDeployer.cpp
+Read from file: SimpleDeployer.cpp
 Board connectivity ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Pdigraph topological dump ===================================++++++++++++++++++++
 Node index (3 entries):
-   1 (0:O_.Aesop [1 box].Box000000.Board000000)
+   1 (0:O_.Simple [1 box].Box000000.Board000000)
   Fanin arcs (1 entries)
      1 ^|2~0.000000|^   -> ((5~0x0000558b5b79a400))
   Fanout arcs (1 entries)
      1 ((0~0x0000558b5b79a030))         -> ^|0~0.000000|^
 ===
 
-   2 (1:O_.Aesop [1 box].Box000000.Board000001)
+   2 (1:O_.Simple [1 box].Box000000.Board000001)
   Fanin arcs (2 entries)
      1 ^|0~0.000000|^   -> ((1~0x0000558b5b79a080))
      2 ^|3~0.000000|^   -> ((7~0x0000558b5b79a5f0))
@@ -711,7 +724,7 @@ Node index (3 entries):
      2 ((4~0x0000558b5b79a3b0))         -> ^|2~0.000000|^
 ===
 
-   3 (2:O_.Aesop [1 box].Box000000.Board000002)
+   3 (2:O_.Simple [1 box].Box000000.Board000002)
   Fanin arcs (1 entries)
      1 ^|1~0.000000|^   -> ((3~0x0000558b5b79a210))
   Fanout arcs (1 entries)
@@ -719,28 +732,28 @@ Node index (3 entries):
 ===
 
 Arc index (4 entries):
-   1 (0~O_.Aesop [1 box].Box000000.Board000000)((0~0x0000558b5b79a030)) ->
+   1 (0~O_.Simple [1 box].Box000000.Board000000)((0~0x0000558b5b79a030)) ->
  ^|0~0.000000|^         ->
- ((1~0x0000558b5b79a080))(1~O_.Aesop [1 box].Box000000.Board000001)
+ ((1~0x0000558b5b79a080))(1~O_.Simple [1 box].Box000000.Board000001)
 
-   2 (1~O_.Aesop [1 box].Box000000.Board000001)((2~0x0000558b5b79a1c0)) ->
+   2 (1~O_.Simple [1 box].Box000000.Board000001)((2~0x0000558b5b79a1c0)) ->
  ^|1~0.000000|^         ->
- ((3~0x0000558b5b79a210))(2~O_.Aesop [1 box].Box000000.Board000002)
+ ((3~0x0000558b5b79a210))(2~O_.Simple [1 box].Box000000.Board000002)
 
-   3 (1~O_.Aesop [1 box].Box000000.Board000001)((4~0x0000558b5b79a3b0)) ->
+   3 (1~O_.Simple [1 box].Box000000.Board000001)((4~0x0000558b5b79a3b0)) ->
  ^|2~0.000000|^         ->
- ((5~0x0000558b5b79a400))(0~O_.Aesop [1 box].Box000000.Board000000)
+ ((5~0x0000558b5b79a400))(0~O_.Simple [1 box].Box000000.Board000000)
 
-   4 (2~O_.Aesop [1 box].Box000000.Board000002)((6~0x0000558b5b79a5a0)) ->
+   4 (2~O_.Simple [1 box].Box000000.Board000002)((6~0x0000558b5b79a5a0)) ->
  ^|3~0.000000|^         ->
- ((7~0x0000558b5b79a5f0))(1~O_.Aesop [1 box].Box000000.Board000001)
+ ((7~0x0000558b5b79a5f0))(1~O_.Simple [1 box].Box000000.Board000001)
 
 Pdigraph topological dump ===================================--------------------
 Board connectivity ------------------------------------------------------------
 Boxes in this engine ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         <a recursive dump of all boxes in the engine goes here>
 Boxes in this engine ----------------------------------------------------------
-P_engine O_.Aesop [1 box] -----------------------------------------------------
+P_engine O_.Simple [1 box] ----------------------------------------------------
 ```
 
 ## P_box
@@ -794,7 +807,7 @@ Methods:
 An example dump (`P_box::Dump()`) of a box follows.
 
 ```
-P_box O_.Aesop [1 box].Box000000 ++++++++++++++++++++++++++++++++++++++++++++++
+P_box O_.Simple [1 box].Box000000 +++++++++++++++++++++++++++++++++++++++++++++
 NameBase dump+++++++++++++++++++++++++++++++
 this           0x558b5b796560
 Name           Box000000
@@ -809,7 +822,7 @@ NameBase dump-------------------------------
 Boards in this box ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         <a recursive dump of all boards in this box goes here>
 Boards in this box ------------------------------------------------------------
-P_box O_.Aesop [1 box] --------------------------------------------------------
+P_box O_.Simple [1 box] -------------------------------------------------------
 ```
 
 ## P_board
@@ -880,6 +893,9 @@ Methods:
    owned, or if the mailbox is not owned by the board after claiming it, and
    `OwnershipException` is thrown.
 
+ - `void P_board::on_being_contained_hook(P_box* container)`: Sets the
+   parent of this board to the box containing it.
+
  - `void P_board::connect(AddressComponent start, AddressComponent end, float
    weight, bool oneWay=false)`: Creates and inserts a `P_link` instance as an
    arc in `P_board::G`, which connects the boards keyed by the `start` and
@@ -895,7 +911,7 @@ An example dump (`P_board::Dump()`) of a board with sixteen mailboxes connected
 in a line with zero-weight arcs follows.
 
 ```
-P_board O_.Aesop [1 box].Box000000.Board000000 ++++++++++++++++++++++++++++++++
+P_board O_.Simple [1 box].Box000000.Board000000 +++++++++++++++++++++++++++++++
 NameBase dump+++++++++++++++++++++++++++++++
 this           0x558b5b796400
 Name           Board000000
@@ -910,14 +926,14 @@ NameBase dump-------------------------------
 Mailbox connectivity ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Pdigraph topological dump ===================================++++++++++++++++++++
 Node index (16 entries):
-   1 (0:O_.Aesop [1 box].Box000000.Board000000.Mailbox000000)
+   1 (0:O_.Simple [1 box].Box000000.Board000000.Mailbox000000)
   Fanin arcs (1 entries)
      1 ^|2~0.000000|^   -> ((5~0x0000558b5b79cae0))
   Fanout arcs (1 entries)
      1 ((0~0x0000558b5b79c6b0))         -> ^|0~0.000000|^
 ===
 
-   2 (1:O_.Aesop [1 box].Box000000.Board000000.Mailbox000001)
+   2 (1:O_.Simple [1 box].Box000000.Board000000.Mailbox000001)
   Fanin arcs (2 entries)
      1 ^|0~0.000000|^   -> ((1~0x0000558b5b79c700))
      2 ^|4~0.000000|^   -> ((9~0x0000558b5b79cec0))
@@ -926,7 +942,7 @@ Node index (16 entries):
      2 ((4~0x0000558b5b79ca90))         -> ^|2~0.000000|^
 ===
 
-   3 (2:O_.Aesop [1 box].Box000000.Board000000.Mailbox000002)
+   3 (2:O_.Simple [1 box].Box000000.Board000000.Mailbox000002)
   Fanin arcs (2 entries)
      1 ^|1~0.000000|^   -> ((3~0x0000558b5b79c8f0))
      2 ^|6~0.000000|^   -> ((13~0x0000558b5b79d2a0))
@@ -935,7 +951,7 @@ Node index (16 entries):
      2 ((8~0x0000558b5b79ce70))         -> ^|4~0.000000|^
 ===
 
-   4 (3:O_.Aesop [1 box].Box000000.Board000000.Mailbox000003)
+   4 (3:O_.Simple [1 box].Box000000.Board000000.Mailbox000003)
   Fanin arcs (2 entries)
      1 ^|3~0.000000|^   -> ((7~0x0000558b5b79ccd0))
      2 ^|8~0.000000|^   -> ((17~0x0000558b5b79d680))
@@ -944,7 +960,7 @@ Node index (16 entries):
      2 ((12~0x0000558b5b79d250))        -> ^|6~0.000000|^
 ===
 
-   5 (4:O_.Aesop [1 box].Box000000.Board000000.Mailbox000004)
+   5 (4:O_.Simple [1 box].Box000000.Board000000.Mailbox000004)
   Fanin arcs (2 entries)
      1 ^|5~0.000000|^   -> ((11~0x0000558b5b79d0b0))
      2 ^|10~0.000000|^  -> ((21~0x0000558b5b79da60))
@@ -953,7 +969,7 @@ Node index (16 entries):
      2 ((16~0x0000558b5b79d630))        -> ^|8~0.000000|^
 ===
 
-   6 (5:O_.Aesop [1 box].Box000000.Board000000.Mailbox000005)
+   6 (5:O_.Simple [1 box].Box000000.Board000000.Mailbox000005)
   Fanin arcs (2 entries)
      1 ^|7~0.000000|^   -> ((15~0x0000558b5b79d490))
      2 ^|12~0.000000|^  -> ((25~0x0000558b5b79de40))
@@ -962,7 +978,7 @@ Node index (16 entries):
      2 ((20~0x0000558b5b79da10))        -> ^|10~0.000000|^
 ===
 
-   7 (6:O_.Aesop [1 box].Box000000.Board000000.Mailbox000006)
+   7 (6:O_.Simple [1 box].Box000000.Board000000.Mailbox000006)
   Fanin arcs (2 entries)
      1 ^|9~0.000000|^   -> ((19~0x0000558b5b79d870))
      2 ^|14~0.000000|^  -> ((29~0x0000558b5b79e220))
@@ -971,7 +987,7 @@ Node index (16 entries):
      2 ((24~0x0000558b5b79ddf0))        -> ^|12~0.000000|^
 ===
 
-   8 (7:O_.Aesop [1 box].Box000000.Board000000.Mailbox000007)
+   8 (7:O_.Simple [1 box].Box000000.Board000000.Mailbox000007)
   Fanin arcs (2 entries)
      1 ^|11~0.000000|^  -> ((23~0x0000558b5b79dc50))
      2 ^|16~0.000000|^  -> ((33~0x0000558b5b79e600))
@@ -980,7 +996,7 @@ Node index (16 entries):
      2 ((28~0x0000558b5b79e1d0))        -> ^|14~0.000000|^
 ===
 
-   9 (8:O_.Aesop [1 box].Box000000.Board000000.Mailbox000008)
+   9 (8:O_.Simple [1 box].Box000000.Board000000.Mailbox000008)
   Fanin arcs (2 entries)
      1 ^|13~0.000000|^  -> ((27~0x0000558b5b79e030))
      2 ^|18~0.000000|^  -> ((37~0x0000558b5b79e9e0))
@@ -989,7 +1005,7 @@ Node index (16 entries):
      2 ((32~0x0000558b5b79e5b0))        -> ^|16~0.000000|^
 ===
 
-  10 (9:O_.Aesop [1 box].Box000000.Board000000.Mailbox000009)
+  10 (9:O_.Simple [1 box].Box000000.Board000000.Mailbox000009)
   Fanin arcs (2 entries)
      1 ^|15~0.000000|^  -> ((31~0x0000558b5b79e410))
      2 ^|20~0.000000|^  -> ((41~0x0000558b5b79edc0))
@@ -998,7 +1014,7 @@ Node index (16 entries):
      2 ((36~0x0000558b5b79e990))        -> ^|18~0.000000|^
 ===
 
-  11 (10:O_.Aesop [1 box].Box000000.Board000000.Mailbox000010)
+  11 (10:O_.Simple [1 box].Box000000.Board000000.Mailbox000010)
   Fanin arcs (2 entries)
      1 ^|17~0.000000|^  -> ((35~0x0000558b5b79e7f0))
      2 ^|22~0.000000|^  -> ((45~0x0000558b5b79f1a0))
@@ -1007,7 +1023,7 @@ Node index (16 entries):
      2 ((40~0x0000558b5b79ed70))        -> ^|20~0.000000|^
 ===
 
-  12 (11:O_.Aesop [1 box].Box000000.Board000000.Mailbox000011)
+  12 (11:O_.Simple [1 box].Box000000.Board000000.Mailbox000011)
   Fanin arcs (2 entries)
      1 ^|19~0.000000|^  -> ((39~0x0000558b5b79ebd0))
      2 ^|24~0.000000|^  -> ((49~0x0000558b5b79f580))
@@ -1016,7 +1032,7 @@ Node index (16 entries):
      2 ((44~0x0000558b5b79f150))        -> ^|22~0.000000|^
 ===
 
-  13 (12:O_.Aesop [1 box].Box000000.Board000000.Mailbox000012)
+  13 (12:O_.Simple [1 box].Box000000.Board000000.Mailbox000012)
   Fanin arcs (2 entries)
      1 ^|21~0.000000|^  -> ((43~0x0000558b5b79efb0))
      2 ^|26~0.000000|^  -> ((53~0x0000558b5b79f960))
@@ -1025,7 +1041,7 @@ Node index (16 entries):
      2 ((48~0x0000558b5b79f530))        -> ^|24~0.000000|^
 ===
 
-  14 (13:O_.Aesop [1 box].Box000000.Board000000.Mailbox000013)
+  14 (13:O_.Simple [1 box].Box000000.Board000000.Mailbox000013)
   Fanin arcs (2 entries)
      1 ^|23~0.000000|^  -> ((47~0x0000558b5b79f390))
      2 ^|28~0.000000|^  -> ((57~0x0000558b5b79fd40))
@@ -1034,7 +1050,7 @@ Node index (16 entries):
      2 ((52~0x0000558b5b79f910))        -> ^|26~0.000000|^
 ===
 
-  15 (14:O_.Aesop [1 box].Box000000.Board000000.Mailbox000014)
+  15 (14:O_.Simple [1 box].Box000000.Board000000.Mailbox000014)
   Fanin arcs (2 entries)
      1 ^|25~0.000000|^  -> ((51~0x0000558b5b79f770))
      2 ^|29~0.000000|^  -> ((59~0x0000558b5b79ff30))
@@ -1043,7 +1059,7 @@ Node index (16 entries):
      2 ((56~0x0000558b5b79fcf0))        -> ^|28~0.000000|^
 ===
 
-  16 (15:O_.Aesop [1 box].Box000000.Board000000.Mailbox000015)
+  16 (15:O_.Simple [1 box].Box000000.Board000000.Mailbox000015)
   Fanin arcs (1 entries)
      1 ^|27~0.000000|^  -> ((55~0x0000558b5b79fb50))
   Fanout arcs (1 entries)
@@ -1051,132 +1067,132 @@ Node index (16 entries):
 ===
 
 Arc index (30 entries):
-   1 (0~O_.Aesop [1 box].Box000000.Board000000.Mailbox000000)((0~0x0000558b5b79c6b0))   ->
+   1 (0~O_.Simple [1 box].Box000000.Board000000.Mailbox000000)((0~0x0000558b5b79c6b0))   ->
  ^|0~0.000000|^         ->
- ((1~0x0000558b5b79c700))(1~O_.Aesop [1 box].Box000000.Board000000.Mailbox000001)
+ ((1~0x0000558b5b79c700))(1~O_.Simple [1 box].Box000000.Board000000.Mailbox000001)
 
-   2 (1~O_.Aesop [1 box].Box000000.Board000000.Mailbox000001)((2~0x0000558b5b79c8a0))   ->
+   2 (1~O_.Simple [1 box].Box000000.Board000000.Mailbox000001)((2~0x0000558b5b79c8a0))   ->
  ^|1~0.000000|^         ->
- ((3~0x0000558b5b79c8f0))(2~O_.Aesop [1 box].Box000000.Board000000.Mailbox000002)
+ ((3~0x0000558b5b79c8f0))(2~O_.Simple [1 box].Box000000.Board000000.Mailbox000002)
 
-   3 (1~O_.Aesop [1 box].Box000000.Board000000.Mailbox000001)((4~0x0000558b5b79ca90))   ->
+   3 (1~O_.Simple [1 box].Box000000.Board000000.Mailbox000001)((4~0x0000558b5b79ca90))   ->
  ^|2~0.000000|^         ->
- ((5~0x0000558b5b79cae0))(0~O_.Aesop [1 box].Box000000.Board000000.Mailbox000000)
+ ((5~0x0000558b5b79cae0))(0~O_.Simple [1 box].Box000000.Board000000.Mailbox000000)
 
-   4 (2~O_.Aesop [1 box].Box000000.Board000000.Mailbox000002)((6~0x0000558b5b79cc80))   ->
+   4 (2~O_.Simple [1 box].Box000000.Board000000.Mailbox000002)((6~0x0000558b5b79cc80))   ->
  ^|3~0.000000|^         ->
- ((7~0x0000558b5b79ccd0))(3~O_.Aesop [1 box].Box000000.Board000000.Mailbox000003)
+ ((7~0x0000558b5b79ccd0))(3~O_.Simple [1 box].Box000000.Board000000.Mailbox000003)
 
-   5 (2~O_.Aesop [1 box].Box000000.Board000000.Mailbox000002)((8~0x0000558b5b79ce70))   ->
+   5 (2~O_.Simple [1 box].Box000000.Board000000.Mailbox000002)((8~0x0000558b5b79ce70))   ->
  ^|4~0.000000|^         ->
- ((9~0x0000558b5b79cec0))(1~O_.Aesop [1 box].Box000000.Board000000.Mailbox000001)
+ ((9~0x0000558b5b79cec0))(1~O_.Simple [1 box].Box000000.Board000000.Mailbox000001)
 
-   6 (3~O_.Aesop [1 box].Box000000.Board000000.Mailbox000003)((10~0x0000558b5b79d060))  ->
+   6 (3~O_.Simple [1 box].Box000000.Board000000.Mailbox000003)((10~0x0000558b5b79d060))  ->
  ^|5~0.000000|^         ->
- ((11~0x0000558b5b79d0b0))(4~O_.Aesop [1 box].Box000000.Board000000.Mailbox000004)
+ ((11~0x0000558b5b79d0b0))(4~O_.Simple [1 box].Box000000.Board000000.Mailbox000004)
 
-   7 (3~O_.Aesop [1 box].Box000000.Board000000.Mailbox000003)((12~0x0000558b5b79d250))  ->
+   7 (3~O_.Simple [1 box].Box000000.Board000000.Mailbox000003)((12~0x0000558b5b79d250))  ->
  ^|6~0.000000|^         ->
- ((13~0x0000558b5b79d2a0))(2~O_.Aesop [1 box].Box000000.Board000000.Mailbox000002)
+ ((13~0x0000558b5b79d2a0))(2~O_.Simple [1 box].Box000000.Board000000.Mailbox000002)
 
-   8 (4~O_.Aesop [1 box].Box000000.Board000000.Mailbox000004)((14~0x0000558b5b79d440))  ->
+   8 (4~O_.Simple [1 box].Box000000.Board000000.Mailbox000004)((14~0x0000558b5b79d440))  ->
  ^|7~0.000000|^         ->
- ((15~0x0000558b5b79d490))(5~O_.Aesop [1 box].Box000000.Board000000.Mailbox000005)
+ ((15~0x0000558b5b79d490))(5~O_.Simple [1 box].Box000000.Board000000.Mailbox000005)
 
-   9 (4~O_.Aesop [1 box].Box000000.Board000000.Mailbox000004)((16~0x0000558b5b79d630))  ->
+   9 (4~O_.Simple [1 box].Box000000.Board000000.Mailbox000004)((16~0x0000558b5b79d630))  ->
  ^|8~0.000000|^         ->
- ((17~0x0000558b5b79d680))(3~O_.Aesop [1 box].Box000000.Board000000.Mailbox000003)
+ ((17~0x0000558b5b79d680))(3~O_.Simple [1 box].Box000000.Board000000.Mailbox000003)
 
-  10 (5~O_.Aesop [1 box].Box000000.Board000000.Mailbox000005)((18~0x0000558b5b79d820))  ->
+  10 (5~O_.Simple [1 box].Box000000.Board000000.Mailbox000005)((18~0x0000558b5b79d820))  ->
  ^|9~0.000000|^         ->
- ((19~0x0000558b5b79d870))(6~O_.Aesop [1 box].Box000000.Board000000.Mailbox000006)
+ ((19~0x0000558b5b79d870))(6~O_.Simple [1 box].Box000000.Board000000.Mailbox000006)
 
-  11 (5~O_.Aesop [1 box].Box000000.Board000000.Mailbox000005)((20~0x0000558b5b79da10))  ->
+  11 (5~O_.Simple [1 box].Box000000.Board000000.Mailbox000005)((20~0x0000558b5b79da10))  ->
  ^|10~0.000000|^        ->
- ((21~0x0000558b5b79da60))(4~O_.Aesop [1 box].Box000000.Board000000.Mailbox000004)
+ ((21~0x0000558b5b79da60))(4~O_.Simple [1 box].Box000000.Board000000.Mailbox000004)
 
-  12 (6~O_.Aesop [1 box].Box000000.Board000000.Mailbox000006)((22~0x0000558b5b79dc00))  ->
+  12 (6~O_.Simple [1 box].Box000000.Board000000.Mailbox000006)((22~0x0000558b5b79dc00))  ->
  ^|11~0.000000|^        ->
- ((23~0x0000558b5b79dc50))(7~O_.Aesop [1 box].Box000000.Board000000.Mailbox000007)
+ ((23~0x0000558b5b79dc50))(7~O_.Simple [1 box].Box000000.Board000000.Mailbox000007)
 
-  13 (6~O_.Aesop [1 box].Box000000.Board000000.Mailbox000006)((24~0x0000558b5b79ddf0))  ->
+  13 (6~O_.Simple [1 box].Box000000.Board000000.Mailbox000006)((24~0x0000558b5b79ddf0))  ->
  ^|12~0.000000|^        ->
- ((25~0x0000558b5b79de40))(5~O_.Aesop [1 box].Box000000.Board000000.Mailbox000005)
+ ((25~0x0000558b5b79de40))(5~O_.Simple [1 box].Box000000.Board000000.Mailbox000005)
 
-  14 (7~O_.Aesop [1 box].Box000000.Board000000.Mailbox000007)((26~0x0000558b5b79dfe0))  ->
+  14 (7~O_.Simple [1 box].Box000000.Board000000.Mailbox000007)((26~0x0000558b5b79dfe0))  ->
  ^|13~0.000000|^        ->
- ((27~0x0000558b5b79e030))(8~O_.Aesop [1 box].Box000000.Board000000.Mailbox000008)
+ ((27~0x0000558b5b79e030))(8~O_.Simple [1 box].Box000000.Board000000.Mailbox000008)
 
-  15 (7~O_.Aesop [1 box].Box000000.Board000000.Mailbox000007)((28~0x0000558b5b79e1d0))  ->
+  15 (7~O_.Simple [1 box].Box000000.Board000000.Mailbox000007)((28~0x0000558b5b79e1d0))  ->
  ^|14~0.000000|^        ->
- ((29~0x0000558b5b79e220))(6~O_.Aesop [1 box].Box000000.Board000000.Mailbox000006)
+ ((29~0x0000558b5b79e220))(6~O_.Simple [1 box].Box000000.Board000000.Mailbox000006)
 
-  16 (8~O_.Aesop [1 box].Box000000.Board000000.Mailbox000008)((30~0x0000558b5b79e3c0))  ->
+  16 (8~O_.Simple [1 box].Box000000.Board000000.Mailbox000008)((30~0x0000558b5b79e3c0))  ->
  ^|15~0.000000|^        ->
- ((31~0x0000558b5b79e410))(9~O_.Aesop [1 box].Box000000.Board000000.Mailbox000009)
+ ((31~0x0000558b5b79e410))(9~O_.Simple [1 box].Box000000.Board000000.Mailbox000009)
 
-  17 (8~O_.Aesop [1 box].Box000000.Board000000.Mailbox000008)((32~0x0000558b5b79e5b0))  ->
+  17 (8~O_.Simple [1 box].Box000000.Board000000.Mailbox000008)((32~0x0000558b5b79e5b0))  ->
  ^|16~0.000000|^        ->
- ((33~0x0000558b5b79e600))(7~O_.Aesop [1 box].Box000000.Board000000.Mailbox000007)
+ ((33~0x0000558b5b79e600))(7~O_.Simple [1 box].Box000000.Board000000.Mailbox000007)
 
-  18 (9~O_.Aesop [1 box].Box000000.Board000000.Mailbox000009)((34~0x0000558b5b79e7a0))  ->
+  18 (9~O_.Simple [1 box].Box000000.Board000000.Mailbox000009)((34~0x0000558b5b79e7a0))  ->
  ^|17~0.000000|^        ->
- ((35~0x0000558b5b79e7f0))(10~O_.Aesop [1 box].Box000000.Board000000.Mailbox000010)
+ ((35~0x0000558b5b79e7f0))(10~O_.Simple [1 box].Box000000.Board000000.Mailbox000010)
 
-  19 (9~O_.Aesop [1 box].Box000000.Board000000.Mailbox000009)((36~0x0000558b5b79e990))  ->
+  19 (9~O_.Simple [1 box].Box000000.Board000000.Mailbox000009)((36~0x0000558b5b79e990))  ->
  ^|18~0.000000|^        ->
- ((37~0x0000558b5b79e9e0))(8~O_.Aesop [1 box].Box000000.Board000000.Mailbox000008)
+ ((37~0x0000558b5b79e9e0))(8~O_.Simple [1 box].Box000000.Board000000.Mailbox000008)
 
-  20 (10~O_.Aesop [1 box].Box000000.Board000000.Mailbox000010)((38~0x0000558b5b79eb80)) ->
+  20 (10~O_.Simple [1 box].Box000000.Board000000.Mailbox000010)((38~0x0000558b5b79eb80)) ->
  ^|19~0.000000|^        ->
- ((39~0x0000558b5b79ebd0))(11~O_.Aesop [1 box].Box000000.Board000000.Mailbox000011)
+ ((39~0x0000558b5b79ebd0))(11~O_.Simple [1 box].Box000000.Board000000.Mailbox000011)
 
-  21 (10~O_.Aesop [1 box].Box000000.Board000000.Mailbox000010)((40~0x0000558b5b79ed70)) ->
+  21 (10~O_.Simple [1 box].Box000000.Board000000.Mailbox000010)((40~0x0000558b5b79ed70)) ->
  ^|20~0.000000|^        ->
- ((41~0x0000558b5b79edc0))(9~O_.Aesop [1 box].Box000000.Board000000.Mailbox000009)
+ ((41~0x0000558b5b79edc0))(9~O_.Simple [1 box].Box000000.Board000000.Mailbox000009)
 
-  22 (11~O_.Aesop [1 box].Box000000.Board000000.Mailbox000011)((42~0x0000558b5b79ef60)) ->
+  22 (11~O_.Simple [1 box].Box000000.Board000000.Mailbox000011)((42~0x0000558b5b79ef60)) ->
  ^|21~0.000000|^        ->
- ((43~0x0000558b5b79efb0))(12~O_.Aesop [1 box].Box000000.Board000000.Mailbox000012)
+ ((43~0x0000558b5b79efb0))(12~O_.Simple [1 box].Box000000.Board000000.Mailbox000012)
 
-  23 (11~O_.Aesop [1 box].Box000000.Board000000.Mailbox000011)((44~0x0000558b5b79f150)) ->
+  23 (11~O_.Simple [1 box].Box000000.Board000000.Mailbox000011)((44~0x0000558b5b79f150)) ->
  ^|22~0.000000|^        ->
- ((45~0x0000558b5b79f1a0))(10~O_.Aesop [1 box].Box000000.Board000000.Mailbox000010)
+ ((45~0x0000558b5b79f1a0))(10~O_.Simple [1 box].Box000000.Board000000.Mailbox000010)
 
-  24 (12~O_.Aesop [1 box].Box000000.Board000000.Mailbox000012)((46~0x0000558b5b79f340)) ->
+  24 (12~O_.Simple [1 box].Box000000.Board000000.Mailbox000012)((46~0x0000558b5b79f340)) ->
  ^|23~0.000000|^        ->
- ((47~0x0000558b5b79f390))(13~O_.Aesop [1 box].Box000000.Board000000.Mailbox000013)
+ ((47~0x0000558b5b79f390))(13~O_.Simple [1 box].Box000000.Board000000.Mailbox000013)
 
-  25 (12~O_.Aesop [1 box].Box000000.Board000000.Mailbox000012)((48~0x0000558b5b79f530)) ->
+  25 (12~O_.Simple [1 box].Box000000.Board000000.Mailbox000012)((48~0x0000558b5b79f530)) ->
  ^|24~0.000000|^        ->
- ((49~0x0000558b5b79f580))(11~O_.Aesop [1 box].Box000000.Board000000.Mailbox000011)
+ ((49~0x0000558b5b79f580))(11~O_.Simple [1 box].Box000000.Board000000.Mailbox000011)
 
-  26 (13~O_.Aesop [1 box].Box000000.Board000000.Mailbox000013)((50~0x0000558b5b79f720)) ->
+  26 (13~O_.Simple [1 box].Box000000.Board000000.Mailbox000013)((50~0x0000558b5b79f720)) ->
  ^|25~0.000000|^        ->
- ((51~0x0000558b5b79f770))(14~O_.Aesop [1 box].Box000000.Board000000.Mailbox000014)
+ ((51~0x0000558b5b79f770))(14~O_.Simple [1 box].Box000000.Board000000.Mailbox000014)
 
-  27 (13~O_.Aesop [1 box].Box000000.Board000000.Mailbox000013)((52~0x0000558b5b79f910)) ->
+  27 (13~O_.Simple [1 box].Box000000.Board000000.Mailbox000013)((52~0x0000558b5b79f910)) ->
  ^|26~0.000000|^        ->
- ((53~0x0000558b5b79f960))(12~O_.Aesop [1 box].Box000000.Board000000.Mailbox000012)
+ ((53~0x0000558b5b79f960))(12~O_.Simple [1 box].Box000000.Board000000.Mailbox000012)
 
-  28 (14~O_.Aesop [1 box].Box000000.Board000000.Mailbox000014)((54~0x0000558b5b79fb00)) ->
+  28 (14~O_.Simple [1 box].Box000000.Board000000.Mailbox000014)((54~0x0000558b5b79fb00)) ->
  ^|27~0.000000|^        ->
- ((55~0x0000558b5b79fb50))(15~O_.Aesop [1 box].Box000000.Board000000.Mailbox000015)
+ ((55~0x0000558b5b79fb50))(15~O_.Simple [1 box].Box000000.Board000000.Mailbox000015)
 
-  29 (14~O_.Aesop [1 box].Box000000.Board000000.Mailbox000014)((56~0x0000558b5b79fcf0)) ->
+  29 (14~O_.Simple [1 box].Box000000.Board000000.Mailbox000014)((56~0x0000558b5b79fcf0)) ->
  ^|28~0.000000|^        ->
- ((57~0x0000558b5b79fd40))(13~O_.Aesop [1 box].Box000000.Board000000.Mailbox000013)
+ ((57~0x0000558b5b79fd40))(13~O_.Simple [1 box].Box000000.Board000000.Mailbox000013)
 
-  30 (15~O_.Aesop [1 box].Box000000.Board000000.Mailbox000015)((58~0x0000558b5b79fee0)) ->
+  30 (15~O_.Simple [1 box].Box000000.Board000000.Mailbox000015)((58~0x0000558b5b79fee0)) ->
  ^|29~0.000000|^        ->
- ((59~0x0000558b5b79ff30))(14~O_.Aesop [1 box].Box000000.Board000000.Mailbox000014)
+ ((59~0x0000558b5b79ff30))(14~O_.Simple [1 box].Box000000.Board000000.Mailbox000014)
 
 Pdigraph topological dump ===================================--------------------
 Mailbox connectivity ----------------------------------------------------------
 Mailboxes in this board +++++++++++++++++++++++++++++++++++++++++++++++++++++++
         <a recursive dump of all mailboxes in this board goes here>
 Mailboxes in this board -------------------------------------------------------
-P_board O_.Aesop [1 box].Box000000.Board000000 --------------------------------
+P_board O_.Simple [1 box].Box000000.Board000000 -------------------------------
 
 ```
 
@@ -1225,7 +1241,7 @@ Methods:
 An example dump (`P_mailbox::Dump()`) of a mailbox follows.
 
 ```
-P_mailbox O_.Aesop [1 box].Box000000.Board000000.Mailbox000000 ++++++++++++++++
+P_mailbox O_.Simple [1 box].Box000000.Board000000.Mailbox000000 +++++++++++++++
 NameBase dump+++++++++++++++++++++++++++++++
 this           0x558b5b79a740
 Name           Mailbox000000
@@ -1240,7 +1256,7 @@ NameBase dump-------------------------------
 Cores in this mailbox +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         <a recursive dump of all cores in this mailbox goes here>
 Cores in this mailbox ---------------------------------------------------------
-P_mailbox O_.Aesop [1 box].Box000000.Board000000.Mailbox000000 ----------------
+P_mailbox O_.Simple [1 box].Box000000.Board000000.Mailbox000000 ---------------
 ```
 
 ## P_core
@@ -1302,7 +1318,7 @@ Methods:
 An example dump (`P_core::Dump()`) of a core with no binary data follows.
 
 ```
-P_core O_.Aesop [1 box].Box000000.Board000000.Mailbox000000.Core000000 ++++++++
+P_core O_.Simple [1 box].Box000000.Board000000.Mailbox000000.Core000000 +++++++
 NameBase dump+++++++++++++++++++++++++++++++
 this           0x55769be87a40
 Name           Core000000
@@ -1319,7 +1335,7 @@ No instruction binary assigned to this core.
 Threads in this core ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         <a recursive dump of all threads in this core goes here>
 Threads in this core ----------------------------------------------------------
-P_core O_.Aesop [1 box].Box000000.Board000000.Mailbox000000.Core000000 --------
+P_core O_.Simple [1 box].Box000000.Board000000.Mailbox000000.Core000000 -------
 ```
 
 ## P_thread
@@ -1354,7 +1370,7 @@ thread has devices, "The device map is empty" is replaced with a recursive dump
 of all devices in the thread.
 
 ```
-P_thread O_.Aesop [1 box].Box000000.Board000000.Mailbox000000.Core000000.Thread000000 +
+P_thread O_.Simple [1 box].Box000000.Board000000.Mailbox000000.Core000000.Thread000000 +
 NameBase dump+++++++++++++++++++++++++++++++
 this           0x55769be76b00
 Name           Thread000000
@@ -1760,8 +1776,8 @@ the deployer.
 
 ## I haven't written up these source definitions yet <!>
  - Dialect1Deployer
- - AesopDeployer
- - MultiAesopDeployer
+ - SimpleDeployer
+ - MultiSimpleDeployer
  - HardwareIterator
 
 An example dump (`HardwareIterator::Dump()`) of a newly-initialised iterator
@@ -2042,7 +2058,10 @@ A defining example follows:
 // Relative cost of sending a packet "into" a core. Can be a float.
 +mailbox_core_cost=0.2
 // Relative cost of sending a packet from one core to any other
-// core in a box. Can be a float.
+// core in a box. Can be a float. Note that in a sane universe,
+// core_core_cost is always double cost_mailbox_core, because core
+// to core communications are always just
+// core-to-mailbox + mailbox-to-core.
 +core_core_cost=0.1
 
 [core]
