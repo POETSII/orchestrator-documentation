@@ -17,10 +17,11 @@ All non-trivial applications run using the Orchestrator consist of at least one
 normal device and at least one supervisor device (a default supervisor is used
 if one is not defined by the application writer).
 
-Software addresses are 32-bit binary strings that uniquely identify a device
-deployed as part of a POETS application. Unlike hardware addresses, software
-addresses are defined by a series of fixed-at-compile-time-width
-fields. Software addresses are of the form:
+Software addresses are 32-bit binary strings. Together, a software address and
+a hardware address are sufficient to uniquely identify a device deployed as
+part of a POETS application. Unlike hardware addresses, software addresses are
+defined by a series of fixed-at-compile-time-width fields. Software addresses
+are of the form:
 
 $$C_{\mathrm{MOTHERSHIP}}\cdot C_{\mathrm{CNC}}\cdot C_{\mathrm{TASK}}\cdot
 C_{\mathrm{OPCODE}}\cdot C_{\mathrm{DEVICE}}$$
@@ -40,7 +41,7 @@ MOTHERSHIP 0 (1b)    Is 1 if the hardware address that accompanies this
 
 CNC        1 (1b)    Is 1 if a device is a command-and-control (CNC) device,
                      and 0 otherwise. The existence of this bit, together with
-                     $C_{\mathrm{CNC}}$, allows the device type to be
+                     $C_{\mathrm{MOTHERSHIP}}$, allows the device type to be
                      determined from the software address (see Table 2). If a
                      normal device is targeted with $C_{\mathrm{CNC}}=1$, its
                      `OnCtl` handler is invoked.
@@ -280,7 +281,7 @@ test suite.
    have been defined efficiently.
 
  - Note that the `SoftwareAddress` class does not check for invalid address
-   combinations (i.e. $C_\mathrm{ISCNC}=0$ and $C_\mathrm{OPCODE}\ne0$). This
-   is to allow address components to be set in stages to support copy
+   combinations (i.e. $C_\mathrm{CNC}=0$ and $C_\mathrm{OPCODE}\ne0$). This is
+   to allow address components to be set in stages to support copy
    construction. If validation of this sort is needed in future, we could
    implement classes for each device type to restrict these combinations.
