@@ -27,7 +27,8 @@ $$C_{\mathrm{MOTHERSHIP}}\cdot C_{\mathrm{CNC}}\cdot C_{\mathrm{TASK}}\cdot
 C_{\mathrm{OPCODE}}\cdot C_{\mathrm{DEVICE}}$$
 
 where $\cdot$ represents a concatenation, and where each address component $C$
-is denoted by Table 1.
+is denoted by Table 1. Table 2 shows, for each device type, how address
+components may vary.
 
 -------------------------------------------------------------------------------
 Component  Bit range Description
@@ -47,12 +48,7 @@ CNC        1 (1b)    Is 1 if a device is a command-and-control (CNC) device,
                      `OnCtl` handler is invoked.
 
 TASK       2-7 (6b)  Denotes the Orchestrator task that this device is
-                     associated with. This is particularly relevant for
-                     supervisor devices; as supervisor devices on the same box
-                     have the same hardware address, because they all run on
-                     the same Mothership. Since many tasks may be deployed
-                     within the same box, this field allows supervisor devices
-                     to be distinguished. This value ranges in $[0,63]$ (where
+                     associated with. This value ranges in $[0,63]$ (where
                      $63=2^6-1$).
 
 OPCODE     8-15 (8b) Denotes an operation code for messages to CNC devices or
@@ -63,8 +59,6 @@ DEVICE     16-31     Denotes the ID of a device.
 -------------------------------------------------------------------------------
 
 Table: Bit ranges for each software address component.
-
-For each device type, address components may vary as follows:
 
 ------------------------------------------------
 Device type    MOTHERSHIP CNC TASK OPCODE DEVICE
@@ -271,6 +265,12 @@ test suite.
  - The bit ranges are flexible - there are a bunch of spare bits in the device
    field that are unlikely to be used. Bits from there can be pilfered and
    given to another field if it is necessary later.
+
+ - The $C_\mathrm{TASK}$ component of the software address is particularly
+   relevant for supervisor devices; as supervisor devices on the same box have
+   the same hardware address, because they all run on the same
+   Mothership. Since many tasks may be deployed within the same box, this field
+   allows supervisor devices to be distinguished.
 
  - Multiple instances of the `SoftwareAddress` class are going to be produced
    when a given application is used by the Orchestrator, so the data footprint
