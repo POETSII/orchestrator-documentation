@@ -402,64 +402,6 @@ objects persist after the command has completed. Other commands (`/dump`,
 `/clear`) interact directly with the Engine in some
 way.](images/interaction_diagram.pdf)
 
-# Tests
-The hardware model, including the items, containment, addressing mechanism,
-input file reader, and the iterator, are all supported by a suite of unit tests
-in the `Tests` directory of the Orchestrator. These unit tests are driven by
-the Catch2 (1.x, classic) testing framework, described by the file
-`Tests/catch.hpp`. The tests can be built using GCC in a similar manner to the
-Orchestrator build process, by commanding `make tests`. This will compile the
-source with debugging enabled (and debugging symbols).
-
-Each file in `Tests/*.cpp` produces a file once compiled with the Catch2
-header. These files can be executed to determine whether or not the source
-functions as intended, along with output describing what went wrong. Each test
-can also be called with a memory checker (I use Valgrind) to verify the
-integrity of the structures under test. For example, if the hardware model
-tests (Tests/TestHardwareModel.cpp) are compiled and run, and all pass,
-something like the following is printed to the standard output (JUnit output
-can also be produced for CI):
-
-```
-$ ./TestHardwareModel.test
-===============================================================================
-All tests passed (67 assertions in 18 test cases)
-```
-
-Or, with Valgrind, something like (this is good output):
-
-```
-$ valgrind --track-origins=yes --leak-check=full ./TestHardwareModel.test
-==20767== Memcheck, a memory error detector
-==20767== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==20767== Using Valgrind-3.14.0 and LibVEX; rerun with -h for copyright info
-==20767== Command: ./TestHardwareModel.test
-==20767==
-===============================================================================
-All tests passed (67 assertions in 18 test cases)
-
-==20767==
-==20767== HEAP SUMMARY:
-==20767==     in use at exit: 18,572 bytes in 6 blocks
-==20767==   total heap usage: 1,474 allocs, 1,468 frees, 230,292 bytes allocated
-==20767==
-==20767== LEAK SUMMARY:
-==20767==    definitely lost: 0 bytes in 0 blocks
-==20767==    indirectly lost: 0 bytes in 0 blocks
-==20767==      possibly lost: 0 bytes in 0 blocks
-==20767==    still reachable: 18,572 bytes in 6 blocks
-==20767==         suppressed: 0 bytes in 0 blocks
-==20767== Reachable blocks (those to which a pointer was found) are not shown.
-==20767== To see them, rerun with: --leak-check=full --show-leak-kinds=all
-==20767==
-==20767== For counts of detected and suppressed errors, rerun with: -v
-==20767== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
-```
-
-Mark has a script for running each of these tests on its own and with a memory
-checker. If that's of interest to anyone, get in touch, and I'll share it or
-make it available in the repository.
-
 # Future Work
 The hardware model is designed to be adaptable to potential changes in the
 hardware configuration the Orchestrator operates on. This adaptability also
