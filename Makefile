@@ -1,14 +1,11 @@
 # Makes PDFs from all markdown files in the root directory.
 
-# General requirements:
+# Requirements:
 #  - pandoc (https://pandoc.org).
-#
-# Build-specific requirements:
-#  - PDF:
-#    - requires LaTeX (I use texlive, texlive-latex-extra is sufficient).
-#    - requires fvextra (you can get this from
-#      https://github.com/gpoore/fvextra.git)
-
+#  - A dot processor (I use graphviz).
+#  - PDF builds require:
+#    - LaTeX (I use texlive, texlive-latex-extra is almost sufficient).
+#    - fvextra (you can get this from https://github.com/gpoore/fvextra.git)
 
 DOC_BUILDER := "pandoc"
 DOC_BUILDER_FLAGS := "--number-sections --highlight-style tango"
