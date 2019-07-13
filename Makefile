@@ -2,33 +2,48 @@
 
 # Requirements:
 #  - pandoc (https://pandoc.org).
-#  - A dot processor (I use graphviz).
+#  - A dot processor (I use graphviz). Syntax must be compatible with the
+#    'dot_build' routine,
 #  - PDF builds require:
 #    - LaTeX (I use texlive, texlive-latex-extra is almost sufficient).
 #    - fvextra (you can get this from https://github.com/gpoore/fvextra.git)
 
-DOC_BUILDER := "pandoc"
-DOC_BUILDER_FLAGS := "--number-sections --highlight-style tango"
-DOC_SOURCES_DIR := source
-DOC_TARGETS_DIR := build
+BUILDER := "pandoc"
+BUILDER_FLAGS := "--number-sections --highlight-style tango"
+TEXT_SOURCES_DIR := source
+TEXT_TARGETS_DIR := build
 
 GRAPH_BUILDER := "dot"
 GRAPH_SOURCES_DIR := images/source
 GRAPH_TARGETS_DIR := images
 
+MD := mkdir --parents
+PRINT := printf
+
 # Defines targets using a given extension. Arguments:
-#  - $1: Desired extension (e.g. "doc").
+#  - $1: Desired extension (e.g. "docx").
 define targets_for_filetype
-    $(patsubst $(DOC_SOURCES_DIR)/%.md,\
-	    $(DOC_TARGETS_DIR)/%.$1,\
-        $(wildcard $(DOC_SOURCES_DIR)/*.md))
+    $(patsubst $(TEXT_SOURCES_DIR)/%.md,\
+	    $(TEXT_TARGETS_DIR)/%.$1,\
+        $(wildcard $(TEXT_SOURCES_DIR)/*.md))
 endef
 
 # Build a document using pandoc. Use only in a rule definition. Takes no
 # arguments.
 define pandoc_build
-	mkdir --parents "$(DOC_TARGETS_DIR)"
-	"$(DOC_BUILDER)" "$(DOC_BUILDER_FLAGS)" --output="$@" $(filter %.md, $^)
+	@$(PRINT) "[....] Building \"$@\"..."
+	@$(MD) "$(TEXT_TARGETS_DIR)"
+	@$(BUILDER) "$(BUILDER_FLAGS)" --output="$@" $(filter %.md, $^)
+	@$(PRINT) "\r[DONE] Building \"$@\".\n"
+endef
+
+# Build a graph image using your dot builder of choice. Use only in a rule
+# definition. Takes no arguments.
+define dot_build
+	@$(PRINT) "[....] Building \"$@\"..."
+	@$(MD) "$(GRAPH_TARGETS_DIR)"
+	@$(GRAPH_BUILDER) -Tpdf "$^" -o "$@"
+	@$(PRINT) "\r[DONE] Building \"$@\".\n"
 endef
 
 # Define images to build.
@@ -46,32 +61,34 @@ ALL_IMAGE_TARGETS := $(GRAPH_TARGETS_DIR)/addressing_structure.pdf \
 # on the end of markdown files (literally cat-style) before pandoc parses them.
 DOCX_TARGETS := $(call targets_for_filetype,docx)
 PDF_TARGETS := $(call targets_for_filetype,pdf)
-PDF_BACKMATTER := $(DOC_SOURCES_DIR)/include/latex.md
+PDF_BACKMATTER := $(TEXT_SOURCES_DIR)/include/latex.md
 ALL_TARGETS := $(DOCX_TARGETS) $(PDF_TARGETS)
 
 # General targets
 all: $(ALL_TARGETS)
 
 clean:
-	$(RM) $(ALL_TARGETS) $(ALL_IMAGE_TARGETS)
+	@$(PRINT) "[....] Clearing..."
+	@$(RM) $(ALL_TARGETS) $(ALL_IMAGE_TARGETS)
+	@$(PRINT) "\r[DONE] Clearing.\n"
 
 # Targets for document types.
-docx: $(DOCX_DOC_TARGETS)
+docx: $(DOCX_TARGETS)
 
-pdf: $(PDF_DOC_TARGETS)
+pdf: $(PDF_TARGETS)
 
 # Builds one PDF from one markdown file, using the backmatter (dependency
 # order matters).
-$(DOC_TARGETS_DIR)/%.pdf: $(DOC_SOURCES_DIR)/%.md $(PDF_BACKMATTER) $(ALL_IMAGE_TARGETS)
+$(TEXT_TARGETS_DIR)/%.pdf: $(TEXT_SOURCES_DIR)/%.md $(PDF_BACKMATTER) \
+	$(ALL_IMAGE_TARGETS)
 	$(call pandoc_build)
 
 # Builds one DOCX file from one markdown file, using no backmatter.
-$(DOC_TARGETS_DIR)/%.docx: $(DOC_SOURCES_DIR)/%.md $(ALL_IMAGE_TARGETS)
+$(TEXT_TARGETS_DIR)/%.docx: $(TEXT_SOURCES_DIR)/%.md $(ALL_IMAGE_TARGETS)
 	$(call pandoc_build)
 
 # Builds one PDF from one dot (graph) file.
 $(GRAPH_TARGETS_DIR)/%.pdf: $(GRAPH_SOURCES_DIR)/%.dot
-	mkdir --parents "$(GRAPH_TARGETS_DIR)"
-	"$(GRAPH_BUILDER)" -Tpdf "$^" -o "$@"
+	$(call dot_build)
 
 .PHONY: all clean docx pdf
