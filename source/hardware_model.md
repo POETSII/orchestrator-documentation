@@ -1,4 +1,4 @@
-% The Hardware Model and its Interfaces
+% How the Orchestrator Models the Compute Hardware
 
 # The Hardware Model
 This document introduces the design of the hardware model, and explains
@@ -66,7 +66,7 @@ architectures can be accommodated as necessary. For example, the hardware model
 can be extended to support bespoke compute cores, since items in the model can
 be extended to hold attributes that describe these cores.
 
-## Containment
+# Containment
 Central to the implementation of the hardware model is the notion of
 containment. Each container indexes the component it contains by the relevant
 component ($C$) of the hardware address[^butnotP_boardv] (see the following
@@ -111,125 +111,7 @@ call `void P_mailbox::on_being_contained_hook(P_board*)`, to register the board
 as the parent of the mailbox. If containment fails, for example if the
 containee is already owned, an `OwnershipException` is raised.
 
-## Addressing Hardware
-In addition to representing physical hardware, the Orchestrator needs to
-understand how the Tinsel communicates with items on the hardware stack. Tinsel
-addresses threads using the following hierarchical address
-scheme:[^tinseladdress]
-
-[^tinseladdress]: This may not reflect current Tinsel functionality. It is only
-    included here to demonstrate that some translation has to occur between the
-    Tinsel address and the Hardware address in the Orchestrator.
-
-$$T_{\mathrm{BOARD,Y}}\cdot T_{\mathrm{BOARD,X}}\cdot T_{\mathrm{CORE}}\cdot
-T_{\mathrm{THREAD}}$$
-
-where the address is a 32-element bit array, $T$ represents a component of the
-Tinsel hardware address, and "$\cdot$" represents concatenation. The
-Orchestrator generalizes this concept of an address to:
-
-$$C_{\mathrm{BOX}}\cdot C_{\mathrm{BOARD}}\cdot C_{\mathrm{MAILBOX}}\cdot
-C_{\mathrm{CORE}}\cdot C_{\mathrm{THREAD}}$$
-
-which is again a 32-element bit array, and where $C$ represents a component of
-the hardware address in the Orchestrator. A Tinsel 32-bit address is identical
-to the 32-bit address held in the Orchestrator's representation. Each component
-has a fixed width $W$ for the lifetime of the Orchestrator
-(e.g. $W_{\mathrm{MAILBOX}}$), and is buffered by zeroes so that each component
-does not overrun into any other component. By way of example, the source name
-of component $C_{\mathrm{BOX}}$ is `HardwareAddress::boxComponent`, and the
-source name of the width $W_{\mathrm{MAILBOX}}$ is
-`HardwareAddressFormat::mailboxWordLength`.
-
-Figure 2 shows the class structure of how components of the hardware model
-interact with the addressing system. Each item in the Engine hierarchy (apart
-from the Engine itself) inherits from the `AddressableItem` class, which
-abstracts the behaviours of "being addressable". The `AddressableItem` class
-holds a `HardwareAddress` instance, which is comprised of `AddressComponent`s
-(which are `uint32_t`s). Instances of `HardwareAddress` also point to a
-`HardwareAddressFormat`, which holds the widths of each component[^whyformat].
-
-![Class structure diagram showing how items in the hardware model maintain
-addressing capabilities. The `HardwareAddressFormat` is effectively a "master
-copy" that applies over the items in the engine. Green boxes are classes
-representing items in the hardware model. Red boxes are classes supporting
-addressing behaviours. Blue boxes are sets of members.
-](images/addressing_structure.pdf)
-
-[^whyformat]: Because a system can have many threads, cores, mailboxes, boards,
-    and boxes, `HardwareAddress` is designed to have as low a data footprint as
-    reasonably possible. Consequently, the bit widths are not stored on a
-    per-address basis, and are instead stored in a `HardwareAddressFormat`,
-    which is common to all addresses in an Engine. A `HardwareAddress` reads
-    the spacings in its `HardwareAddressFormat` when it is instructed to output
-    a 32-bit hardware address.
-
-## How OrchBase and the Operator fit in
-The hardware model is central to the operator's successful usage of the
-Orchestrator. The operator needs to be able to:
-
- - define the hardware model in the Orchestrator in order to facilitate
-   placement and to populate SBase (in NameServer and on Motherships).
-
- - redefine the hardware model with a replacement.
-
- -  be able to easily diagnose potential issues with the hardware model, and
-    its interactions with the rest of the Orchestrator (though admittedly this
-    is more of a developer role).
-
-The operator's interactions with the hardware model are shown in Figure 3. The
-operator can define the model in two ways:
-
- - From a default configuration: The operator can command `topology /set1` or
-   `topology /set2` in the POETS shell to initialise a default hardware
-   configuration. In response to this command, Root clears its existing engine
-   (`pE`), and creates a new one dynamically. Root then statically creates an
-   `SimpleDeployer` (or a `MultiSimpleDeployer`) object, which are
-   pre-provisioned `Dialect1Deployer` classes. The created object is then used
-   to deploy the default configuration to the engine (`pE`). The default
-   configurations are:
-
-    - Set 1: Deploys a one-box system, which contains one box, which contains
-      three boards connected in a row, which each contain sixteen mailboxes
-      connected in a row, which each contain four cores, which each contain
-      sixteen threads.
-
-    - Set 2: As with Set 1, but with two boxes instead of one, connected on the
-      short edge.
-
-   these configurations are suitable for testing small applications and for
-   rudimentary testing.
-
- - Input file: The operator can command `topology /load =
-   topology_description.poets` to load the topology described in the file
-   `topology_description.poets` (alternative paths can be specified). Root
-   first clears and recreates its engine as before, then statically creates a
-   `HardwareFileReader` object, loads the file, uses it to populate a
-   statically-created `Dialect1Deployer` object. As before, this deployer
-   object then deploys its configuration (which was loaded from the file) to
-   the engine owned by Root. See Appendix B for a description of how input
-   topology files must be constructed.
-
-Once an Engine has been populated, the operator can then interact with the
-engine through the following POETS console commands:
-
- - `topology /clear`, which clears the topology, deleting all of the
-   dynamically-created items within the engine, freeing each container
-   structure, then deleting the engine itself.
-
- - `topology /dump`, which dumps the engine and its contents to stdout, if an
-   engine has been defined. Optionally, `topology /dump = file` can be used to
-   write to a file instead.
-
-![Hardware model interaction diagram. The operator interacts with the hardware
-model (Engine, `OrchBase->pE`) through topology commands. Certain commands
-(`/set1`, `/set2`, and `/load`) statically create one or more intermediate
-objects, which are used to define the Engine. None of these command-transient
-objects persist after the command has completed. Other commands (`/dump`,
-`/clear`) interact directly with the Engine in some
-way.](images/interaction_diagram.pdf)
-
-## Graphs
+# Graphs
 Graphs are used in the hardware model to represent collections of items
 connected in a topology, in order to inform the placement of application
 devices onto threads in the hardware model. All graphs in the hardware model
@@ -261,7 +143,7 @@ graph does not need to be Manhattan, and can contain cycles (but not
 loops). This description extends to the graph of mailboxes
 `P_board::G`.](images/generic_graph.pdf)
 
-## Iteration
+# Iteration
 As an Orchestrator developer, it is often useful to iterate over different
 items in the Engine. The `HardwareIterator` class supports iterating over
 different levels of the hardware hierarchy for a given Engine, though note that
@@ -325,7 +207,7 @@ serviced by the first mailbox in the first board (the origin thread), allow
  - Allow the developer to reset the iterators to the first item on their
    respective level of the hierarchy.
 
-### Iteration Example
+## Iteration Example
 In bucket-filling placement, devices are mapped to threads in order (like
 pouring water into a succession of buckets). This placement method must respect
 the constraint that core pairs can only contain the same type of device
@@ -402,7 +284,125 @@ The second implementation, which uses the iterator, is superior because it:
 For an example using the source, the test suite contains a set of simple
 examples which are suitable for a first look.
 
-## Tests
+# Addressing Hardware
+In addition to representing physical hardware, the Orchestrator needs to
+understand how the Tinsel communicates with items on the hardware stack. Tinsel
+addresses threads using the following hierarchical address
+scheme:[^tinseladdress]
+
+[^tinseladdress]: This may not reflect current Tinsel functionality. It is only
+    included here to demonstrate that some translation has to occur between the
+    Tinsel address and the Hardware address in the Orchestrator.
+
+$$T_{\mathrm{BOARD,Y}}\cdot T_{\mathrm{BOARD,X}}\cdot T_{\mathrm{CORE}}\cdot
+T_{\mathrm{THREAD}}$$
+
+where the address is a 32-element bit array, $T$ represents a component of the
+Tinsel hardware address, and "$\cdot$" represents concatenation. The
+Orchestrator generalizes this concept of an address to:
+
+$$C_{\mathrm{BOX}}\cdot C_{\mathrm{BOARD}}\cdot C_{\mathrm{MAILBOX}}\cdot
+C_{\mathrm{CORE}}\cdot C_{\mathrm{THREAD}}$$
+
+which is again a 32-element bit array, and where $C$ represents a component of
+the hardware address in the Orchestrator. A Tinsel 32-bit address is identical
+to the 32-bit address held in the Orchestrator's representation. Each component
+has a fixed width $W$ for the lifetime of the Orchestrator
+(e.g. $W_{\mathrm{MAILBOX}}$), and is buffered by zeroes so that each component
+does not overrun into any other component. By way of example, the source name
+of component $C_{\mathrm{BOX}}$ is `HardwareAddress::boxComponent`, and the
+source name of the width $W_{\mathrm{MAILBOX}}$ is
+`HardwareAddressFormat::mailboxWordLength`.
+
+Figure 2 shows the class structure of how components of the hardware model
+interact with the addressing system. Each item in the Engine hierarchy (apart
+from the Engine itself) inherits from the `AddressableItem` class, which
+abstracts the behaviours of "being addressable". The `AddressableItem` class
+holds a `HardwareAddress` instance, which is comprised of `AddressComponent`s
+(which are `uint32_t`s). Instances of `HardwareAddress` also point to a
+`HardwareAddressFormat`, which holds the widths of each component[^whyformat].
+
+![Class structure diagram showing how items in the hardware model maintain
+addressing capabilities. The `HardwareAddressFormat` is effectively a "master
+copy" that applies over the items in the engine. Green boxes are classes
+representing items in the hardware model. Red boxes are classes supporting
+addressing behaviours. Blue boxes are sets of members.
+](images/addressing_structure.pdf)
+
+[^whyformat]: Because a system can have many threads, cores, mailboxes, boards,
+    and boxes, `HardwareAddress` is designed to have as low a data footprint as
+    reasonably possible. Consequently, the bit widths are not stored on a
+    per-address basis, and are instead stored in a `HardwareAddressFormat`,
+    which is common to all addresses in an Engine. A `HardwareAddress` reads
+    the spacings in its `HardwareAddressFormat` when it is instructed to output
+    a 32-bit hardware address.
+
+# How OrchBase and the Operator fit in
+The hardware model is central to the operator's successful usage of the
+Orchestrator. The operator needs to be able to:
+
+ - define the hardware model in the Orchestrator in order to facilitate
+   placement and to populate SBase (in NameServer and on Motherships).
+
+ - redefine the hardware model with a replacement.
+
+ -  be able to easily diagnose potential issues with the hardware model, and
+    its interactions with the rest of the Orchestrator (though admittedly this
+    is more of a developer role).
+
+The operator's interactions with the hardware model are shown in Figure 3. The
+operator can define the model in two ways:
+
+ - From a default configuration: The operator can command `topology /set1` or
+   `topology /set2` in the POETS shell to initialise a default hardware
+   configuration. In response to this command, Root clears its existing engine
+   (`pE`), and creates a new one dynamically. Root then statically creates an
+   `SimpleDeployer` (or a `MultiSimpleDeployer`) object, which are
+   pre-provisioned `Dialect1Deployer` classes. The created object is then used
+   to deploy the default configuration to the engine (`pE`). The default
+   configurations are:
+
+    - Set 1: Deploys a one-box system, which contains one box, which contains
+      three boards connected in a row, which each contain sixteen mailboxes
+      connected in a row, which each contain four cores, which each contain
+      sixteen threads.
+
+    - Set 2: As with Set 1, but with two boxes instead of one, connected on the
+      short edge.
+
+   these configurations are suitable for testing small applications and for
+   rudimentary testing.
+
+ - Input file: The operator can command `topology /load =
+   topology_description.poets` to load the topology described in the file
+   `topology_description.poets` (alternative paths can be specified). Root
+   first clears and recreates its engine as before, then statically creates a
+   `HardwareFileReader` object, loads the file, uses it to populate a
+   statically-created `Dialect1Deployer` object. As before, this deployer
+   object then deploys its configuration (which was loaded from the file) to
+   the engine owned by Root. See Appendix B for a description of how input
+   topology files must be constructed.
+
+Once an Engine has been populated, the operator can then interact with the
+engine through the following POETS console commands:
+
+ - `topology /clear`, which clears the topology, deleting all of the
+   dynamically-created items within the engine, freeing each container
+   structure, then deleting the engine itself.
+
+ - `topology /dump`, which dumps the engine and its contents to stdout, if an
+   engine has been defined. Optionally, `topology /dump = file` can be used to
+   write to a file instead.
+
+![Hardware model interaction diagram. The operator interacts with the hardware
+model (Engine, `OrchBase->pE`) through topology commands. Certain commands
+(`/set1`, `/set2`, and `/load`) statically create one or more intermediate
+objects, which are used to define the Engine. None of these command-transient
+objects persist after the command has completed. Other commands (`/dump`,
+`/clear`) interact directly with the Engine in some
+way.](images/interaction_diagram.pdf)
+
+# Tests
 The hardware model, including the items, containment, addressing mechanism,
 input file reader, and the iterator, are all supported by a suite of unit tests
 in the `Tests` directory of the Orchestrator. These unit tests are driven by
@@ -460,7 +460,7 @@ Mark has a script for running each of these tests on its own and with a memory
 checker. If that's of interest to anyone, get in touch, and I'll share it or
 make it available in the repository.
 
-## Future Work
+# Future Work
 The hardware model is designed to be adaptable to potential changes in the
 hardware configuration the Orchestrator operates on. This adaptability also
 supports the addition of certain features. This section outlines features that
