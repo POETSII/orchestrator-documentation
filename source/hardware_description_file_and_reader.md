@@ -1,0 +1,1066 @@
+% How to Describe Hardware to the Orchestrator
+
+# Overview
+This document defines the input file (hardware description file) format for
+describing the hardware stack on which the Orchestrator operates, and how the
+file is read by the Orchestrator. I recommend reading the hardware model
+documentation before proceeding. The hardware file reader mechanism is
+supplemented by a reference definition in Appendix A.
+
+Figure 1 shows the variety of ways in which the hardware model can be
+populated. This document is describes the `HardwareFileReader` pathway,
+triggered by `task /load`. Hardware description files come in a variety of
+dialects in increasing complexity (see the Input File Format section). Dialect
+1 files provision a `Dialect1Deployer` (described in the hardware model
+documentation), whereas Dialect 3 files provision the engine `OrchBase->pE`
+directly.
+
+![Hardware model interaction diagram. The operator interacts with the hardware
+model (Engine, `OrchBase->pE`) through topology commands. Certain commands
+(`/set1`, `/set2`, and `/load`) statically create one or more intermediate
+objects, which are used to define the Engine. None of these command-transient
+objects persist after the command has completed. Other commands (`/dump`,
+`/clear`) interact directly with the Engine in some
+way.](images/interaction_diagram.pdf)
+
+# Input File Format (0.3.2)
+This section defines the file format used by the Orchestrator to define its
+internal model of the POETS Engine.
+
+The input files satisfy the general "Universal Interface Format" (UIF) file
+format[^uifdocs]. The format supports three dialects, which define the POETS
+Engine on different levels of granularity. The complete Orchestrator will be
+able to parse a file defined using any one of these three dialects. When the
+Orchestrator completes a "discovery" operation or when it otherwise dumps a
+machine-readable output of its model of the POETS Engine, that dump will be
+given in the most precise dialect version (dialect 3). This Appendix defines
+attributes that are common to all dialects in the Common Attributes Section,
+then defines:
+
+[^uifdocs]: The UIF documentation can be found in the Orchestrator repository,
+    in the `Generics` directory.
+
+ - Dialect 1, where items at each level of the hierarchy are the same as other
+   items at that level ("horizontally homogeneous"), and where some topology
+   information is assumed.
+
+ - Dialect 2, which is as dialect 1, but allows the items contained at each
+   level to vary ("horizontally heterogeneous"). For example, boxes can contain
+   different numbers of boards, but must have the same properties
+   otherwise. Topology is also explicitly defined in this dialect, but is
+   constant at each level of the hierarchy.
+
+ - Dialect 3, which is as dialect 2, but allows items within a level to vary
+   using a type mechanism ("fully heterogeneous"), so that they can hold
+   different topologies of items, and have different properties from other
+   items on their level of the hierarchy.
+
+Greater dialects provide more flexibility at the expense of being more
+difficult to generate.
+
+## Common Attributes
+
+Input files must be ASCII encoded.
+
+### Comment Syntax
+All dialects support a comment syntax:
+
+```
+// All dialects support this comment syntax, where all text after
+// two consecutive forward slash symbols (//) on a line must be
+// ignored by the reader. Comments cannot be escaped. I'll be using
+// comments throughout these snippets, appropriately, to describe
+// implementation details and intentions.
+
+// Also note that empty lines do not affect file parsing, though
+// whitespace within a non-comment line matters.
+```
+
+### Header Section
+All dialects support sections, which contain variable definitions. Sections can
+appear in any order, but must be unique within a file. All files must contain a
+`[header]` section. For example:
+```
+[header]  // This is a header section (with an inline comment).
++author="Mark Vousden"
++dialect=1
++datetime=20181008130324  // YYYYMMDDhhmmss
++version="0.3.2"
++file="my_first_example.txt"
+```
+
+Points to note:
+
+ - The line `+author="Mark Vousden"` is a variable definition; specifically
+   binding the value `Mark Vousden` as a string to the `author` variable in
+   the `[header]` section. Note that the `+` symbol at the prefix of the
+   definition shows that a binding is taking place. Values cannot contain two
+   consecutive `/` characters or `"` characters.
+
+ - The `[header]` section is mandatory, and must define the following variables
+    (in any order):
+
+   - `datetime`: Creation time of this file, in ISO8601 "basic datetime" format
+     (YYYYMMDDhhmmss), without timezone information.
+
+   - `dialect`: The index of the dialect, either 1, 2, or 3.
+
+   - `version`: The version of the file format (which you can extract from this
+     example). Must be Semantic Versioning 2.0.0 compatible.
+
+ - The following variables may optionally be defined:
+
+   - `author`: The name of the individual who has created this file, in
+     straight double quotes.
+
+   - `hardware`: The version of hardware used to generate this file.
+
+   - `file`: The handle of the file in the filesystem[^fileMismatchWarning].
+
+ - The `[header]` section may be opened with a description,
+   e.g. `[header(Hafez)]` (where the description here is `Hafez`), as long
+   as the description satisfies the regular expression `[a-zA-Z0-9]{2,32}`, and
+   that only one header section is defined in a given file.
+
+[^fileMismatchWarning]: The design intent being that the Orchestrator will warn
+the operator if this field match the name of the file passed in.
+
+### Address Format Section
+All dialects define a format for how the POETS Engine addresses threads in the
+hardware, so that the Orchestrator and the POETS Engine can interface. Each
+thread in the POETS Engine is uniquely addressed by a binary word, where
+different slices of the word correspond to different regions of the POETS
+Engine hierarchy. These slices are defined in the `[packet_address_format]`
+section, for example:
+
+```
+[packet_address_format]
++mailbox=8
++thread=4
++core=2
++board=4
++box=2
+```
+
+Points to note:
+
+ - The `[packet_address_format]` section is mandatory, and must define the
+   following variables (in any order):
+
+   - `board`: The number of bits dedicated to defining the board-component of
+     the address in the address word. Must be a positive integer.
+
+   - `box`: As with `board`, but for boxes.
+
+   - `core`: As with `board`, but for cores.
+
+   - `mailbox`: As with `board`, but for mailboxes.
+
+   - `thread`: As with `board`, but for threads.
+
+ - In this contrived example, the address is defined as a binary word, where
+   the first (LSB) four bits define the thread address, the next two bits
+   define the core address, the next eight bits define the mailbox address, the
+   next four bits define the board address, and the next two bits define the
+   box address, resulting in a $4+2+8+4+2=20$ bit word.
+
+ - In order for the Orchestrator to generate a POETS Engine file during the
+   discovery process, it will need to query the hardware to identify the format
+   of the address word through some API.
+
+A further complexity of addressing in the POETS Engine is that, at a given
+non-thread, non-core level of the hierarchy, the ID of an item at that level of
+the hierarchy may not be contiguous within that section of the word. By way of
+example, a two-dimensional arrangement of mailboxes may divide the first half
+of the mailbox word for the "horizontal" axis, and the second half for the
+"vertical" axis, so that spatially-local mailboxes may have significantly
+different address words. To support such "multidimensional" words, the
+`[packet_address_format]` section supports the following syntax:
+
+```
+[packet_address_format]
++box=2  // The order of variable definitions within the section does
+        // not matter.
++mailbox=(2,2,2)  // Three dimensions (can be one or more dimensions)
++thread=4  // Must be one-dimensional, always.
++core=2  // Must be one-dimensional, always.
++board=(4,4)  // Two dimensions (can be one or more dimensions)
+```
+
+Here, the address again defined as a binary word, where the first (LSB) four
+bits define the thread address, the next two bits define the core address, the
+next six bits define the mailbox address (two in each of the three dimensions),
+the next eight bits define the board address (four in each of the two
+dimensions), and the next two bits define the box address, resulting in a
+$4+2+(2\times3)+(4\times2)+2+2=24$ bit word.
+
+## Dialect 1 (Homogeneous)
+This dialect allows the writer to elegantly define the components of the POETS
+Engine, without the flexibility of the other dialects. It makes the assumptions
+about the constituents of the POETS Engine and their connectivity,
+specifically:
+
+ - Each item is the same as each other item on its level of the hierarchy
+   (i.e. each box has the same properties as each other box, and contains the
+   same number of boards).
+
+ - Items are either connected to all other items on their level of the
+   hierarchy, or are connected in a hypercube topology.
+
+A defining example follows:
+
+```
+// A simple example showcasing the features of dialect 1.
+[header]
++author="Mark Vousden"
++dialect=1
++datetime=20181008130324
++version="0.3.2"
+
+[packet_address_format]
++mailbox=(4,4)
++thread=4
++core=2
++board=4
++box=2
+
+[engine]
+// Number of boxes in this POETS Engine. Positive integer.
++boxes=2
+// Number of compute FPGA boards in this POETS Engine. Positive
+// integer or "hypercube". The total number of boards must divide
+// into the number of boxes without remainder.
++boards=6
+// Relative cost of communication for devices entering the POETS
+// Engine externally. Can be a float.
++external_box_cost=50
+// Relative cost of sending a packet from one board to any other
+// board in a box. Can be a float.
++board_board_cost=5
+
+[box]
+// Relative cost of sending a packet "into" a board. Can be a
+// float.
++box_board_cost=11
+// Amount of memory available to a supervisor process on this box
+// (MiB). Non-negative integer.
++supervisor_memory=4096
+
+[board]
+// Number of mailboxes in each compute FPGA. Positive integer or
+// "hypercube".
++mailboxes=hypercube(+10,10)
+// Relative cost of sending a packet "into" a mailbox. Can be a
+// float.
++board_mailbox_cost=2
+// Amount of memory available to a supervisor process on this board
+// (MiB). Non-negative integer.
++supervisor_memory=0
+// Relative cost of sending a packet from one mailbox to any other
+// mailbox in a board. Can be a float.
++mailbox_mailbox_cost=1
+// Amount of DRAM available, total (MiB). Positive integer.
++dram=4096
+
+[mailbox]
+// Number of cores in each mailbox. Positive integer.
++cores=4
+// Relative cost of sending a packet "into" a core. Can be a float.
++mailbox_core_cost=0.2
+// Relative cost of sending a packet from one core to any other
+// core in a box. Can be a float. Note that in a sane universe,
+// core_core_cost is always double cost_mailbox_core, because core
+// to core communications are always just
+// core-to-mailbox + mailbox-to-core.
++core_core_cost=0.1
+
+[core]
+// Number of threads running on a core. Positive integer.
++threads=16
+// Available instruction memory (KiB). Positive integer.
++instruction_memory=512
+// Available data memory (KiB). Positive integer.
++data_memory=512
+// Relative cost of sending a packet from one thread to any other
+// thread in a core. Can be a float.
++thread_thread_cost=0.002
+// Relative cost of sending a packet "into" a thread. Can be a
+// float.
++core_thread_cost=0.002
+```
+
+Note:
+
+ - The `[engine]`, `[box]`, `[board]`, `[mailbox]`, and `[core]` sections and
+   their contents are all mandatory.
+
+ - The various `X_X_cost`-s (e.g. `board_board_cost`) are used to define the
+   graph objects in the internal model.
+
+ - Use of the `hypercube` directive in the definition of boards or mailboxes
+   (for example, the line `+mailboxes=hypercube(+10,10)` in the `[board]`
+   section) results in:
+
+   - A hypercube topology (in this case, a $10\times10$ grid) being used
+     instead of an "all-to-all" topology. Items are addressed in sequence along
+     each dimension.
+
+   - In this case, the boundary in the first dimension is periodic, as
+     indicated by the first `+` character before the value in the first
+     dimension of the hypercube. The boundary in the second dimension is open
+     in this case (for both dimensions to be periodic, the definition must be
+     `+mailboxes=hypercube(+10,+10)`). Items connected in this way are not
+     addressed in sequence across periodic boundaries (addresses wrap around).
+
+   - The definition of `X_X_cost`-like variables still parameterise the cost of
+     sending a packet between neighbours.
+
+ - The values in the `[packet_address_format]` section for a given variable
+   must fit the number of items defined in the appropriate section. For
+   example, `+thread=4` in the `[packet_address_format]` section, so
+   the number of threads (`+threads` in the `[core]` section) must be
+   $\le2^4=16$, which is satisfied in this example.
+
+ - If a value in the `[packet_address_format]` section is multidimensional,
+   such as `+mailbox=(4,4)` in this example, then the item definition for that
+   value (`+mailboxes=hypercube(+10,10)` in the `board` section, again for this
+   example) must be a hypercube of the same dimension, and each dimension of
+   the item definition must "fit" in the corresponding dimension of the address
+   format[^addressFitting].
+
+[^addressFitting]: Informally, if the values of `+mailbox` define vector
+$\mathbf{x}\in\mathbb{N}^n$, then if the arguments of the hypercube directive
+of `+mailboxes` define vector $\mathbf{y}$, then $\mathbf{y}\in\mathbb{N}^n$,
+and $\mathbf{y}\cdot\mathbf{\hat{e}}_m\le
+2^{\mathbf{x}\cdot\mathbf{\hat{e}}_m}$ for each unit basis vector
+$\mathbf{\hat{e}}_m$.
+
+Appendix C contains a complete dialect 1 example file representing Coleridge.
+
+## Dialect 2 (Horizontally-Heterogeneous)
+Dialect 2 extends dialect 1 by supporting heterogeneity on each level of the
+hierarchy. While each box must still be the same as each other box (and each
+board the same as each other board, and so on), dialect 2 allows the writer to
+define simple weighted graph topologies to contain these items. Relative to
+dialect 1, dialect 2 removes support for the following definitions:
+
+```
+[engine]
+boxes
+boards
+[board]
+mailboxes
+```
+
+Instead of defining the constituents (number of items) by defining these
+variables, dialect 2 mandates that the writer define the topology
+explicitly. Note that the following definitions are still supported:
+
+```
+[mailbox]
+cores
+[core]
+thread
+```
+
+These definitions remain because all cores and threads are still the same as
+all other cores and threads in this dialect, so a count is still a meaningful
+representation for them. Dialect 2 also mandates the use of the
+`[engine_board]` section to store the simple weighted graph of boards in the
+engine, and the `[engine_box]` section for the other engine properties. Also,
+the `board_board_cost` variable must now be defined in the `[engine_board]`
+section. Here are example `[engine_box]` and `[engine_board]` sections for
+dialect 2, where the `→` character denotes a line continuation:
+
+```
+[engine_box]
+// Define four boxes, each with two boards:
+(0,0):Io(addr(00),boards(B0,B1))
+(1,0):Europa(addr(10),boards(B0,B1))
+(0,1):Ganymede(addr(01),boards(B0,B1))
+(1,1):Callisto(addr(11),boards(B0,B1))
++external_box_cost=50
+
+[engine_board]
+// Boards are connected in a grid:
+(0,0):Io(board(B0),addr(0))=Io(board(B1),cost(5)),Europa(board(B0))
+(0,1):Io(board(B1),addr(1))=Io(board(B0),cost(5)),Ganymede(board(B0)),Europa(board(B1))
+(0,0):Europa(board(B0),addr(0))=Europa(board(B1),cost(5)),Io(board(B0))
+(0,1):Europa(board(B1),addr(1))=Europa(board(B0),cost(5)),Callisto(board(B0)),
+ → Io(board(B1))
+(0,0):Ganymede(board(B0),addr(0))=Ganymede(board(B1),cost(5)),Callisto(board(B0)),
+ → Io(board(B1))
+(0,1):Ganymede(board(B1),addr(1))=Ganymede(board(B0),cost(5)),Callisto(board(B1))
+(0,0):Callisto(board(B0),addr(0))=Callisto(board(B1),cost(5)),Ganymede(board(B0)),
+ → Europa(board(B1))
+(0,1):Callisto(board(B1),addr(1))=Callisto(board(B0),cost(5)),Ganymede(board(B1))
+
+// Default edge cost, if not defined in the topology explicitly.
++board_board_cost=20
+```
+
+Notes:
+
+ - Figure 7 shows the graph of the boards described by this example, along with
+   their containing boxes.
+
+ - The line `(0,0):Io(addr(00),boards(Board0,Board1))` in the `[engine_box]`
+   section defines a box:
+
+   - named `Io`,
+
+   - at position `(0,0)` in the engine co-ordinate system[^positioning]. The
+     position can be omitted, in which case the line would be
+     `Io(addr(00),boards(B0,B1))`,
+
+   - with box address component `00`, and
+
+   - containing boards named `B0` and `B1`.
+
+   In order for this file to be valid, there must be definitions for the boards
+   `Io(board(B0))` and `Io(board(B1))` in the `[engine_board]` section.
+
+[^positioning]: The position is ignored by the Orchestrator, but may be useful
+to visualisation tools.
+
+ - The line
+   `(0,0):Io(board(B0),addr(0))=Io(board(B1),cost(5)),Europa(board(B0))`
+   in the `[engine_board]` section defines a board:
+
+   - named `B0` in box `Io` (boards can have the same names across boxes,
+     but not within a box),
+
+   - at position `(0,0)` in the box co-ordinate system,
+
+   - with board-address component `0`, and
+
+   - is connected to the boards `Io(board(B1))` and `Europa(board(B0))`,
+     whose edges have communication costs 5 and 20 respectively.
+
+   In order for this file to be valid, there must also be lines in this section
+   defining a `Io(board(B1))` board with a 5-weight edge to
+   `Io(board(B0))`, and a `Europa(board(B0))` board with a 20-weight edge
+   to `Io(board(B0))`.
+
+ - Address components must be defined, and must not exceed the appropriate
+   length defined in the `[packet_address_format]` section. The exception to
+   this is when the length in the `[packet_address_format]` section is zero; in
+   which case only one item exists, and there must be no address component. The
+   Coleridge example in Appendix C demonstrates this on the box level.
+
+ - The graph of mailboxes mailboxes in a board is defined similarly to the
+   graph of boards in the engine, as demonstrated by the Coleridge example in
+   Appendix C.
+
+ - When edge weights are not defined explicitly in a graph, as with the line\
+   `(0,0):Io(board(B0),addr(0))=Io(board(B1),cost(5)),Europa(board(B0))`, the
+   value defined in `board_board_cost` is used (20 in this case). `X_X_cost` is
+   used in the general case, where `X` is the level of the contained items.
+
+ - Boxes, boards, and mailboxes can have any name as long as they match the
+   regular expression `[a-zA-Z0-9]{2,32}`, and are unique within the item that
+   contains them.
+
+ - As with dialect 1, multidimensional addresses are supported. Example box
+   declaration: `(0,0):Io(addr(00,01),boards(B0,B1))`.
+
+ - If, on a given level of the hierarchy, there is only one item with no
+   connections to items on its level, the assignment operator `=` can be
+   omitted. In this case, the declaration becomes `(0,0):Io()`, or for boards,
+   `(0,0):Io(board(B0))`. Note that the address component is omitted because
+   there is only one item on the level.
+
+ - Different boxes can contain different quantities of boards.
+
+![Weighted graph of boards described by the dialect 2 example, where each board
+(red) is contained in a box (blue). All boxes and all boards are of the same
+"type" (see the Dialect 3 Section for information on
+types).](images/dialect_2.pdf)
+
+Appendix C contains a complete dialect 2 example file representing Coleridge.
+
+## Dialect 3 (Fully-Heterogeneous)
+Dialect 3 extends dialect 2 by supporting heterogeneity across levels of the
+hierarchy, so that each box can have different properties from other boxes, and
+each board can be different from each other board, and so on. Dialect 3
+maintains support for the weighted graph topology introduced in dialect 2, and
+extends it to support section types, to model "hardware types". By way of
+example, two boards with the same type will have the same constituents and
+topology (quantity and configuration) of mailboxes and packet costs associated
+with them, whereas two boards of different types may not. Here are example
+`[engine_box]` and `[engine_board]` sections for dialect 3, where the `→`
+character denotes a line continuation:
+
+```
+[engine_box]
+// Define four boxes with three different types. Note that each box
+// contains two boards, apart from one box which contains one board.
+(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1))
+(1,0):Europa(addr(10),type(TYPEc92e3bc1),boards(B0))
+(0,1):Ganymede(addr(01),type(TYPEdcecd67b),boards(B0,B1))
+(1,1):Callisto(addr(11),type(TYPEdcecd67b),boards(B0,B1))
++external_box_cost=50
+
+[engine_board]
+// Boards are connected in a grid, kind-of:
+(0,0):Io(board(B0),addr(0),type(TYPEd7aefac5))=Io(board(B1),cost(5)),Europa(board(B0))
+(0,1):Io(board(B1),addr(1),type(TYPEd7aefac5))=Io(board(B0),cost(5)),Ganymede(board(B0))
+(0,0):Europa(board(B0),addr(0),type(TYPEb443a014))=Io(board(B0)),Callisto(board(B0))
+(0,0):Ganymede(board(B0),addr(0),type(TYPEd7aefac5))=Ganymede(board(B1),cost(5)),
+ → Callisto(board(B0)),Io(board(B1))
+(0,1):Ganymede(board(B1),addr(1),type(TYPEd7aefac5))=Ganymede(board(B0),cost(5)),
+ → Callisto(board(B1))
+(0,0):Callisto(board(B0),addr(0),type(TYPEd7aefac5))=Callisto(board(B1),cost(5)),
+ → Ganymede(board(B0)),Europa(board(B0))
+(0,1):Callisto(board(B1),addr(1),type(TYPEb443a014))=Callisto(board(B0),cost(5)),
+ → Ganymede(board(B1))
++board_board_cost=20
+
+// These sections and their contents must be defined.
+[box(TYPEef752a19)]
+... // Truncation
+[box(TYPEc92e3bc1)]
+...
+[box(TYPEdcecd67b)]
+...
+[board(TYPEd7aefac5)]
+...
+[board(TYPEb443a014)]
+...
+```
+
+Notes:
+
+ - Figure 8 shows the graph of the boards described by this example, along with
+   their containing boxes, where each colour of box and each colour of board
+   denotes an item of a certain type. Every item must have a type.
+
+ - The line `(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1))` in the
+   `[engine_box]` section defines a box:
+
+   - named `Io`, as with dialect 2,
+
+   - at position `(0,0)` in the engine co-ordinate system, as with dialect 2,
+
+   - with box address component `00`, as with dialect 2 (multidimensional
+     addresses are supported in the same way),
+
+   - with type `TYPEef752a19`, and
+
+   - containing boards named `B0` and `B1`.
+
+   In order for this file to be valid, there must be definitions for the boards
+   `Io(board(B0))` and `Io(board(B1))` in the `[engine_board]` section, and a
+   `[box(TYPEef752a19)]` section must exist, which will define the properties
+   of boxes of this type.
+
+ - The line
+   `(0,0):Io(board(B0),addr(0),type(TYPEd7aefac5))=Io(board(B1),cost(5)),Europa(`
+   `→board(B0))` in the `[engine_board]` section defines a board:
+
+   - named `B0` in box `Io`,
+
+   - at position `(0,0)` in the box co-ordinate system,
+
+   - with board-address component `0`,
+
+   - with type `TYPEd7aefac5`, and
+
+   - is connected to the boards `Io(board(B1))` and `Europa(board(B0))`,
+     whose edges have communication costs 5 and 20 respectively.
+
+   In order for this file to be valid, there must also be lines in this section
+   defining a `Io(board(B1))` board with a 5-weight edge to `Io(board(B0))`,
+   and a `Europa(board(B0))` board with a 20-weight edge to `Io(board(B0))`,
+   and a `[board(TYPEd7aefac5)]` section must exist, which will define the
+   properties of boards of this type.
+
+ - The boxes (and boards and mailboxes) and their types can have any name as
+   long as they match the regular expression `[a-zA-Z0-9]{2,32}`, and are
+   unique on a given level of the hierarchy. Types do not have to begin with
+   `TYPE` (it's done here more to emphasise the point). Unlike with dialect 2,
+   the extra level of heterogeneity provided by dialect 3 allows these names
+   and types to be defined by unique identifiers derived from hardware.
+
+Types can also be defined as defaults. The following two blocks are synonyms of
+the previous dialect 3 example given in this section using default type
+definitions:
+
+```
+[engine_box]
+(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1))
+(1,0):Europa(addr(01),type(TYPEc92e3bc1),boards(B0))
+(0,1):Ganymede(addr(10),boards(B0,B1))
+(1,1):Callisto(addr(11),boards(B0,B1))
++type="TYPEdcecd67b"
++external_box_cost=50
+
+[engine_board]
+(0,0):Io(board(B0),addr(0))=Io(board(B1),cost(5)),Europa(board(B0))
+(0,1):Io(board(B1),addr(1))=Io(board(B0),cost(5)),Ganymede(board(B0))
+(0,0):Europa(board(B0),addr(0),type(TYPEb443a014))=Io(board(B0)),Callisto(board(B0))
+(0,0):Ganymede(board(B0),addr(0))=Ganymede(board(B1),cost(5)),Callisto(board(B0)),
+ → Io(board(B1))
+(0,1):Ganymede(board(B1),addr(1))=Ganymede(board(B0),cost(5)),Callisto(board(B1))
+(0,0):Callisto(board(B0),addr(0))=Callisto(board(B1),cost(5)),Ganymede(board(B0)),
+ → Europa(board(B0))
+(0,1):Callisto(board(B1),addr(1),type(TYPEb443a014))=Callisto(board(B0),cost(5)),
+ → Ganymede(board(B1))
++type="TYPEd7aefac5"
++board_board_cost=20
+```
+
+and:
+
+```
+[default_types]
++box_type="TYPEdcecd67b"
++board_type="TYPEd7aefac5"
++mailbox_type="SomeMailboxType" // Doesn't matter for this example,
+                                // and could be omitted.
+[engine_box]
+(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1))
+(1,0):Europa(addr(01),type(TYPEc92e3bc1),boards(B0))
+(0,1):Ganymede(addr(10),boards(B0,B1))
+(1,1):Callisto(addr(11),boards(B0,B1))
++external_box_cost=50
+
+[engine_board]
+(0,0):Io(board(B0),addr(0))=Io(board(B1),cost(5)),Europa(board(B0))
+(0,1):Io(board(B1),addr(1))=Io(board(B0),cost(5)),Ganymede(board(B0))
+(0,0):Europa(board(B0),addr(0),type(TYPEb443a014))=Io(board(B0)),Callisto(board(B0))
+(0,0):Ganymede(board(B0),addr(0))=Ganymede(board(B1),cost(5)),Callisto(board(B0)),
+ → Io(board(B1))
+(0,1):Ganymede(board(B1),addr(1))=Ganymede(board(B0),cost(5)),Callisto(board(B1))
+(0,0):Callisto(board(B0),addr(0))=Callisto(board(B1),cost(5)),Ganymede(board(B0)),
+ → Europa(board(B0))
+(0,1):Callisto(board(B1),addr(1),type(TYPEb443a014))=Callisto(board(B0),cost(5)),
+ → Ganymede(board(B1))
++board_board_cost=20
+```
+
+Notes:
+
+ - The type of an item is defined as follows (all items must have a defined
+   type somewhere):
+
+   - If the type is defined on the same line as that item, that type definition
+     is used.
+
+   - Otherwise, the value for `type` in the section of that item is used, if
+     `type` is defined.
+
+   - Otherwise, the value corresponding to that item in the `default_types`
+     section is used.
+
+ - Values can be defined in the `default_types` section in any order.
+
+![Weighted graph of boards described by the dialect 3 example, where each board
+is contained in a box. The colour of each item denotes its
+type.](images/dialect_3.pdf)
+
+Appendix C contains a complete dialect 3 example file representing Coleridge.
+
+# Appendix C: Coleridge Hardware Input Files (0.3.2)
+The following subsections of this document contain the content of example
+hardware input files that describe Coleridge (an existing POETS Engine) as of
+the datetime in their header sections. These examples are included to
+demonstrate the form of the hardware files; the information contained therein
+is not expected to accurately represent Coleridge in any future state.
+
+## Coleridge in Dialect 1
+
+```
+// A representation of the Coleridge box in Dialect 1.
+[header(Coleridge)]
++author="Mark Vousden"
++dialect=1
++datetime=20181127165846
++version="0.3.2"
++file="dialect_1"
+
+[packet_address_format]
++mailbox=(2,2)
++thread=4
++core=2
++board=(2,2)
++box=0  // There is only one box in Coleridge, and since 2^0 >= 1,
+        // this address component is valid.
+
+[engine]
++boxes=1
++boards=hypercube(2,3)
++external_box_cost=*  // <!> Missing, used for externals.
+
+[box]
++box_board_cost=*  // <!> Missing
++supervisor_memory=10240 // Coleridge has 46GB of RAM, so I'm
+                         // arbitrarily reserving 10GiB here. This
+                         // is measured in MiB.
++board_board_cost=8 // <!> Relative to board::mailbox_mailbox_cost
+
+[board]
++mailboxes=hypercube(4,4)
++board_mailbox_cost=*  // <!> Missing
++supervisor_memory=0
++mailbox_mailbox_cost=1 // <!> Relative to box::board_board_cost
++dram=4096  // MiB, two DDR3 DRAM boards.
+
+[mailbox]
++cores=4
++mailbox_core_cost=*  // <!> Missing
++core_core_cost=*  // <!> Missing
+
+[core]
++threads=16
++instruction_memory=8  // KiB
++data_memory=*  // <!> Missing
++core_thread_cost=*  // <!> Missing
++thread_thread_cost=*  // <!> Missing
+```
+
+## Coleridge in Dialect 2
+
+```
+// A representation of the Coleridge box in Dialect 2
+[header(Coleridge)]
++author="Mark Vousden"
++dialect=2
++datetime=20181127165846
++version="0.3.2"
++file="dialect_2"
+
+[packet_address_format]
++mailbox=(2,2)
++thread=4
++core=2
++board=(2,2)
++box=0  // There is only one box in Coleridge, and since 2^0 >= 1,
+        // this address component is valid.
+
+[engine_box]
+Box(boards(B0,B1,B2,B3,B4,B5))
++external_box_cost=*  // <!> Missing, used for externals.
+
+[engine_board]
+// Layout:
+//
+//   0 -- 1
+//
+//   |    |
+//
+//   2 -- 3
+//
+//   |    |
+//
+//   4 -- 5
+//
+(0,0):Box(board(B0),addr(0,00))=Box(board(B1)),Box(board(B2))
+(1,0):Box(board(B1),addr(1,00))=Box(board(B0)),Box(board(B3))
+(0,1):Box(board(B2),addr(0,01))=Box(board(B0)),Box(board(B3)),Box(board(B4))
+(1,1):Box(board(B3),addr(1,01))=Box(board(B1)),Box(board(B2)),Box(board(B5))
+(0,2):Box(board(B4),addr(0,10))=Box(board(B2)),Box(board(B5))
+(1,2):Box(board(B5),addr(1,10))=Box(board(B3)),Box(board(B4))
++board_board_cost=8 // <!> Relative to board::mailbox_mailbox_cost
+
+[box]
++box_board_cost=*  // <!> Missing
++supervisor_memory=10240 // Coleridge has 46GB of RAM, so I'm
+                         // arbitrarily reserving 10GiB here. This
+                         // is measured in MiB.
+
+[board]
+// Layout:
+//
+//   0 -- 1 -- 2 -- 3
+//
+//   |    |    |    |
+//
+//   4 -- 5 -- 6 -- 7
+//
+//   |    |    |    |
+//
+//   8 -- 9 -- A -- B
+//
+//   |    |    |    |
+//
+//   C -- D -- E -- F
+//
+(0,0):Mbox0(addr(00,00))=Mbox1,Mbox4
+(1,0):Mbox1(addr(01,00))=Mbox0,Mbox2,Mbox5
+(2,0):Mbox2(addr(10,00))=Mbox1,Mbox3,Mbox6
+(3,0):Mbox3(addr(11,00))=Mbox2,Mbox7
+(0,1):Mbox4(addr(00,01))=Mbox0,Mbox5,Mbox8
+(1,1):Mbox5(addr(01,01))=Mbox1,Mbox4,Mbox6,Mbox9
+(2,1):Mbox6(addr(10,01))=Mbox2,Mbox5,Mbox7,MboxA
+(3,1):Mbox7(addr(11,01))=Mbox3,Mbox6,MboxB
+(0,2):Mbox8(addr(00,10))=Mbox4,Mbox9,MboxC
+(1,2):Mbox9(addr(01,10))=Mbox5,Mbox8,MboxA,MboxD
+(2,2):MboxA(addr(10,10))=Mbox6,Mbox9,MboxB,MboxE
+(3,2):MboxB(addr(11,10))=Mbox7,MboxA,MboxF
+(0,3):MboxC(addr(00,11))=Mbox8,MboxD
+(1,3):MboxD(addr(01,11))=Mbox9,MboxC,MboxE
+(2,3):MboxE(addr(10,11))=MboxA,MboxD,MboxF
+(3,3):MboxF(addr(11,11))=MboxB,MboxE
++board_mailbox_cost=*  // <!> Missing
++supervisor_memory=0
++mailbox_mailbox_cost=1 // <!> Relative to box::board_board_cost
++dram=4096  // MiB, two DDR3 DRAM boards.
+
+[mailbox]
++cores=4
++mailbox_core_cost=*  // <!> Missing
++core_core_cost=*  // <!> Missing
+
+[core]
++threads=16
++instruction_memory=8  // KiB
++data_memory=*  // <!> Missing
++core_thread_cost=*  // <!> Missing
++thread_thread_cost=*  // <!> Missing
+```
+
+## Coleridge in Dialect 3
+
+```
+// A representation of the Coleridge box in Dialect 3. Note that,
+// since Coleridge is vertically homogeneous, nothing exciting
+// happens with types here. However, the syntax may still be
+// instructive.
+[header(Coleridge)]
++author="Mark Vousden"
++dialect=3
++datetime=20181127165846
++version="0.3.2"
++file="dialect_3"
+
+[packet_address_format]
++mailbox=(2,2)
++thread=4
++core=2
++board=(2,2)
++box=0  // There is only one box in Coleridge, and since 2^0 >= 1,
+        // this address component is valid.
+
+[default_types]
++box_type="CommonBox"
++board_type="CommonBoard"
++mailbox_type="CommonMbox"
+
+[engine_box]
+Box(boards(B0,B1,B2,B3,B4,B5))
++external_box_cost=*  // <!> Missing, used for externals.
+
+[engine_board]
+// Layout:
+//
+//   0 -- 1
+//
+//   |    |
+//
+//   2 -- 3
+//
+//   |    |
+//
+//   4 -- 5
+//
+(0,0):Box(board(B0),addr(0,00))=Box(board(B1)),Box(board(B2))
+(1,0):Box(board(B1),addr(1,00))=Box(board(B0)),Box(board(B3))
+(0,1):Box(board(B2),addr(0,01))=Box(board(B0)),Box(board(B3)),Box(board(B4))
+(1,1):Box(board(B3),addr(1,01))=Box(board(B1)),Box(board(B2)),Box(board(B5))
+(0,2):Box(board(B4),addr(0,10))=Box(board(B2)),Box(board(B5))
+(1,2):Box(board(B5),addr(1,10))=Box(board(B3)),Box(board(B4))
++board_board_cost=8 // <!> Relative to board::mailbox_mailbox_cost
+
+[box(CommonBox)]
++box_board_cost=*  // <!> Missing
++supervisor_memory=10240  // Coleridge has 46GB of RAM, so I'm
+                         // arbitrarily reserving 10GiB here. This
+                         // is measured in MiB.
+
+[board(CommonBoard)]
+// Layout:
+//
+//   0 -- 1 -- 2 -- 3
+//
+//   |    |    |    |
+//
+//   4 -- 5 -- 6 -- 7
+//
+//   |    |    |    |
+//
+//   8 -- 9 -- A -- B
+//
+//   |    |    |    |
+//
+//   C -- D -- E -- F
+//
+(0,0):Mbox0(addr(00,00))=Mbox1,Mbox4
+(1,0):Mbox1(addr(01,00))=Mbox0,Mbox2,Mbox5
+(2,0):Mbox2(addr(10,00))=Mbox1,Mbox3,Mbox6
+(3,0):Mbox3(addr(11,00))=Mbox2,Mbox7
+(0,1):Mbox4(addr(00,01))=Mbox0,Mbox5,Mbox8
+(1,1):Mbox5(addr(01,01))=Mbox1,Mbox4,Mbox6,Mbox9
+(2,1):Mbox6(addr(10,01))=Mbox2,Mbox5,Mbox7,MboxA
+(3,1):Mbox7(addr(11,01))=Mbox3,Mbox6,MboxB
+(0,2):Mbox8(addr(00,10))=Mbox4,Mbox9,MboxC
+(1,2):Mbox9(addr(01,10))=Mbox5,Mbox8,MboxA,MboxD
+(2,2):MboxA(addr(10,10))=Mbox6,Mbox9,MboxB,MboxE
+(3,2):MboxB(addr(11,10))=Mbox7,MboxA,MboxF
+(0,3):MboxC(addr(00,11))=Mbox8,MboxD
+(1,3):MboxD(addr(01,11))=Mbox9,MboxC,MboxE
+(2,3):MboxE(addr(10,11))=MboxA,MboxD,MboxF
+(3,3):MboxF(addr(11,11))=MboxB,MboxE
++board_mailbox_cost=*  // <!> Missing
++supervisor_memory=0
++mailbox_mailbox_cost=1 // <!> Relative to box::board_board_cost
++dram=4096  // MiB, two DDR3 DRAM boards.
+
+[mailbox(CommonMbox)]
++cores=4
++mailbox_core_cost=*  // <!> Missing
++core_core_cost=*  // <!> Missing
+
+[core]
++threads=16
++instruction_memory=8  // KiB
++data_memory=*  // <!> Missing
++core_thread_cost=*  // <!> Missing
++thread_thread_cost=*  // <!> Missing
+```
+
+# Appendix A: Source definitions
+
+## HardwareFileReader
+`HardwareFileReader` reads hardware description input files. Using the
+information in one of these files, `HardwareFileReader` creates and provisions
+a deployer object, which in turn is used to provision a `P_engine`. This class
+inherits from `JNJ`, and hence `UIF` (both in `Generics`), which
+`HardwareFileReader` uses for file parsing and holding the data from the input
+file.
+
+Members:
+
+ - `bool isFileLoaded`: Is `true` if a hardware file has been loaded by this
+   `HardwareFileReader`, and `false` otherwise. You can't provision a deployer
+   without first loading a file.
+
+ - `std::string loadedFile`: Path to the file loaded, or empty if no file is
+   loaded.
+
+Methods:
+
+ - `HardwareFileReader::HardwareFileReader()`: Constructor, calls
+   `set_uif_error_callback`.
+
+ - `HardwareFileReader::HardwareFileReader(const char* filePath, P_engine*
+   engine)`: Convenience constructor. While also setting the syntax error
+   callback method as described above, this constructor also reads the hardware
+   input file at `filePath`, and uses it to provision `engine`.
+
+ - `void HardwareFileReader::load_file(const char* filePath)`: Given that the
+   file at `filePath` exists, this method reads the file using `UIF`, and
+   generates the `JNJ` data structure. Throws a `HardwareFileNotFoundException`
+   if the file does not exist, or throws a `HardwareSyntaxException` (from
+   `on_syntax_error`) if the input file contains a syntax error. This method
+   does not throw anything in the event of a semantic error.
+
+ - `void HardwareFileReader::populate_hardware_model(P_engine* engine)`: Given
+   that a file has been loaded, this method creates and provisions a deployer,
+   and uses it to populate `engine`. This method performs some semantic
+   validation (using `validate_sections` and `provision_deployer`), throwing a
+   `HardwareSemanticException` if one or more is found.
+
+ - `bool HardwareFileReader::does_file_exist(const char* filePath)`: Returns
+   `true` if a file exists at `filePath`, and `false` otherwise.
+
+ - `void HardwareFileReader::set_uif_error_callback()`: Sets a callback method
+   (`on_syntax_error`) to be called by `UIF` when a syntax error is encountered
+   in an input file.
+
+ - `static void HardwareFileReader::on_syntax_error(void* reader, void*
+   uifInstance, int)`: Throws a `HardwareSyntaxException` using error
+   information from `reader` and `uifInstance` (both of which are normally this
+   `HardwareFileReader`).
+
+ - `bool HardwareFileReader::validate_sections(std::string* errorMessage)`:
+   Validates that each mandatory section exists, and that there are no
+   duplicated sections. Appends any errors found to `errorMessage`. Returns
+   `false` if any errors were found, and `true` otherwise.
+
+ - `bool provision_deployer(Dialect1Deployer* deployer, std::string*
+   errorMessage)`: Provisions `deployer` with the configuration stored in this
+   reader from reading a file through a big nested set of cases. Performs
+   type-checking and simple semantic validation on each field, appending any
+   errors found to `errorMessage`. Returns `false` if any errors were found,
+   and `true` otherwise.
+
+ - `bool is_value_at_node_natural(UIF::Node* recordNode, UIF::Node* valueNode,
+   std::string variable, std::string value, std::string sectionName,
+   std::string* errorMessage)`: Returns `true` if the value at `valueNode` is a
+   natural number (including zero), and `false` otherwise. The other input
+   arguments are used to construct an error message if appropriate, which is
+   appended to `errorMessage`.
+
+ - `bool is_value_at_node_floating(UIF::Node* recordNode, UIF::Node* valueNode,
+   std::string variable, std::string value, std::string sectionName,
+   std::string* errorMessage)`: Returns `true` if the value at `valueNode` is a
+   floating-point number, and `false` otherwise. The other input arguments are
+   used to construct an error message if appropriate, which is appended to
+   `errorMessage`.
+
+ - `bool are_values_at_node_natural(UIF::Node* recordNode, UIF::Node*
+   valueNode, std::string variable, std::string value, std::string sectionName,
+   std::string* errorMessage)`: Returns `true` if the multi-valued node
+   `valueNode` contains only natural numbers (including zero), and `false`
+   otherwise. The other input arguments are used to construct an error message
+   if appropriate, which is appended to `errorMessage`.
+
+ - `void invalid_variable_message(std::string* errorMessage, UIF::Node*
+   recordNode, std::string sectionName, std::string variable)`: Appends a
+   passive-aggressive error message to `errorMessage` explaining that the
+   variable name `variable` in section `sectionName` is not recognised by the
+   reader. `recordNode` is used to obtain the line number for the error
+   message.
+
+No dump method is defined for `HardwareFileReader` objects. It doesn't hold
+much state, and the `JNJ` data structure is better understood by interrogating
+the deployer.
+
+## I haven't written up these source definitions yet <!>
+ - Dialect1Deployer
+ - SimpleDeployer
+ - MultiSimpleDeployer
+ - HardwareIterator
+
+An example dump (`HardwareIterator::Dump()`) of a newly-initialised iterator
+follows.
+
+```
+Engine000.Iterator ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+NameBase dump+++++++++++++++++++++++++++++++
+this           0x7ffe4ec4de10
+Name           Iterator
+Id                    216(0x000000d8)
+Parent         0x7ffe4ec4deb0
+Recursion trap Unset
+Unique id      216
+NameBase id    Name
+ ** No map entries **
+NameBase dump-------------------------------
+
+Current board memory address:     0x000056352e245330
+Current board hardware address:   0
+Current mailbox memory address:   0x000056352e248cd0
+Current mailbox hardware address: 0
+Current core memory address:      0x000056352e2486c0
+Current core hardware address:    0
+Current thread memory address:    0x000056352e248810
+Current thread hardware address:  0
+The board has not changed since "has_board_changed" was last called.
+The mailbox has not changed since "has_mailbox_changed" was last called.
+The core has not changed since "has_core_changed" was last called.
+The thread has not changed since "has_thread_changed" was last called.
+This iterator has not wrapped.
+Engine000.Iterator ------------------------------------------------------------
+```
