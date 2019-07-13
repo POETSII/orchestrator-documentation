@@ -467,16 +467,6 @@ supports the addition of certain features. This section outlines features that
 are planned for addition in future, as well as how their addition will manifest
 in changes to the hardware model.
 
- - *Higher dialect readers*: POETS Engines will have heterogeneities in their
-   structure in future; an Engine may be comprised of multiple boxes with
-   different board layouts for example. The current hardware model
-   implementation supports heterogeneity throughout the data structure (each
-   item is represented by an individual region in memory). However, the current
-   hardware file reading mechanism is limited to homogeneous configurations. An
-   extension to `HardwareFileReader` is planned, to support a variety of
-   dialects of input files, so that heterogeneous systems can be
-   described. These dialects are defined in Appendix B.
-
  - *Incorporate the bridge board in the board graph*: In order for a packet to
    be sent from a normal device (compute device running on a thread in the
    POETS Engine) to a supervisor device, that packet is routed through the
