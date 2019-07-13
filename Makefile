@@ -53,7 +53,7 @@ ALL_TARGETS := $(DOCX_TARGETS) $(PDF_TARGETS)
 all: $(ALL_TARGETS)
 
 clean:
-	$(RM) $(ALL_DOC_TARGETS) $(ALL_IMAGE_TARGETS)
+	$(RM) $(ALL_TARGETS) $(ALL_IMAGE_TARGETS)
 
 # Targets for document types.
 docx: $(DOCX_DOC_TARGETS)
