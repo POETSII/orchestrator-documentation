@@ -36,16 +36,26 @@ digraph G {
         fillcolor="#ffeeee";
         style="filled";
         label="Command-transient objects                  ";
-
         // Purple nodes
         node[color="#440044",
              fillcolor="#ffbeff:#ff7fff"];
 
         HardwareFileParser;
 
+
+        // Decision nodes
+        node[color="#000000",
+             fillcolor="#FFFFFF",
+             margin=0,
+             shape="diamond"];
+
+        DialectDecision [label="Which\ndialect?"];
+
         // Yellow nodes
         node[color="#444400",
-             fillcolor="#ffffbe:#ffff7f"];
+             fillcolor="#ffffbe:#ffff7f",
+             margin=0.05,
+             shape="rect"];
 
         MultiAesopDeployer [label="MultiAesopDeployer\n(n=2)"];
         AesopDeployer;
@@ -68,8 +78,10 @@ digraph G {
     Dialect1Deployer -> Engine [label=" creates and\n populates"];
 
     // Purple edges (file parser)
-    edge[color="#440044"];
-    HardwareFileParser -> Dialect1Deployer [label="creates and\npopulates"];
+    edge[color="#990099"];
+    HardwareFileParser -> DialectDecision;
+    DialectDecision -> Dialect1Deployer [label="D1", constraint="false"];
+    DialectDecision -> Engine [label="D3"];
 
     // Yellow edges (inheritance)
     edge[color="#444400"];
