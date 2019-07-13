@@ -204,7 +204,7 @@ operator can define the model in two ways:
    topology_description.poets` to load the topology described in the file
    `topology_description.poets` (alternative paths can be specified). Root
    first clears and recreates its engine as before, then statically creates a
-   `HardwareFileParser` object, loads the file, uses it to populate a
+   `HardwareFileReader` object, loads the file, uses it to populate a
    statically-created `Dialect1Deployer` object. As before, this deployer
    object then deploys its configuration (which was loaded from the file) to
    the engine owned by Root. See Appendix B for a description of how input
@@ -467,13 +467,13 @@ supports the addition of certain features. This section outlines features that
 are planned for addition in future, as well as how their addition will manifest
 in changes to the hardware model.
 
- - *Higher dialect parsers*: POETS Engines will have heterogeneities in their
+ - *Higher dialect readers*: POETS Engines will have heterogeneities in their
    structure in future; an Engine may be comprised of multiple boxes with
    different board layouts for example. The current hardware model
    implementation supports heterogeneity throughout the data structure (each
    item is represented by an individual region in memory). However, the current
    hardware file reading mechanism is limited to homogeneous configurations. An
-   extension to `HardwareFileParser` is planned, to support a variety of
+   extension to `HardwareFileReader` is planned, to support a variety of
    dialects of input files, so that heterogeneous systems can be
    described. These dialects are defined in Appendix B.
 
@@ -703,7 +703,7 @@ NameBase dump-------------------------------
 
 Author: Mark Vousden
 Configuration datetime (YYYYMMDDHHmmss): 201901101712
-Written for parser version: 0.3.1
+Written for file reader version: 0.3.1
 Read from file: SimpleDeployer.cpp
 Board connectivity ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Pdigraph topological dump ===================================++++++++++++++++++++
@@ -1681,18 +1681,18 @@ Methods:
 No dump method is defined for `AddressableItem` objects; each object that
 inherits from `AddressableItem` defines its own `Dump` method.
 
-## HardwareFileParser
-`HardwareFileParser` reads hardware description input files. Using the
-information in one of these files, `HardwareFileParser` creates and provisions
+## HardwareFileReader
+`HardwareFileReader` reads hardware description input files. Using the
+information in one of these files, `HardwareFileReader` creates and provisions
 a deployer object, which in turn is used to provision a `P_engine`. This class
 inherits from `JNJ`, and hence `UIF` (both in `Generics`), which
-`HardwareFileParser` uses for file parsing and holding the data from the input
+`HardwareFileReader` uses for file parsing and holding the data from the input
 file.
 
 Members:
 
  - `bool isFileLoaded`: Is `true` if a hardware file has been loaded by this
-   `HardwareFileParser`, and `false` otherwise. You can't provision a deployer
+   `HardwareFileReader`, and `false` otherwise. You can't provision a deployer
    without first loading a file.
 
  - `std::string loadedFile`: Path to the file loaded, or empty if no file is
@@ -1700,47 +1700,47 @@ Members:
 
 Methods:
 
- - `HardwareFileParser::HardwareFileParser()`: Constructor, calls
+ - `HardwareFileReader::HardwareFileReader()`: Constructor, calls
    `set_uif_error_callback`.
 
- - `HardwareFileParser::HardwareFileParser(const char* filePath, P_engine*
+ - `HardwareFileReader::HardwareFileReader(const char* filePath, P_engine*
    engine)`: Convenience constructor. While also setting the syntax error
    callback method as described above, this constructor also reads the hardware
    input file at `filePath`, and uses it to provision `engine`.
 
- - `void HardwareFileParser::load_file(const char* filePath)`: Given that the
+ - `void HardwareFileReader::load_file(const char* filePath)`: Given that the
    file at `filePath` exists, this method reads the file using `UIF`, and
    generates the `JNJ` data structure. Throws a `HardwareFileNotFoundException`
    if the file does not exist, or throws a `HardwareSyntaxException` (from
    `on_syntax_error`) if the input file contains a syntax error. This method
    does not throw anything in the event of a semantic error.
 
- - `void HardwareFileParser::populate_hardware_model(P_engine* engine)`: Given
+ - `void HardwareFileReader::populate_hardware_model(P_engine* engine)`: Given
    that a file has been loaded, this method creates and provisions a deployer,
    and uses it to populate `engine`. This method performs some semantic
    validation (using `validate_sections` and `provision_deployer`), throwing a
    `HardwareSemanticException` if one or more is found.
 
- - `bool HardwareFileParser::does_file_exist(const char* filePath)`: Returns
+ - `bool HardwareFileReader::does_file_exist(const char* filePath)`: Returns
    `true` if a file exists at `filePath`, and `false` otherwise.
 
- - `void HardwareFileParser::set_uif_error_callback()`: Sets a callback method
+ - `void HardwareFileReader::set_uif_error_callback()`: Sets a callback method
    (`on_syntax_error`) to be called by `UIF` when a syntax error is encountered
    in an input file.
 
- - `static void HardwareFileParser::on_syntax_error(void* parser, void*
+ - `static void HardwareFileReader::on_syntax_error(void* reader, void*
    uifInstance, int)`: Throws a `HardwareSyntaxException` using error
-   information from `parser` and `uifInstance` (both of which are normally this
-   `HardwareFileParser`).
+   information from `reader` and `uifInstance` (both of which are normally this
+   `HardwareFileReader`).
 
- - `bool HardwareFileParser::validate_sections(std::string* errorMessage)`:
+ - `bool HardwareFileReader::validate_sections(std::string* errorMessage)`:
    Validates that each mandatory section exists, and that there are no
    duplicated sections. Appends any errors found to `errorMessage`. Returns
    `false` if any errors were found, and `true` otherwise.
 
  - `bool provision_deployer(Dialect1Deployer* deployer, std::string*
    errorMessage)`: Provisions `deployer` with the configuration stored in this
-   parser from reading a file through a big nested set of cases. Performs
+   reader from reading a file through a big nested set of cases. Performs
    type-checking and simple semantic validation on each field, appending any
    errors found to `errorMessage`. Returns `false` if any errors were found,
    and `true` otherwise.
@@ -1770,10 +1770,10 @@ Methods:
    recordNode, std::string sectionName, std::string variable)`: Appends a
    passive-aggressive error message to `errorMessage` explaining that the
    variable name `variable` in section `sectionName` is not recognised by the
-   parser. `recordNode` is used to obtain the line number for the error
+   reader. `recordNode` is used to obtain the line number for the error
    message.
 
-No dump method is defined for `HardwareFileParser` objects. It doesn't hold
+No dump method is defined for `HardwareFileReader` objects. It doesn't hold
 much state, and the `JNJ` data structure is better understood by interrogating
 the deployer.
 
@@ -1861,7 +1861,7 @@ All dialects support a comment syntax:
 ```
 // All dialects support this comment syntax, where all text after
 // two consecutive forward slash symbols (//) on a line must be
-// ignored by the parser. Comments cannot be escaped. I'll be using
+// ignored by the reader. Comments cannot be escaped. I'll be using
 // comments throughout these snippets, appropriately, to describe
 // implementation details and intentions.
 
