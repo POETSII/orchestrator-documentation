@@ -9,33 +9,23 @@ supplemented by a reference definition in Appendix A.
 
 Figure 1 shows the variety of ways in which the hardware model can be
 populated. This document is describes the `HardwareFileReader` pathway,
-triggered by `task /load`. Hardware description files come in a variety of
-dialects in increasing complexity (see the Input File Format section). Dialect
-1 files provision a `Dialect1Deployer` (described in the hardware model
-documentation), whereas Dialect 3 files provision the engine `OrchBase->pE`
-directly.
+triggered by `task /load`.
 
-![Hardware model interaction diagram. The operator interacts with the hardware
-model (Engine, `OrchBase->pE`) through topology commands. Certain commands
-(`/set1`, `/set2`, and `/load`) statically create one or more intermediate
-objects, which are used to define the Engine. None of these command-transient
-objects persist after the command has completed. Other commands (`/dump`,
-`/clear`) interact directly with the Engine in some
-way.](images/interaction_diagram.pdf)
+![Hardware model interaction diagram. The operator loads a file using `topology
+\load`. Dialect 1 files provision a Dialect1Deployer, which create and populate
+ an Engine. Dialect 3 files are used to provision an Engine
+directly. Dialect 2 files are not supported.](images/interaction_diagram.pdf)
 
-# Input File Format (0.3.2)
+# Input File Format (0.4.0)
 This section defines the file format used by the Orchestrator to define its
-internal model of the POETS Engine.
-
-The input files satisfy the general "Universal Interface Format" (UIF) file
-format[^uifdocs]. The format supports three dialects, which define the POETS
-Engine on different levels of granularity. The complete Orchestrator will be
-able to parse a file defined using any one of these three dialects. When the
-Orchestrator completes a "discovery" operation or when it otherwise dumps a
-machine-readable output of its model of the POETS Engine, that dump will be
-given in the most precise dialect version (dialect 3). This Appendix defines
-attributes that are common to all dialects in the Common Attributes Section,
-then defines:
+internal model of the POETS Engine. The input files satisfy the general
+"Universal Interface Format" (UIF) file format[^uifdocs]. The format supports
+three dialects, which define the POETS Engine on different levels of
+granularity. When the Orchestrator dumps a machine-readable output of its model
+of the POETS Engine as part of the discovery process (once it is implemented),
+that dump will be given in the most precise dialect version (dialect 3). This
+Appendix defines attributes that are common to all dialects in the Common
+Attributes Section, then defines:
 
 [^uifdocs]: The UIF documentation can be found in the Orchestrator repository,
     in the `Generics` directory.
@@ -48,7 +38,8 @@ then defines:
    level to vary ("horizontally heterogeneous"). For example, boxes can contain
    different numbers of boards, but must have the same properties
    otherwise. Topology is also explicitly defined in this dialect, but is
-   constant at each level of the hierarchy.
+   constant at each level of the hierarchy. This dialect is not currently
+   supported by the Orchestrator.
 
  - Dialect 3, which is as dialect 2, but allows items within a level to vary
    using a type mechanism ("fully heterogeneous"), so that they can hold
@@ -64,7 +55,6 @@ Input files must be ASCII encoded.
 
 ### Comment Syntax
 All dialects support a comment syntax:
-
 ```
 // All dialects support this comment syntax, where all text after
 // two consecutive forward slash symbols (//) on a line must be
@@ -85,8 +75,8 @@ appear in any order, but must be unique within a file. All files must contain a
 +author="Mark Vousden"
 +dialect=1
 +datetime=20181008130324  // YYYYMMDDhhmmss
-+version="0.3.2"
-+file="my_first_example.txt"
++version="0.4.0"
++file="my_first_example.uif"
 ```
 
 Points to note:
@@ -139,7 +129,6 @@ section, for example:
 +thread=4
 +core=2
 +board=4
-+box=2
 ```
 
 Points to note:
@@ -149,8 +138,6 @@ Points to note:
 
    - `board`: The number of bits dedicated to defining the board-component of
      the address in the address word. Must be a positive integer.
-
-   - `box`: As with `board`, but for boxes.
 
    - `core`: As with `board`, but for cores.
 
@@ -162,7 +149,7 @@ Points to note:
    the first (LSB) four bits define the thread address, the next two bits
    define the core address, the next eight bits define the mailbox address, the
    next four bits define the board address, and the next two bits define the
-   box address, resulting in a $4+2+8+4+2=20$ bit word.
+   box address, resulting in a $4+8+4+2=18$ bit word.
 
  - In order for the Orchestrator to generate a POETS Engine file during the
    discovery process, it will need to query the hardware to identify the format
@@ -179,8 +166,7 @@ different address words. To support such "multidimensional" words, the
 
 ```
 [packet_address_format]
-+box=2  // The order of variable definitions within the section does
-        // not matter.
+// The order variable definitions in a section does not matter.
 +mailbox=(2,2,2)  // Three dimensions (can be one or more dimensions)
 +thread=4  // Must be one-dimensional, always.
 +core=2  // Must be one-dimensional, always.
@@ -190,9 +176,8 @@ different address words. To support such "multidimensional" words, the
 Here, the address again defined as a binary word, where the first (LSB) four
 bits define the thread address, the next two bits define the core address, the
 next six bits define the mailbox address (two in each of the three dimensions),
-the next eight bits define the board address (four in each of the two
-dimensions), and the next two bits define the box address, resulting in a
-$4+2+(2\times3)+(4\times2)+2+2=24$ bit word.
+and the next eight bits define the board address (four in each of the two
+dimensions)resulting in a $4+2+(2\times3)+(4\times2)+2=22$ bit word.
 
 ## Dialect 1 (Homogeneous)
 This dialect allows the writer to elegantly define the components of the POETS
@@ -215,14 +200,13 @@ A defining example follows:
 +author="Mark Vousden"
 +dialect=1
 +datetime=20181008130324
-+version="0.3.2"
++version="0.4.0"
 
 [packet_address_format]
 +mailbox=(4,4)
 +thread=4
 +core=2
 +board=4
-+box=2
 
 [engine]
 // Number of boxes in this POETS Engine. Positive integer.
@@ -335,9 +319,9 @@ and $\mathbf{y}\cdot\mathbf{\hat{e}}_m\le
 2^{\mathbf{x}\cdot\mathbf{\hat{e}}_m}$ for each unit basis vector
 $\mathbf{\hat{e}}_m$.
 
-Appendix C contains a complete dialect 1 example file representing Coleridge.
+Appendix A contains a complete dialect 1 example file representing Coleridge.
 
-## Dialect 2 (Horizontally-Heterogeneous)
+## Dialect 2 (Horizontally-Heterogeneous, not supported)
 Dialect 2 extends dialect 1 by supporting heterogeneity on each level of the
 hierarchy. While each box must still be the same as each other box (and each
 board the same as each other board, and so on), dialect 2 allows the writer to
@@ -444,13 +428,12 @@ to visualisation tools.
 
  - Address components must be defined, and must not exceed the appropriate
    length defined in the `[packet_address_format]` section. The exception to
-   this is when the length in the `[packet_address_format]` section is zero; in
-   which case only one item exists, and there must be no address component. The
-   Coleridge example in Appendix C demonstrates this on the box level.
+   this is in boxes, which are not constrained by format (and are not actually
+   used in the current iteration of Tinsel).
 
  - The graph of mailboxes mailboxes in a board is defined similarly to the
    graph of boards in the engine, as demonstrated by the Coleridge example in
-   Appendix C.
+   Appendix A.
 
  - When edge weights are not defined explicitly in a graph, as with the line\
    `(0,0):Io(board(B0),addr(0))=Io(board(B1),cost(5)),Europa(board(B0))`, the
@@ -464,12 +447,6 @@ to visualisation tools.
  - As with dialect 1, multidimensional addresses are supported. Example box
    declaration: `(0,0):Io(addr(00,01),boards(B0,B1))`.
 
- - If, on a given level of the hierarchy, there is only one item with no
-   connections to items on its level, the assignment operator `=` can be
-   omitted. In this case, the declaration becomes `(0,0):Io()`, or for boards,
-   `(0,0):Io(board(B0))`. Note that the address component is omitted because
-   there is only one item on the level.
-
  - Different boxes can contain different quantities of boards.
 
 ![Weighted graph of boards described by the dialect 2 example, where each board
@@ -477,19 +454,19 @@ to visualisation tools.
 "type" (see the Dialect 3 Section for information on
 types).](images/dialect_2.pdf)
 
-Appendix C contains a complete dialect 2 example file representing Coleridge.
+Appendix A contains a complete dialect 2 example file representing Coleridge.
 
 ## Dialect 3 (Fully-Heterogeneous)
-Dialect 3 extends dialect 2 by supporting heterogeneity across levels of the
-hierarchy, so that each box can have different properties from other boxes, and
-each board can be different from each other board, and so on. Dialect 3
-maintains support for the weighted graph topology introduced in dialect 2, and
-extends it to support section types, to model "hardware types". By way of
-example, two boards with the same type will have the same constituents and
-topology (quantity and configuration) of mailboxes and packet costs associated
-with them, whereas two boards of different types may not. Here are example
-`[engine_box]` and `[engine_board]` sections for dialect 3, where the `→`
-character denotes a line continuation:
+Dialect 3 supports heterogeneity across levels of the hierarchy, so that each
+box can have different properties from other boxes, and each board can be
+different from each other board, and so on. Dialect 3 maintains support for the
+weighted graph topology introduced in dialect 2, and extends it to support
+section types, to model "hardware types". By way of example, two boards with
+the same type will have the same constituents and topology (quantity and
+configuration) of mailboxes and packet costs associated with them, whereas two
+boards of different types may not. Here are example `[engine_box]` and
+`[engine_board]` sections for dialect 3, where the `→` character denotes a line
+continuation:
 
 ```
 [engine_box]
@@ -659,9 +636,9 @@ Notes:
 is contained in a box. The colour of each item denotes its
 type.](images/dialect_3.pdf)
 
-Appendix C contains a complete dialect 3 example file representing Coleridge.
+Appendix A contains a complete dialect 3 example file representing Coleridge.
 
-# Appendix C: Coleridge Hardware Input Files (0.3.2)
+# Appendix A: Coleridge Hardware Input Files (0.4.0)
 The following subsections of this document contain the content of example
 hardware input files that describe Coleridge (an existing POETS Engine) as of
 the datetime in their header sections. These examples are included to
@@ -675,8 +652,8 @@ is not expected to accurately represent Coleridge in any future state.
 [header(Coleridge)]
 +author="Mark Vousden"
 +dialect=1
-+datetime=20181127165846
-+version="0.3.2"
++datetime=20190715115101
++version="0.4.0"
 +file="dialect_1"
 
 [packet_address_format]
@@ -684,8 +661,6 @@ is not expected to accurately represent Coleridge in any future state.
 +thread=4
 +core=2
 +board=(2,2)
-+box=0  // There is only one box in Coleridge, and since 2^0 >= 1,
-        // this address component is valid.
 
 [engine]
 +boxes=1
@@ -726,8 +701,8 @@ is not expected to accurately represent Coleridge in any future state.
 [header(Coleridge)]
 +author="Mark Vousden"
 +dialect=2
-+datetime=20181127165846
-+version="0.3.2"
++datetime=20190715115101
++version="0.4.0"
 +file="dialect_2"
 
 [packet_address_format]
@@ -735,11 +710,9 @@ is not expected to accurately represent Coleridge in any future state.
 +thread=4
 +core=2
 +board=(2,2)
-+box=0  // There is only one box in Coleridge, and since 2^0 >= 1,
-        // this address component is valid.
 
 [engine_box]
-Box(boards(B0,B1,B2,B3,B4,B5))
+Box(addr(0),boards(B0,B1,B2,B3,B4,B5))
 +external_box_cost=*  // <!> Missing, used for externals.
 
 [engine_board]
@@ -830,8 +803,8 @@ Box(boards(B0,B1,B2,B3,B4,B5))
 [header(Coleridge)]
 +author="Mark Vousden"
 +dialect=3
-+datetime=20181127165846
-+version="0.3.2"
++datetime=20190715115101
++version="0.4.0"
 +file="dialect_3"
 
 [packet_address_format]
@@ -839,8 +812,6 @@ Box(boards(B0,B1,B2,B3,B4,B5))
 +thread=4
 +core=2
 +board=(2,2)
-+box=0  // There is only one box in Coleridge, and since 2^0 >= 1,
-        // this address component is valid.
 
 [default_types]
 +box_type="CommonBox"
@@ -848,7 +819,7 @@ Box(boards(B0,B1,B2,B3,B4,B5))
 +mailbox_type="CommonMbox"
 
 [engine_box]
-Box(boards(B0,B1,B2,B3,B4,B5))
+Box(addr(0),boards(B0,B1,B2,B3,B4,B5))
 +external_box_cost=*  // <!> Missing, used for externals.
 
 [engine_board]
