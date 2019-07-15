@@ -286,33 +286,47 @@ examples which are suitable for a first look.
 
 # Addressing Hardware
 In addition to representing physical hardware, the Orchestrator needs to
-understand how the Tinsel communicates with items on the hardware stack. Tinsel
-addresses threads using the following hierarchical address
-scheme:[^tinseladdress]
-
-[^tinseladdress]: This may not reflect current Tinsel functionality. It is only
-    included here to demonstrate that some translation has to occur between the
-    Tinsel address and the Hardware address in the Orchestrator.
+understand how the Tinsel communicates with items on the hardware
+stack. Hardware threads are addressed using 32-bit binary strings. Tinsel
+addresses threads using the following hierarchical address scheme (MSB-first):
 
 $$T_{\mathrm{BOARD,Y}}\cdot T_{\mathrm{BOARD,X}}\cdot T_{\mathrm{CORE}}\cdot
 T_{\mathrm{THREAD}}$$
 
-where the address is a 32-element bit array, $T$ represents a component of the
-Tinsel hardware address, and "$\cdot$" represents concatenation. The
-Orchestrator generalizes this concept of an address to:
+where $T$ represents a component of the Tinsel hardware address, and "$\cdot$"
+represents concatenation. The Orchestrator generalizes this concept of an
+address to:
 
-$$C_{\mathrm{BOX}}\cdot C_{\mathrm{BOARD}}\cdot C_{\mathrm{MAILBOX}}\cdot
-C_{\mathrm{CORE}}\cdot C_{\mathrm{THREAD}}$$
+$$C_{\mathrm{BOARD}}\cdot C_{\mathrm{MAILBOX}}\cdot C_{\mathrm{CORE}}
+\cdot C_{\mathrm{THREAD}}$$
 
-which is again a 32-element bit array, and where $C$ represents a component of
-the hardware address in the Orchestrator. A Tinsel 32-bit address is identical
-to the 32-bit address held in the Orchestrator's representation. Each component
-has a fixed width $W$ for the lifetime of the Orchestrator
+where $C$ represents a component of the hardware address in the Orchestrator. A
+Tinsel 32-bit address is identical to the 32-bit address held in the
+Orchestrator's representation. These components map as follows:
+
++-----------------------------------------------+--------------------------------------------------+
+| Orchestrator                                  | Tinsel                                           |
++===============================================+==================================================+
+| $C_{\mathrm{BOARD}}$                          | $T_{\mathrm{BOARD,X}}\cdot T_{\mathrm{BOARD,Y}}$ |
++-----------------------------------------------+--------------------------------------------------+
+| $C_{\mathrm{MAILBOX}}\cdot C_{\mathrm{CORE}}$ | $T_{\mathrm{CORE}}$                              |
++-----------------------------------------------+--------------------------------------------------+
+| $C_{\mathrm{THREAD}}$                         | $T_{\mathrm{THREAD}}$                            |
++-----------------------------------------------+--------------------------------------------------+
+
+Each component $C$ has a fixed width $W$ for the lifetime of the Orchestrator
 (e.g. $W_{\mathrm{MAILBOX}}$), and is buffered by zeroes so that each component
 does not overrun into any other component. By way of example, the source name
 of component $C_{\mathrm{BOX}}$ is `HardwareAddress::boxComponent`, and the
 source name of the width $W_{\mathrm{MAILBOX}}$ is
-`HardwareAddressFormat::mailboxWordLength`.
+`HardwareAddressFormat::mailboxWordLength`. If the sum of the widths of the
+address is less than 32, the address is MSB-zero-padded to create a binary
+string that is exactly 32 bits.
+
+The Orchestrator hardware address also supports a fifth component,
+$C_\mathrm{BOX}$, which is currently unused. It can be set, but nothing
+presently reads it. This component can be enabled at compile time (see the
+source definition for `HardwareAddress` in Appendix A).
 
 Figure 2 shows the class structure of how components of the hardware model
 interact with the addressing system. Each item in the Engine hierarchy (apart
