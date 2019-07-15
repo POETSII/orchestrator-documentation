@@ -1390,7 +1390,10 @@ P_port O_._3987 ---------------------------------------------------------------
 box, or a board, etc.) in the Engine hierarchy. The `HardwareAddress` stores
 the components of the addresses as defined in the Addressing Hardware section,
 as well as information on which components have been defined, and how to
-produce the address as a 32-bit unsigned.
+produce the address as a 32-bit unsigned. The preprocessor-directive,
+`IGNORE_BOX_COMPONENT`, is set in the header that holds this class declaration,
+which controls whether the box component of the address is validated when
+input, and whether it contributes to the output `uint32_t` hardware address.
 
 Note that `HardwareAddressInt` is a `uint32_t`, like `AddressComponent`.
 
