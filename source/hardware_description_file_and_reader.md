@@ -359,10 +359,10 @@ dialect 2, where the `→` character denotes a line continuation:
 ```
 [engine_box]
 // Define four boxes, each with two boards:
-(0,0):Io(addr(00),boards(B0,B1))
-(1,0):Europa(addr(10),boards(B0,B1))
-(0,1):Ganymede(addr(01),boards(B0,B1))
-(1,1):Callisto(addr(11),boards(B0,B1))
+(0,0):Io(addr(00),boards(B0,B1),hostname(io))
+(1,0):Europa(addr(10),boards(B0,B1),hostname(europa))
+(0,1):Ganymede(addr(01),boards(B0,B1),hostname(ganymede))
+(1,1):Callisto(addr(11),boards(B0,B1),hostname(callisto))
 +external_box_cost=50
 
 [engine_board]
@@ -388,14 +388,16 @@ Notes:
  - Figure 7 shows the graph of the boards described by this example, along with
    their containing boxes.
 
- - The line `(0,0):Io(addr(00),boards(Board0,Board1))` in the `[engine_box]`
-   section defines a box:
+ - The line `(0,0):Io(addr(00),boards(Board0,Board1),hostname(io))` in the
+   `[engine_box]` section defines a box:
 
    - named `Io`,
 
+   - with MPI name `io` (the hostname directive is optional),
+
    - at position `(0,0)` in the engine co-ordinate system[^positioning]. The
      position can be omitted, in which case the line would be
-     `Io(addr(00),boards(B0,B1))`,
+     `Io(addr(00),boards(B0,B1),hostname(io))`,
 
    - with box address component `00`, and
 
@@ -472,10 +474,10 @@ continuation:
 [engine_box]
 // Define four boxes with three different types. Note that each box
 // contains two boards, apart from one box which contains one board.
-(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1))
-(1,0):Europa(addr(10),type(TYPEc92e3bc1),boards(B0))
-(0,1):Ganymede(addr(01),type(TYPEdcecd67b),boards(B0,B1))
-(1,1):Callisto(addr(11),type(TYPEdcecd67b),boards(B0,B1))
+(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1),hostname(io))
+(1,0):Europa(addr(10),type(TYPEc92e3bc1),boards(B0),hostname(europa))
+(0,1):Ganymede(addr(01),type(TYPEdcecd67b),boards(B0,B1),hostname(ganymede))
+(1,1):Callisto(addr(11),type(TYPEdcecd67b),boards(B0,B1),hostname(callisto))
 +external_box_cost=50
 
 [engine_board]
@@ -512,10 +514,13 @@ Notes:
    their containing boxes, where each colour of box and each colour of board
    denotes an item of a certain type. Every item must have a type.
 
- - The line `(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1))` in the
-   `[engine_box]` section defines a box:
+ - The line `(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1),hostname(io))`
+   in the `[engine_box]` section defines a box:
 
    - named `Io`, as with dialect 2,
+
+   - with MPI name `io` (the hostname directive is optional), as with dialect
+     2,
 
    - at position `(0,0)` in the engine co-ordinate system, as with dialect 2,
 
@@ -565,10 +570,10 @@ definitions:
 
 ```
 [engine_box]
-(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1))
-(1,0):Europa(addr(01),type(TYPEc92e3bc1),boards(B0))
-(0,1):Ganymede(addr(10),boards(B0,B1))
-(1,1):Callisto(addr(11),boards(B0,B1))
+(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1),hostname(io))
+(1,0):Europa(addr(01),type(TYPEc92e3bc1),boards(B0),hostname(europa))
+(0,1):Ganymede(addr(10),boards(B0,B1),hostname(ganymede))
+(1,1):Callisto(addr(11),boards(B0,B1),hostname(callisto))
 +type="TYPEdcecd67b"
 +external_box_cost=50
 
@@ -596,10 +601,10 @@ and:
 +mailbox_type="SomeMailboxType" // Doesn't matter for this example,
                                 // and could be omitted.
 [engine_box]
-(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1))
-(1,0):Europa(addr(01),type(TYPEc92e3bc1),boards(B0))
-(0,1):Ganymede(addr(10),boards(B0,B1))
-(1,1):Callisto(addr(11),boards(B0,B1))
+(0,0):Io(addr(00),type(TYPEef752a19),boards(B0,B1),hostname(io))
+(1,0):Europa(addr(01),type(TYPEc92e3bc1),boards(B0),hostname(europa))
+(0,1):Ganymede(addr(10),boards(B0,B1),hostname(ganymede))
+(1,1):Callisto(addr(11),boards(B0,B1),hostname(callisto))
 +external_box_cost=50
 
 [engine_board]
@@ -712,7 +717,7 @@ is not expected to accurately represent Coleridge in any future state.
 +board=(2,2)
 
 [engine_box]
-Box(addr(0),boards(B0,B1,B2,B3,B4,B5))
+Box(addr(0),boards(B0,B1,B2,B3,B4,B5),hostname(coleridge))
 +external_box_cost=*  // <!> Missing, used for externals.
 
 [engine_board]
@@ -819,7 +824,7 @@ Box(addr(0),boards(B0,B1,B2,B3,B4,B5))
 +mailbox_type="CommonMbox"
 
 [engine_box]
-Box(addr(0),boards(B0,B1,B2,B3,B4,B5))
+Box(addr(0),boards(B0,B1,B2,B3,B4,B5),hostname(coleridge))
 +external_box_cost=*  // <!> Missing, used for externals.
 
 [engine_board]
