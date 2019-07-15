@@ -16,6 +16,113 @@ triggered by `task /load`.
  an Engine. Dialect 3 files are used to provision an Engine
 directly. Dialect 2 files are not supported.](images/interaction_diagram.pdf)
 
+# The Orchestrator's Hardware File Reader
+The `HardwareFileReader` class reads hardware description files, and creates
+and populates a `P_engine` on the heap from the information in the file. It
+inherits from `JNJ`, which is a class that generates parse trees from UIF
+files. A high-level description of the loading procedure follows:
+
+ - The file is loaded, and parsed using the logic in `JNJ`. This generates a
+   parse tree, and performs syntactic validation which will throw a
+   `HardwareSyntaxException` on failure.
+
+ - The parse tree is explored by `HardwareFileReader` logic, which validates
+   the semantics of the input file, defines the `P_engine`, and creates and
+   defines the items in the hardware stack. This semantic validation fails
+   slow, and throws a `HardwareSemanticException` on failure. Detailed design
+   notes for this are available on request, but may be horrendously out of date
+   and arcane to normal humans[^where].
+
+[^where]: If you are MLV, you'll find the notes you are looking for in your
+    repo. If not, talk to MLV.
+
+A minimal, unsafe use of the reader is:
+
+```
+P_engine* engine = new P_engine("My engine");
+reader = HardwareFileReader("/path/to/my/file.uif", engine);
+// You can use your engine now!
+```
+
+This is unsafe because it does not check the result of the parse; if the input
+file contains mistakes, an uncaught exception would be thrown. A better way is:
+
+```
+P_engine* engine = new P_engine("My engine");
+reader = HardwareFileReader;
+try
+{
+    reader.load_file("/path/to/my/file.uif");
+    reader.populate_hardware_model(engine);
+    // You can use your engine now.
+}
+catch (OrchestratorException& exception)
+{
+    printf("%s\n", exception.what())
+    delete engine;
+    // Something went wrong. You can't use your engine.
+}
+```
+
+This logic is used when the operator commands `task /load =
+"/path/to/my/file.uif"`.
+
+## What is not validated
+
+The `HardwareFileReader` will attempt to save you from yourself to a reasonable
+degree, but will not catch every case. Things that are not validated by the
+Dialect 1 validator include:
+
+ - Lines within a section that are simply one word, without the assignment
+   operator (=) or the prefix (+). These are simply ignored.
+
+ - Multidimensional input components are not matched against their respective
+   address word lengths, either using their dimensionality or their value. This
+   will cause an `OrchestratorException` to be thrown by the function
+   that populates address components.
+
+ - Repeatedly-defined values within a section - only the last defined value
+   is used.
+
+ - Probably more, it was developed as a stopgap. Use at your own risk, and
+   prefer Dialect 3 for any serious work.
+
+Things that are not validated by the Dialect 3 validator include:
+
+ - Address components of items. If invalid address components are provided, an
+   `OrchestratorException` will be thrown, exactly like the Dialect 1
+   validator.
+
+ - Invalid properties in item declarations are ignored. For example, you can
+   declare a box with the line `MyBox(octopus,quack(duck),boards(MyBoard))` and
+   the validator will not complain.
+
+ - You can declare many values for item properties, and only the first will be
+   used. For example, you can declare a board with the LHS line
+   `MyBox(board(MyBoard),type(IAm,Not,Very,Decisive))`. This issue affects edge
+   costs and item types, but not item addresses.
+
+ - You can declare duplicate properties for a given item, and only the first
+   will be used. For example, you can declare a mailbox with the LHS line
+   `MyMailbox(type(TYPEa),type(TYPEb))`, and only `TYPEa` will be used. This
+   affects all properties.
+
+ - Probably more, but more care, attention, and time has gone into this
+   validator than the Dialect 1 one.
+
+## Dialect 3 Semantic Parser/Validator Call Graph
+
+Figure 2 shows a call graph that I made this during the design process. May it
+be of use to you.
+
+![Dialect 3 semantic parser/validator call graph. Green ellipses denote
+class-level data, where edges to/from indicate data write/read
+dependencies. Boxes denote methods in `HardwareFileReader` prefixed with `d3_`,
+where an edge to another box indicates that the method in the first box calls
+the method in the second. Yellow boxes denote methods that examine subtrees of
+the parse graph. Validation methods are not shown (for
+simplicity).](images/d3_call_graph.pdf)
+
 # Input File Format (0.4.0)
 This section defines the file format used by the Orchestrator to define its
 internal model of the POETS Engine. The input files satisfy the general
@@ -385,7 +492,7 @@ dialect 2, where the `→` character denotes a line continuation:
 
 Notes:
 
- - Figure 7 shows the graph of the boards described by this example, along with
+ - Figure 3 shows the graph of the boards described by this example, along with
    their containing boxes.
 
  - The line `(0,0):Io(addr(00),boards(Board0,Board1),hostname(io))` in the
@@ -510,7 +617,7 @@ continuation:
 
 Notes:
 
- - Figure 8 shows the graph of the boards described by this example, along with
+ - Figure 4 shows the graph of the boards described by this example, along with
    their containing boxes, where each colour of box and each colour of board
    denotes an item of a certain type. Every item must have a type.
 

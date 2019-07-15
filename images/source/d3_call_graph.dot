@@ -1,0 +1,167 @@
+digraph G {
+    fontname="Inconsolata";
+    fontsize=11;
+    margin=0;
+    nodesep=0.3;
+    rankdir="UD";
+    ranksep=0.2;
+    splines="ortho";
+
+    // Function display properties.
+    node[color="#550000",
+         fillcolor="#ffdedb:#ff8fa8",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0.1,
+         shape="rect",
+         style="filled"];
+
+    populate_hardware_model;
+    catastrophic_failure;
+    load_validate_sections;
+    populate_validate_header;
+    populate_validate_address_format;
+    validate_types_define_cache;
+    populate_validate_engine_box;
+    populate_validate_engine_board_and_below;
+    define_box_fields_from_section;
+    define_board_fields_from_section;
+    populate_validate_board_with_mailboxes;
+    define_mailbox_fields_from_section;
+    create_cores_and_threads_for_mailbox;
+
+    // Get-function display properties.
+    node[color="#555500",
+         fillcolor="#ffffdb:#ffffa8",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0.1,
+         shape="rect",
+         style="filled"];
+
+    get_explicit_type_from_item_definition;
+    get_section_from_type;
+    get_address_from_item_definition;
+    get_board_name;
+    get_explicit_cost_from_edge_definition;
+    get_mailbox_name;
+    get_validate_default_types;
+
+    // Datastructure display properties.
+    node[color="#005500",
+         fillcolor="#deffdb:#8fffa8",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0,
+         shape="ellipse",
+         style="filled"];
+
+    untypedSections;
+    typedSections;
+    engine [label="engine (and\nthings within)"];
+    defaultTypes;
+    boxFromName;
+    undefinedBoards;
+
+    // Method calls
+    edge[color="#ff0000"];
+    populate_hardware_model -> load_validate_sections;
+    populate_hardware_model -> populate_validate_header;
+    populate_hardware_model -> populate_validate_address_format;
+    populate_hardware_model -> validate_types_define_cache;
+    populate_hardware_model -> populate_validate_engine_box;
+    populate_hardware_model -> populate_validate_engine_board_and_below;
+    populate_hardware_model -> catastrophic_failure;
+
+    populate_validate_engine_box -> define_box_fields_from_section;
+
+    populate_validate_engine_board_and_below -> define_board_fields_from_section;
+    populate_validate_engine_board_and_below -> populate_validate_board_with_mailboxes;
+
+    populate_validate_board_with_mailboxes -> define_mailbox_fields_from_section;
+
+    define_mailbox_fields_from_section -> create_cores_and_threads_for_mailbox;
+
+    // Get-method calls
+    edge[color="#888800"];
+    validate_types_define_cache -> get_validate_default_types;
+
+    populate_validate_engine_box -> get_explicit_type_from_item_definition;
+    populate_validate_engine_box -> get_section_from_type;
+    populate_validate_engine_box -> get_address_from_item_definition;
+
+    populate_validate_engine_board_and_below -> get_board_name;
+    populate_validate_engine_board_and_below -> get_explicit_type_from_item_definition;
+    populate_validate_engine_board_and_below -> get_section_from_type;
+    populate_validate_engine_board_and_below -> get_address_from_item_definition;
+    populate_validate_engine_board_and_below -> get_explicit_cost_from_edge_definition;
+
+    populate_validate_board_with_mailboxes -> get_mailbox_name;
+    populate_validate_board_with_mailboxes -> get_explicit_type_from_item_definition;
+    populate_validate_board_with_mailboxes -> get_section_from_type;
+    populate_validate_board_with_mailboxes -> get_address_from_item_definition;
+    populate_validate_board_with_mailboxes -> get_explicit_cost_from_edge_definition;
+
+    // Data writes
+    edge[color="#00aa00"];
+    load_validate_sections -> untypedSections;
+    load_validate_sections -> typedSections;
+
+    populate_validate_header -> engine;
+
+    populate_validate_address_format -> engine;
+
+    validate_types_define_cache -> defaultTypes;
+
+    populate_validate_engine_box -> engine;
+    populate_validate_engine_box -> boxFromName;
+    populate_validate_engine_box -> undefinedBoards;
+
+    define_box_fields_from_section -> engine;
+
+    populate_validate_engine_board_and_below -> engine;
+    // It does, but it also makes the graph less clear.
+    // populate_validate_engine_board_and_below -> undefinedBoards;
+
+    define_board_fields_from_section -> engine;
+
+    populate_validate_board_with_mailboxes -> engine;
+
+    define_mailbox_fields_from_section -> engine;
+
+    create_cores_and_threads_for_mailbox -> engine;
+
+    // Data reads
+    untypedSections -> populate_validate_header;
+
+    untypedSections -> populate_validate_address_format;
+
+    untypedSections -> validate_types_define_cache;
+    typedSections -> validate_types_define_cache;
+
+    untypedSections -> populate_validate_engine_box;
+    defaultTypes -> populate_validate_engine_box;
+
+    typedSections -> get_section_from_type;
+
+    untypedSections -> populate_validate_engine_board_and_below;
+    boxFromName -> populate_validate_engine_board_and_below;
+    undefinedBoards -> populate_validate_engine_board_and_below;
+
+    boxFromName -> get_board_name;
+
+    // Positional hackery
+    /* { */
+    /*     rank=same; */
+    /*     load_validate_sections; */
+    /*     populate_validate_header; */
+    /*     populate_validate_address_format; */
+    /*     validate_types_define_cache; */
+    /*     populate_validate_engine_box; */
+    /*     populate_validate_engine_board_and_below; */
+    /* } */
+
+}
