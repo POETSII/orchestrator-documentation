@@ -82,7 +82,8 @@ The Launcher follows this logic, breaking after each "If so" clause:
  - Then, has the caller provided a hardware description file path? If so, read
    it to get the hosts to spawn Mothership processes on via
    `Launcher::GetHosts`, failing fast if the file doesn't exist or is
-   malformed.
+   malformed. See the hardware description file documentation for information
+   on how these hosts are stored.
 
  - Then, is there a hardware description file at the default path (presently\
    `/local/orchestrator-common/hdf.uif`) If so, read it to get the hosts to
