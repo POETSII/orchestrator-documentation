@@ -48,11 +48,13 @@ machine from your user account:
    - Obtain the latest Orchestrator dependencies tarball from
      https://github.com/poetsii/orchestrator-dependencies/releases, extract it,
      and modify the `ORCHESTRATOR_DEPENDENCIES_DIR` variable in
-     `Build/gcc/Makefile.dependencies` to point to the root directory of it.
+     `Build/gcc/Makefile.dependencies` to point to the root directory of it. If
+     you want to help your fellow users and you're on a POETS box, you can
+     extract it to `/local/orchestrator-dependencies/`.
 
  - From the `Build/gcc` directory in the Orchestrator repository, command `make
    all` to build the Orchestrator. You may also wish to build in parallel,
-   using the `-j 4` flag (4 build slaves will be used).
+   using the `-j N` flag ("N" build slaves will be used).
 
 The build process creates a series of disparate executables in the `bin`
 directory in the Orchestrator repository. If this process fails, or raises
@@ -61,7 +63,7 @@ fix these instructions, or fix the mistake in the build process. Once you have
 successfully completed the build, you are ready to use the Orchestrator on
 POETS hardware.
 
-# Usage
+# Usage (Interactive)
 
 ## Execution
 
@@ -99,6 +101,17 @@ then hit any key to end the Orchestrator process. Note that this will
 effectively disown any jobs running on the Engine, so you will be unable to
 reconnect to any jobs started in this way.
 
+You may also encounter a message similar to:
+
+~~~ {.bash}
+POETS> 11:16:30.04: 140(I) Topology loaded from file ||/local/orchestrator-common/hdf.uif||.
+POETS>
+~~~
+
+in which case, the developer that has set up this machine has installed a
+default topology file, which you can later overwrite if desired (for more
+information about this default, see the launcher documentation).
+
 If your session terminates with
 
 ~~~ {.bash}
@@ -112,9 +125,13 @@ process can run on a box in the Engine at a time. Until that process ends, you
 will not be able to use the Orchestrator. This error may also be raised when
 the disk runs out of space, which you can check by commanding `df -h`.
 
-While your session is running, if you include the LogServer component, a log
-file will be written in the current directory containing details of the
+While your session is running, if you include the Logserver component, a log
+file will be written in the `bin` directory containing details of the
 Orchestrator session.
+
+## Help
+
+Command `./orchestrate.sh --help` (obviously).
 
 ## An Exemplary Orchestrator Session
 
@@ -129,7 +146,7 @@ the flow of heat across a plate. This requires you to:
    example. Place the XML file in the `application_staging/xml` directory in
    the Orchestrator repository on the POETS machine.
 
-This session will, in order (using Aesop):
+This session will, in order (using Byron):
 
  1. Verify that all components of the Orchestrator have been loaded in the
     current session.
@@ -169,7 +186,7 @@ Rank 03,                    TMoth:CommonBase, created 10:28:19 Jan 25 2019
 
 POETS> 16:06:32.31:  23(I) system /show
 POETS> 16:06:32.31:  29(I) The Orchestrator has 4 MPI processes on comm 0
-POETS> 16:06:32.31:  30(I) Process aesop.cl.cam.ac.uk has console I/O
+POETS> 16:06:32.31:  30(I) Process fielding has console I/O
 ~~~
 
 In this case, the Root, RTCL, LogServer, and TMoth (Mothership) components of
@@ -182,7 +199,7 @@ In order to perform compute tasks on POETS using the Orchestrator, a task
 (graph, XML) must first be loaded. At the `POETS>` prompt, command:
 
 ~~~ {.bash}
-task /path = "/path/to/the/orchestrator/repository/without/the/trailing/slash"
+task /path = "/path_to_orchestrator_repository/application_staging/xml"
 ~~~
 
 This command sets the path to load application XMLs from^[You can command this
@@ -192,10 +209,10 @@ your copy of the Orchestrator repository. The Orchestrator should respond, and
 you should see (with your path):
 
 ~~~ {.bash}
-POETS>task /path = "/path/to/the/orchestrator/repository/without/the/trailing/slash"
-POETS> 08:49:01.44:  23(I) task /path = "/path/to/the/orchestrator/repository/without/the/trailing/slash"
+POETS>task /path = "/path_to_orchestrator_repository/application_staging/xml"
+POETS> 08:49:01.44:  23(I) task /path = "/path_to_orchestrator_repository/application_staging/xml"
 POETS> 08:49:01.44: 102(I) Task graph default file path is || ||
-POETS> 08:49:01.44: 103(I) New path is ||/path/to/the/orchestrator/repository/without/the/trailing/slash||
+POETS> 08:49:01.44: 103(I) New path is ||/path_to_orchestrator_repository/application_staging/xml||
 ~~~
 
 This output from the Orchestrator is created by the LogServer, and is written
@@ -238,9 +255,9 @@ Orchestrator has 1 tasks loaded:
 
     |Task       |Supervisor |Linked   |Devices  |Channels |Declare    |PoL? | PoL type   |Parameters
     +-----------+-----------+---------+---------+---------+-----------+-----+ -----------+------------+----....
-  0 | plate_3x3 |plate_3x3_supervisorNode_inst |      no |      10 |      38| plate_heat |User |           |/path/to/the/orchestrator/repository/without/ the/trailing/slash/application_staging/xml/plate_3x3.xml  |
+  0 | plate_3x3 |plate_3x3_supervisorNode_inst |      no |      10 |      38| plate_heat |User |           |/path_to_orchestrator_repository/application_staging/xml/plate_3x3.xml  |
     +-----------+-----------+---------+---------+---------+-----------+-----+ -----------+------------+----....
-Default display filepath ||/path/to/the/orchestrator/repository/without/the/ trailing/slash||
+Default display filepath ||/path_to_orchestrator_repository/application_staging/xml||
 
 POETS> 08:57:18.53:  23(I) task /show
 ~~~
@@ -265,14 +282,20 @@ successfully loaded your task, you can run your task on the hardware.
 ### Defining hardware topology in the Orchestrator
 
 In order to run an application on the POETS engine, the Orchestrator needs to
-know the topology of the hardware the application is to run on. For a one-box
-system, command:
+know the topology of the hardware the application is to run on. If you received
+the "Topology loaded" message from the execution section previously, then the
+Orchestrator already has a loaded topology, and you need not do anything
+more. However, for the purposes of this example, we will overwrite the loaded
+topology.
+
+For a one-box system, command:
 
 ~~~ {.bash}
 topology /set1
 ~~~
 
-The Orchestrator should respond simply with:
+The Orchestrator should respond simply with (may also include a "Clearing"
+message if a topology was previously loaded):
 
 ~~~ {.bash}
 POETS>topology /set1
@@ -291,14 +314,6 @@ topology to that file. The Orchestrator prints:
 
 ~~~ {.bash}
 POETS>topology /dump = "./my_topology_dump"
-Config_t                   O_.Set1.ConfigXXX++++++++++++++++++++++++++++++++++++
-NameBase       O_.Set1.ConfigXXX
-Me,Parent      0x0x2080a10,0x0x2080c90
-bMem           = 4294967295
-boards         = 3
-cores          = 64
-threads        = 16
-Config_t                   O_.Set1.ConfigXXX------------------------------------
 POETS> 09:24:59.63:  23(I) topology /dump = "./my_topology_dump"
 ~~~
 
@@ -328,11 +343,12 @@ POETS> 09:32:39.98:  23(I) link /link = "plate_3x3"
 
 Each device defined in the task graph is one-to-one mapped to a thread in the
 POETS engine. Note that threads are identified in a hierarchical manner for
-debugging purposes; one can interpret `O_.Set1.Bx0096.Bo0097.Co0098.Th0101`
-as "The thread with UUID '0101' on the core with UUID '0098' on the FPGA board
+debugging purposes; one can interpret `O_.Set1.Bx0096.Bo0097.Co0098.Th0101` as
+"The thread with UUID '0101' on the core with UUID '0098' on the FPGA board
 with ID '0097' in the POETS box with ID '0096' as described by the 'Set1'
-topology". For diagnostic information, this mapping, and its inverse, can be
-dumped by commanding `link /dump = "file"`.
+topology". Different topologies may use different naming conventions, but this
+output will always be hierarchical. For diagnostic information, this mapping,
+and its inverse, can be dumped by commanding `link /dump = "file"`.
 
 ### Building binaries for devices and supervisors (compilation)
 
@@ -357,7 +373,7 @@ Orchestrator prints:
 ~~~ {.bash}
 POETS> task /build = "plate_3x3"
 POETS> 12:03:31.70:  23(I) task /build = "plate_3x3"
-POETS> 12:03:31.70: 801(D) P_builder::Add(name=plate_3x3,file=/path/to/the/ orchestrator/repository/without/the/trailing/slash/application_staging/xml/ plate_3x3.xml)
+POETS> 12:03:31.70: 801(D) P_builder::Add(name=plate_3x3,file=/path_to orchestrator_repository/application_staging/xml/plate_3x3.xml)
 ~~~
 
 ### Loading binaries into devices for execution, and running the application
@@ -375,8 +391,6 @@ which causes the Orchestrator to print:
 ~~~ {.bash}
 POETS> task /deploy = "plate_3x3"
 Sending a distribution message to mothership with 2 cores
-Inserting VirtualBox plate_3x3_Box_0001
-Inserting VirtualBoard plate_3x3_Box_0001_Board_0002
 ~~~
 
 Once executed, this command provisions the cores with the binaries. To execute
@@ -410,14 +424,60 @@ are running, jobs can be stopped by commanding:
 task /stop = "plate_3x3"
 ~~~
 
-## Usage Summary
+## Interactive Usage Summary
 
 This section has demonstrated how to execute the Orchestrator, and an example
 session for running an application on the POETS engine. The example session
 demonstrates rudimentary Orchestrator operation, and is sufficient to execute
 most tasks of interest.
 
+# Usage (Batch)
+
+You can pass a UTF-8-encoded script file to the orchestrator for batch
+execution. For instance, the interactive usage example could have been run by
+commanding (without stop!):
+
+~~~ {.bash}
+./orchestrate.sh -f /absolute/path/to/batch/script
+~~~
+
+Where the file `/absolute/path/to/batch/script` contains:
+
+~~~ {.bash}
+system /show
+task /path = "/path_to_orchestrator_repository/application_staging/xml"
+task /load = "plate_3x3.xml"
+task /show
+topology /set1
+topology /dump = "./my_topology_dump"
+link /link = "plate_3x3"
+task /build = "plate_3x3"
+task /deploy = "plate_3x3"
+task /init = "plate_3x3"
+task /run = "plate_3x3"
+~~~
+
+Note that you will need to exit the Orchestrator once your job has finished, by
+commanding `exit` (this cannot be scripted, and would likely result in
+premature termination of your job).
+
+For reference, here's a more concise script that Mark uses to run his jobs,
+which does less printing and dumping:
+
+~~~ {.bash}
+task /path = "/home/mv1g18/repos/orchestrator/application_staging/xml"
+task /load = "plate_3x3.xml"
+link /link = "plate_3x3"
+task /build = "plate_3x3"
+task /deploy = "plate_3x3"
+task /init = "plate_3x3"
+task /run = "plate_3x3"
+~~~
+
 # Further Reading
+
+ - The launcher documentation, which explains the different switches for
+   `orchestrate.sh`, and how it works and what it does.
 
  - The implementation documentation (big word document). Seriously, do read
    this.
