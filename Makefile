@@ -49,6 +49,7 @@ endef
 # Define images to build.
 ALL_IMAGE_TARGETS := $(GRAPH_TARGETS_DIR)/addressing_structure.pdf \
                      $(GRAPH_TARGETS_DIR)/bridge_board.pdf \
+                     $(GRAPH_TARGETS_DIR)/d3_call_graph.pdf \
                      $(GRAPH_TARGETS_DIR)/dialect_2.pdf \
                      $(GRAPH_TARGETS_DIR)/dialect_3.pdf \
                      $(GRAPH_TARGETS_DIR)/engine_structure_simple.pdf \
