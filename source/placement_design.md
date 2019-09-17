@@ -1,0 +1,558 @@
+% Design of the Orchestrator Placement System (2019-09-17)
+
+# Placement Overview and Design Requirements
+This document defines the design of the placement system in the
+Orchestrator. The "placement problem" has been well explored in the literature,
+though there is a little novelty in placement in POETS, as the hardware model
+is hierarchical in nature, thus resulting in an unusual search
+codomain. Placing a task requires knowledge of the hardware model, as well as
+the structure and properties of the task.
+
+Explicitly, the "placement problem" in POETS is the mapping of the task
+(digraph) onto the hardware (simple weighted graph), such that the following
+are minimised/compromised:
+
+ - The weights on the edges of the task graph imposed by the hardware graph.
+
+ - The number of devices (`DevI_t`s) placed on threads (`P_thread`s), to avoid
+   overloading cores.
+
+ - The number of edges in the task graph that overlay each given edge in the
+   hardware graph.
+
+With this in mind, the design requirements for the placement system in the
+Orchestrator are:
+
+ - To support of different algorithms, selectable at run time by the
+   Orchestrator operator. In early iterations, bucket filling and simulated
+   annealing is sufficient, but the design of the placement system should allow
+   algorithms to be added easily in future iterations to exploit the
+   hierarchical hardware graph (papers!).
+
+ - To support run-time decisions about how the placement can be constrained,
+   using a "walled-garden" set of constraints that can be
+   parameterised. Application-level (from XML), hardware-level (from a
+   configuration file) must both be supported, as well as constraints specified
+   by the operator at run-time. A failure of an algorithm to satisfy
+   constraints should not cause placement to fail, but should warn the
+   operator.
+
+ - To support placement of multiple tasks in sequence, independently of each
+   other.
+
+ - To support detailed diagnostics (dumps) for problem diagnosis, to support
+   algorithm development and implementation, and to motivate algorithm
+   modifications.
+
+# Data Structures
+This design proposes the introduction of several new data structures in Root
+(OrchBase), as well as the modification of the existing prototypical placement
+system. This section outlines those structures. A map of the proposed structure
+is shown in Figure 1.
+
+![Data structure diagram, showing how placement may be conducted in the
+Orchestrator](images/placement_design_data_structure.pdf)
+
+## Placer
+The `Placer` encapsulates placement behaviour in the Orchestrator. The
+`OrchBase` class holds a `Placer` member (with name `placer`). When the
+`P_engine` stored by `OrchBase` is changed (i.e. `topology /load`), then
+`OrchBase` replaces its `OrchBase::placer` member.
+
+`Placer` instances hold two public maps - one which maps device addresses to
+thread addresses, and one which maps thread addresses to a list of device
+addresses:
+
+~~~ {.cpp}
+std::map<P_thread*, std::list<DevI_t*>> Placer::threadToDevices
+std::map<DevI_t*, P_thread*> Placer::deviceToThread
+~~~
+
+These maps are the primary output of placement, and are investigated by the
+binary builder to establish the relationship between the application and the
+hardware. This is contrary to the current design of the Orchestrator, where
+`P_thread` objects have a vector within which corresponding `DevI_t*` values
+are stored, and each `DevI_t` holds the corresponding `P_thread`. Advantages of
+the two-map approach over the previous approach are:
+
+ - Encapsulation: `Placer` instances do not modify hardware or task data
+   structures. Also makes teardown a little simpler.
+
+ - Modularity, local storage of information.
+
+The disadvantage is that any operation that involves looking up placement
+behaviour as a function of device `DevI_t`, for all devices, is slower (a map
+lookup versus a dereference). Once such case is when a task is "un-placed".
+
+### Placer and P_tasks/Algorithms/Constraints
+
+`Placer` objects hold a history of tasks that have been placed on them, along
+with the `Algorithm` object that performed the placement (`std::map<P_task*,
+Algorithm> history`). Each task may be placed only once without being
+"unplaced". This history is interacted with by the `float
+Placer::place(P_engine*, P_task*, string)`, which:
+
+ - Creates an entry in `history` with the `P_task*` passed as an argument, and
+   a new `Algorithm` instance, which is determined by the string passed as an
+   argument.
+
+ - Runs the algorithm on the task.
+
+ - Performs an integrity check (using
+   `Placer::check_all_devices_mapped(P_engine*, P_task*)`).
+
+ - If all is well, returns the placement score from the algorithm. Otherwise,
+   propagates an error back to the caller.
+
+In this way, the result of the `Algorithm` can be queried by the operator if
+desired. Tasks can also be unplaced with `Placer::unplace(P_engine*, P_task*)`,
+which:
+
+ - Iterates through all of the `DevI_t` instances in the task graph and removes
+   them from the placement maps.
+
+ - Removes all constraints associated with that task.
+
+ - Removes the history entry for that task.
+
+`Placer` objects hold a list of constraints `std::list<Constraint>
+constraints`, which `Algorithm` objects can query during placement.
+
+## Constraints
+As per the design requirements, constraints can be introduced from three
+sources:
+
+ - From a configuration file (applied system-wide)
+
+ - From an application file (applied to that application only)
+
+ - From the command prompt (applied system-wide)
+
+Each individual constraint is represented as a `Constraint` object. Constraints
+have the following associated with them:
+
+ - A `constraintCategory`, which is an enumeration. This is included to
+   facilitate filtering on a list of constraints (such as the one held by the
+   `Placer`) for constraints of a certain "type".
+
+ - A pointer to the `P_task` it was loaded from, if it was introduced from an
+   application file. This is necessary to check which task it applies to.
+
+ - A boolean (`satisfied`) to store previous computation of whether or not the
+   constraint is satisfied. This is necessary to ease the computation of the
+   fitness delta (see the Simulated Annealing section).
+
+ - A method `bool Constraint::is_satisfied(Placer*)` that examines the current
+   placement structure, and returns a boolean denoting whether or not the
+   constraint has been satisfied. This updates the `satisfied` field. This
+   method will be expensive if a global search is required (i.e. constraining
+   the maximum number of devices that can be placed on a thread), but will be
+   cheap otherwise (i.e. fixing a device by name to a thread by address).
+
+ - A method `bool Constraint::is_satisfied_delta(Placer*,
+   std::vector<DevI_t*>)` that examines the devices passed as argument, and
+   returns a boolean denoting whether or not these devices have "internally"
+   broken the constraint. This is useful to avoid iterating through the entire
+   placement structure on each fitness delta evaluation. Idempotence!
+
+ - A cost penalty to impose on the algorithm if broken.
+
+Possible constraints include:
+
+ - Restricting the maximum number of devices that can be placed on a thread.
+
+ - Fix device (by name) to thread (good for debugging, I guess).
+
+ - Restricting two devices to exist on the same thread/core/mailbox/board/box.
+
+ - Set the cost between all connected devices to not exceed a certain value
+   (distances are relative, but might be useful...).
+
+### Declaring Application Constraints in XML (TODO)
+TODO: Some kind of metadata, though where and format?
+
+### Declaring System Constraints in a Configuration File (TODO)
+TODO: Probably UIF.
+
+## Algorithms
+Algorithms represent "placement methods", like bucket filling, or simulated
+annealing. Algorithms control the placement of devices in a given task onto the
+engine, without disrupting the placement of devices from other tasks (recall
+that algorithms should act on one task and not be predictive, from the design
+requirements). All algorithms inherit from an `Algorithm` class, and they must
+define the `float Algorithm::do_it(P_engine*, P_task*, Placer*)` method. Since
+`Placer` objects expose the placement information maps and all constraints, the
+algorithm has sufficient information to do its business. This method returns an
+arbitrary "score" - the context of this is dependent on the algorithm used.
+
+Algorithm instances store (in a `Result` structure):
+
+ - The datetime of when placement was completed.
+
+ - The placement "score".
+
+ - The maximum amount of devices placed on a thread for this task.
+
+ - The greatest "cost" between connected placed devices (stored for easier
+   lookup at dump-time)
+
+One may initially elect to represent placement algorithms as `Placer` methods,
+as opposed to classes in their own right. The motivation for defining them as
+classes is to facilitate the use of the command pattern to log a history of
+algorithms-applied-to-tasks, so that dumping can be meaningful (i.e. the
+operator can see the order things were placed, what algorithm put them there,
+etc.)
+
+Algorithms store edge weights in `P_task->pD.G` (i.e. in the pdigraph object
+stored in the D_graph object) during computation. The `MsgT_t` class must be
+extended with a `float weight` member to accommodate this[^hypocrisy].
+
+[^hypocrisy]: Now I hear you cry "you were going on about modularity earlier,
+    and here you are writing to the task object!", and you would absolutely be
+    correct to call me a hypocrite. However, there are a lot of devices, and
+    it's convenient to look up the costs from both node-pairs (fitness delta)
+    and an edge (fitness total), which `pdigraph` allows us to do pretty
+    quickly (remember, it's maps all the way down...).
+
+# How the Operator Interacts with the Placement System
+Here's a speculative list of commands for how the Orchestrator operator would
+interact with the placement system:
+
+ - `placement /ALGORITHM = TASKNAME`: Performs the `ALGORITHM` algorithm to
+   place the task named `TASKNAME` onto the hardware model. Writes an error to
+   the operator if:
+
+   - There is no task loaded with the name TASKNAME.
+
+   - There is no hardware model loaded.
+
+   - The task could not fit into the hardware model.
+
+   - A task with the name TASKNAME has already been placed (tells the operator
+     to unplace the task before proceeding).
+
+   Writes warnings to the operator for each constraint that could not be
+   satisfied. If there were no errors, writes to the operator confirming the
+   completion of placement, along with the time taken.
+
+   `ALGORITHM` could be "bucket", "sa" or something else that's implemented
+   [^algorithmName]
+
+[^algorithmName]: Just don't call your algorithm "dump", or "place" (please).
+
+ - `placement /dump = TASKNAME`: Dumps placement information for the task named
+   `TASKNAME`, specifically:
+
+   - Information on how each device in the task has been placed on the
+     hardware, line by line. Each record is of the form
+     "`<DEVICENAME>\t<THREADNAME>`" (where `<THREADNAME>` is
+     hierarchical). This information is dumped to
+     `placement_task_to_hardware_<TASKNAME>_<ISO8601DT>.txt`.
+
+   - Diagnostic information from the algorithm object, dumped to\
+     `placement_diagnostics_<TASKNAME>_<ISO8601DT>.txt`. This information
+     includes:
+
+     - When the task was placed.
+
+     - The algorithm type used to place the task.
+
+     - The placement score (supplied by the algorithm).
+
+     - The greatest "distance" between connected placed devices (supplied by
+       the algorithm).
+
+     - The maximum amount of devices placed on a thread for this task (supplied
+       by the algorithm).
+
+     - Detailed information about "cost" between each task graph edge (supplied
+       by the `MsgT_t`s in the task), line by line. Each record is of the form
+       `<DEVICENAME>\t<DEVICENAME>\t<COST>`, and is dumped to
+       `placement_task_edges_<TASKNAME>_<ISO8601DT>.txt`.
+
+   I'd prefer it if the operator could specify paths on the command line, but I
+   can't see an elegant way of doing this using the command infrastructure we
+   have.
+
+   Writes an error to the operator if no task with name TASKNAME has been
+   placed.
+
+ - `placement /unplace = TASKNAME`: Completely clears placement information
+   (including history) for a task with name `TASKNAME`. Writes an error to the
+   operator if no task with that name has been placed.
+
+ - `placement /reset`: Completely clears placement information, history, and
+   constraints, and unlinks the hardware stack from all devices.
+
+ - `placement /constraint = TYPE(ARGS, ...)`: Add a system-wide constraint to
+   the placer, with a set of arguments.
+
+ - `placement /constraint = PATH`: Loads a system-wide constraint configuration
+   file.
+
+# Implementing Simulated Annealing
+Simulated annealing is a search method that allows, in the general case,
+exploration of a solution space and selection of a guaranteed local optimum,
+with some concession for global search. This method transitions from
+exploratory behaviour into exploitary behaviour as solution count
+increases. These characteristics make simulated annealing a suitable candidate
+for a "second-crack" POETS placement algorithm. This section does not explain
+simulated annealing in depth, but instead explains how it might be implemented
+given the placement framework outlined above, with a little algorithm-specific
+augmentation. Fundamentally, simulated annealing is:
+
+ 1. **Initialisation**: Set state $S=S_0$ and $n=0$.
+
+ 2. **Selection**: Select neighbouring state $S_{new}=\delta(S)$.
+
+ 3. **Fitness Evaluation**: Compute $E(S_{new})$, given $E(S)$.
+
+ 4. **Determination**: If $E(S_{new}) < E(S)$, then
+
+    - Set $S=S_{new}$.
+
+    Otherwise, if $E(S_{new})\geq E(S)$, then
+
+    - if $P(E(S),E(S_{new}),T(n))$, then
+
+      - Set $S=S_{new}$.
+
+ 6. **Termination**: If not $F(S,n)$, then go to 2.
+
+ 7. The output is $S$.
+
+where:
+
+ - $S_0$ is an intelligently-chosen initial state (in POETS, this is a graph
+   mapping).
+
+ - $n\in\mathbb{Z}$ is a step counter.
+
+ - $\delta(S)$ is an atomic transformation on state $S$ (see the "Selection"
+   method for how I'm choosing to do this).
+
+ - $E(S)$ is the fitness of state $S$ (i.e. how are the criteria at the top of
+   this document satisfied?)
+
+ - $T(n)\in\mathbb{R}$ is some disorder parameter analogous to temperature in
+   traditional annealing. Must decrease monotonically from one to zero with
+   increasing $n$, until some maximum step counter. A high $T$ value
+   corresponds to exploratory behaviour, and a low $T$ value corresponds to
+   exploitary behaviour.
+
+ - $P(E(S),E(S_{new}),T(N))$ is an acceptance probability function, which
+   determines whether or not a worse solution is accepted as a function of the
+   disorder parameter.
+
+ - $F(S,n)\in\{\text{true},\text{false}\}$ is a termination condition (could be
+   bound by a maximum step, a derivative of the state, or something else).
+
+## Initialisation
+
+### Hardware Communication Matrices
+Before performing optimisation, the simulated annealing algorithm
+(`SimulatedAnnealing::Algorithm`) would populate a
+`std::map<std::pair<P_mailbox*, P_mailbox*>, float> hardwareCosts`, which
+stores the communication cost of going from each mailbox to each mailbox. It
+would also populated `std::map<P_mailbox*, float> supervisorCosts`, which
+stores the communication cost from each mailbox to its supervisor. These costs
+would assume the shortest path, and be populated using the Floyd-Warshall
+algorithm.
+
+One might assume the former map would use up "a lot" of memory, but I
+disagree. For the eight-box system, 16 mailboxes-per-board $\times$ 6
+boards-per-box $\times$ 8 boxes $=$ 768 mailboxes. Given a four-byte float, the
+map will take approximately
+$768\times768\times4\text{bytes}\approx2.4\text{Mbytes}$ (which is not that
+much)
+
+### Starting State
+"Random" placement is sufficient for this, but I suspect a "smart random"
+placement would be a better starting point - perhaps one which accounts for
+constraints. We could even use a bucket-fill placement as an initial state -
+it's cheap to compute.
+
+A point on random placement - core-pairs share instruction memory. As such, we
+maintain a `std::map<DevT_t*, std::list<P_core*>> validCoresForDeviceType`,
+which initially allows all normal devices to be placed on all cores, but cores
+are removed (or added) as devices are moved around.
+
+However the starting state is created it's fitness must be computed to
+establish a baseline. We can quantify fitness as the sum of:
+
+ - The cost of each device graph edge (found by summing the appropriate
+   `hardwareCosts` or `supervisorCosts` entry with the thread->core and
+   core->thread cost)
+
+ - The penalty from all broken constraints
+
+though I realise that this is overly reductionist, as it doesn't account
+for:
+
+ - Communication congestion (i.e. same links being used multiple times, see the
+   Extensions section)
+
+ - Context switching (i.e. overworked, underpaid softswitches, but we can
+   constrain this)
+
+Point is, this approach is pretty expensive, so we only want to do it as few
+times as possible. This is stored in `SimulatedAnnealing.result.score` during
+computation, and is done by calling `Placer:compute_fitness(P_task*)`.
+
+## Selection - Swap and Move Operations
+Simulated annealing mandates that the selection operation must choose a
+neighbouring state. It can be proven that a combination of move and swap
+operations, both of which select neighbouring states, are sufficient to explore
+the state space.
+
+This mechanism would randomly select a device in the task, a core in the
+hardware model that is valid for devices of this type (from
+`validCoresForDeviceType`), a thread index in the core, and an index `i` in
+[0,1023]. If there aren't `i` devices in the target thread, we move the
+selected device to that thread. If there are `i` devices in the target thread,
+the position of the `i`th device is swapped with the position of the selected
+device.
+
+## Fitness Evaluation of Selected State
+In short, compute the delta, and assume we're running in serial.
+
+We could compute the fitness of the entire solution on each change, but that's
+expensive. Instead, since simulated annealing only cares about the fitness
+difference between the original solution and the selected solution, we only
+need to compute the delta. The delta between two solutions is equal to the
+delta of the sum of the edges affected by the swap or move process - so only
+those need to be recomputed and compared.
+
+Constraints should also be reevaluated using their `is_satisfied_delta` method
+(and constraints associated with a different task are ignored). For example, if
+a `MaxDevicesPerThread` constraint:
+
+ - was already satisfied, it only needs to check the changed threads to
+   evaluate whether or not it has been broken.
+
+ - was not satisfied, and the changed threads themselves break the constraint,
+   then the algorithm does not need to go through checking all the threads
+   because the constraint is clearly broken.
+
+In this way, constraint evaluation is cheap for simple cases.
+
+## Determination
+Simply put, better solutions are always accepted if they're better, and
+sometimes accepted (as a function of the disorder parameter
+`SimulatedAnnealing.disorder`). To accept a solution, the data may change:
+
+ - SimulatedAnnealing.result.score
+
+ - MsgT_t.weight (some of them)
+
+ - Placer.deviceToThread (some of them)
+
+ - Placer.threadToDevice (some of them)
+
+ - SimulatedAnnealing.validCoresForDeviceType
+
+## Termination (TODO)
+TODO
+
+## Extensions
+
+### Network Congestion
+As a design assumption, I'm ignoring the "value" of network congestion.  I
+realise this is a bit thick, but we can extend this to cope by adding a "uses"
+pre-computed matrix, which we could multiply the fitness by to penalise
+connection overuse. For a four-edge example, where:
+
+ - `MsgT_t` 1 uses hardware edge 1 with cost 4.
+
+ - `MsgT_t` 2 uses hardware edge 2 with cost 2.
+
+ - `MsgT_t` 3 uses hardware edge 3 with cost 3.
+
+ - `MsgT_t` 4 uses hardware edges 1 and 2 (with costs 4 and 2)
+
+The communication cost fitness in the current representation would be:
+
+ - `MsgT_t` 1: 4
+
+ - `MsgT_t` 2: 2
+
+ - `MsgT_t` 3: 3
+
+ - `MsgT_t` 4: 4 + 2 = 6
+
+ - Total: 4 + 2 + 3 + 6 = 19
+
+However, if we penalise multiple edge use, the fitness might be:
+
+ - `MsgT_t` 1: 4 * 2 = 8 (cost of four  * two "users" of this edge)
+
+ - `MsgT_t` 2: 2 * 2 = 2 (cost of two   * two "users" of this edge)
+
+ - `MsgT_t` 3: 3 * 1 = 3 (cost of three * one "user" of this edge)
+
+ - `MsgT_t` 4: 4 * 2 + 2 * 2 = 12
+
+ - Total: 8 + 2 + 3 + 12 = 25
+
+Recall that these fitness values are arbitrary, but hopefully you "get my
+idea". I think we can get decent results without this extension, but let's see.
+
+### Batched Selection
+Support multiple sequenced (batch) selection operations when disorder is
+high. This might be useful (and would be relatively easy to implement in this
+framework) if we find we're getting overly stuck in local optima.
+
+### Frustrated Selection
+Introduce a "frustration"[^frustration] parameter to `DevI_t`s, which allows
+more frustrated members to be selected. `DevI_t`s may be reselected if they are
+not frustrated enough for the given solution count.
+
+[^frustration]: I'm borrowing this term from condensed matter physics, where a
+"thing" is "frustrated" if it's stuck in a high-energy state. It's not really
+appropriate, because "frustration" implies that the "thing" is stuck in a local
+optimum, where it does not necessarily need to be so here.
+
+# Speculative Roadmap (TODO)
+TODO: Dates and durations
+
+ - Finalise a design
+
+ - Implement low-hanging-fruit data structure changes:
+
+   - Placer
+
+   - Constraint (and some derivatives)
+
+   - constraintCategory
+
+   - Algorithm (and bucket-filling)
+
+   - Result
+
+   - Make it work with whatever builder/parser is available.
+
+ - Introduce the notion of mailbox-board ports to the hardware model, to
+   facilitate more accurate placement calculation.
+
+ - Introduce the notion of a "supervisor board" to the hardware model,
+   analogous to Tinsel's bridge board, to allow costs between normal and
+   supervisor devices to be calculated.
+
+ - Create a fitness evaluator, which accounts for the edges of the task graph,
+   and the costs of any broken constraints.
+
+ - Create simulated annealing operations:
+
+   - Precomputation of mailbox-mailbox communication matrix.
+
+   - Create a simple "sensible initial placement".
+
+   - The other small bits (swapping, moving, fitness delta computation,
+     termination)
+
+ - Simulated annealing extensions (not yet).
+
+# Appendix
+
+## Proof that Movement and Swapping are Sufficient Selection Operations (TODO)
+TODO
