@@ -21,7 +21,7 @@ Software addresses are 32-bit binary strings. Together, a software address and
 a hardware address are sufficient to uniquely identify a device deployed as
 part of a POETS application. Unlike hardware addresses, software addresses are
 defined by a series of fixed-at-compile-time-width fields. Software addresses
-are of the form:
+are of the form (MSB to LSB):
 
 $$C_{\mathrm{MOTHERSHIP}}\cdot C_{\mathrm{CNC}}\cdot C_{\mathrm{TASK}}\cdot
 C_{\mathrm{OPCODE}}\cdot C_{\mathrm{DEVICE}}$$
@@ -58,7 +58,7 @@ DEVICE     16-31     Denotes the ID of a device.
            (16b)
 -------------------------------------------------------------------------------
 
-Table: Bit ranges for each software address component.
+Table: Bit ranges for each software address component (MSB to LSB).
 
 ------------------------------------------------
 Device type    MOTHERSHIP CNC TASK OPCODE DEVICE
