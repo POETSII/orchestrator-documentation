@@ -579,4 +579,10 @@ TODO: Dates and durations
 # Appendix
 
 ## Proof that Movement and Swapping are Sufficient Selection Operations (TODO)
-TODO
+It's pretty simple - just demonstrate that the space of solutions (described as
+an ordered set of unordered size-bound sets of devices, where the order
+determines the thread that a device is placed on) can be fully traversed by
+move operations (described as moving a device from one of the contained sets to
+another), given that there's an "empty space" to move to (adhering to the
+size-bound restriction of the contained sets). Introduce the swap operation to
+resolve the "empty space" case, which completes the proof.
