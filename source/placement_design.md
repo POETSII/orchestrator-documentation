@@ -534,47 +534,68 @@ not frustrated enough for the given solution count.
 appropriate, because "frustration" implies that the "thing" is stuck in a local
 optimum, where it does not necessarily need to be so here.
 
-# Speculative Roadmap (TODO)
-TODO: Dates and durations
+# Roadmap
+Order is sensible, but dates are guesses based of when Mark is away, and how
+long he expects certain jobs to take.
 
- - Finalise a design
+: When Mark expects he'll do things by.
 
- - Implement low-hanging-fruit data structure changes:
-
-   - Placer
-
-   - Constraint (and some derivatives), but not a CLI.
-
-   - constraintCategory
-
-   - Algorithm (and bucket-filling)
-
-   - Result
-
-   - Make it work with whatever builder/parser is available.
-
- - Introduce the notion of mailbox-board ports to the hardware model, to
-   facilitate more accurate placement calculation.
-
- - Introduce the notion of a "supervisor board" to the hardware model,
-   analogous to Tinsel's bridge board, to allow costs between normal and
-   supervisor devices to be calculated.
-
- - Create a fitness evaluator, which accounts for the edges of the task graph,
-   and the costs of any broken constraints.
-
- - Create simulated annealing operations:
-
-   - Precomputation of mailbox-mailbox communication matrix.
-
-   - Create a simple "sensible initial placement".
-
-   - The other small bits (swapping, moving, fitness delta computation,
-     termination)
-
- - CLI approach for introducing constraints
-
- - Simulated annealing extensions (not yet).
++------------+----------------------------------------------------------------+
+| When done  | Job                                                            |
++============+================================================================+
+| 2019-10-07 | Finalise the design of components design of the placement      |
+|            | system, and have it reviewed by relevant people.\              |
+|            |                                                                |
++------------+----------------------------------------------------------------+
+| 2019-10-21 | Implement "fundamental" placement data structures, and connect |
+|            | them to existing Orchestrator infrastructure                   |
+|            | (`P_builder`). This includes:                                  |
+|            |                                                                |
+|            |  - `Placer`                                                    |
+|            |  - `Constraint` (and some derivatives, hard-coding their       |
+|            |    (de)activation)                                             |
+|            |  - `constraintCategory`                                        |
+|            |  - `Algorithm` (and bucket-filling)                            |
+|            |  - `Result`                                                    |
++------------+----------------------------------------------------------------+
+| 2019-10-29 | Implement a fitness evaluator, which accounts for the edges of |
+|            | the task graph, and the costs of any broken constraints.\      |
+|            |                                                                |
++------------+----------------------------------------------------------------+
+| 2019-11-14 | Simulated annealing implementation, with:                      |
+|            |                                                                |
+|            |  - Precomputation of mailbox-mailbox communication matrix.     |
+|            |  - Sensible initial placement (probably bucket-filling).       |
+|            |  - Selection operations (swap and move)                        |
+|            |  - Fitness delta computation                                   |
+|            |  - Some elementary termination logic                           |
++------------+----------------------------------------------------------------+
+| 2019-11-29 | Improve placement accuracy with the time that's left:          |
+|            |                                                                |
+|            | - Divine an accurate communication model                       |
+|            | - Introduce the notion of mailbox-board ports to the hardware  |
+|            |   model, to facilitate more accurate placement calculation.    |
++------------+----------------------------------------------------------------+
+| 2019-12-16 | Advisory board preparation, find a story to tell.\             |
+|            |                                                                |
++------------+----------------------------------------------------------------+
+| Later      | Implement constraint file parser (formally).\                  |
+|            |                                                                |
++------------+----------------------------------------------------------------+
+| Later      | Support placement according to supervisor and external         |
+|            | devices. Do this by introducing the notion of a "supervisor    |
+|            | board" to the hardware model, analogous to Tinsel's bridge     |
+|            | board. Include links between supervisor devices and normal     |
+|            | devices in fitness computation.\                               |
+|            |                                                                |
++------------+----------------------------------------------------------------+
+| Later      | Design the interface for introducing application constraints   |
+|            | (from XML) and operator constraints (from command line), and   |
+|            | implement this interface.\                                     |
+|            |                                                                |
++------------+----------------------------------------------------------------+
+| Later      | Various simulated annealing extensions (not yet).
++------------+----------------------------------------------------------------+
 
 # Appendix
 
