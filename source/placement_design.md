@@ -473,8 +473,21 @@ sometimes accepted (as a function of the disorder parameter
 
  - SimulatedAnnealing.validCoresForDeviceType
 
-## Termination (TODO)
-TODO
+## Termination
+Suitable termination detection is a black art - there are many metrics one can
+use, and they'll all fail in certain cases. We could terminate when:
+
+ - Wallclock exceeds a certain threshold.
+
+ - Iteration count $n$ exceeds a certain threashold.
+
+ - Fitness reaches a certain value as a proportion of the initial value.
+
+ - The rate of fitness reduction (over a perious of time) subceeds a certain
+   threshold.
+
+I'll probably use a wallclock threshold as a termination condition to start
+with.
 
 ## Extensions
 
