@@ -135,6 +135,7 @@ by Algorithm:do_it.<BR ALIGN="TEXT"/>
 + compute_fitness(DevI_t*,<BR ALIGN="LEFT"/>
                   DevI_t*) : float<BR ALIGN="LEFT"/>
 + dump() : void<BR ALIGN="LEFT"/>
++ load_constraint_file(string) : void<BR ALIGN="LEFT"/>
 + place(P_engine*, P_task*,<BR ALIGN="LEFT"/>
         string) : float<BR ALIGN="LEFT"/>
 + unplace(P_engine*, P_task*) : uint<BR ALIGN="LEFT"/>

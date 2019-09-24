@@ -1,4 +1,4 @@
-% Design of the Orchestrator Placement System (2019-09-17)
+% Design of the Orchestrator Placement System (2019-09-24)
 
 # Placement Overview and Design Requirements
 This document defines the design of the placement system in the
@@ -127,7 +127,8 @@ which[^load]:
     sufficiently rare.
 
 `Placer` objects hold a list of constraints `std::list<Constraint>
-constraints`, which `Algorithm` objects can query during placement.
+constraints`, which `Algorithm` objects can query during placement. This list
+is populated by `Placer:load_constraint_file(std::string)`.
 
 ## Constraints
 As per the design requirements, constraints can be introduced from three
@@ -299,7 +300,7 @@ interact with the placement system:
    the placer, with a set of arguments.
 
  - `placement /constraint = PATH`: Loads a system-wide constraint configuration
-   file.
+   file (using `Placer:load_constraint_file(std::string)`).
 
 # Implementing Simulated Annealing
 Simulated annealing is a search method that allows, in the general case,
@@ -312,38 +313,40 @@ simulated annealing in depth, but instead explains how it might be implemented
 given the placement framework outlined above, with a little algorithm-specific
 augmentation. Fundamentally, simulated annealing is:
 
- 1. **Initialisation**: Set state $S=S_0$ and $n=0$.
+ 1. **Initialisation**: Set state $s=s_0$ and $n=0$.
 
- 2. **Selection**: Select neighbouring state $S_{new}=\delta(S)$.
+ 2. **Selection**: Select neighbouring state $s_{\mathrm{new}}=\delta(s)$.
 
- 3. **Fitness Evaluation**: Compute $E(S_{new})$, given $E(S)$.
+ 3. **Fitness Evaluation**: Compute $E(s_{\mathrm{new}})$, given $E(s)$.
 
- 4. **Determination**: If $E(S_{new}) < E(S)$, then
+ 4. **Determination**: If $E(s_{\mathrm{new}}) < E(s)$, then
 
-    - Set $S=S_{new}$.
+    - set $s=s_{\mathrm{new}}$.
 
-    Otherwise, if $E(S_{new})\geq E(S)$, then
+    Otherwise, if $E(s_{\mathrm{new}})\geq E(s)$, then
 
-    - if $P(E(S),E(S_{new}),T(n))$, then
+    - if $P(E(s),E(s_{\mathrm{new}}),T(n))$, then
 
-      - Set $S=S_{new}$.
+      - set $s=s_{\mathrm{new}}$.
 
- 6. **Termination**: If not $F(S,n)$, then go to 2.
+ 6. **Termination**: If not $F(s,n)$, then go to 2.
 
- 7. The output is $S$.
+ 7. The output is $s$.
 
 where:
 
- - $S_0$ is an intelligently-chosen initial state (in POETS, this is a graph
-   mapping).
+ - $s_0\in S$ is an intelligently-chosen initial state (in POETS, this is a
+   graph mapping).
 
- - $n\in\mathbb{Z}$ is a step counter.
+ - $S$ is the set of possible mappings (i.e. the state space).
 
- - $\delta(S)$ is an atomic transformation on state $S$ (see the "Selection"
-   method for how I'm choosing to do this).
+ - $n\in\mathbb{Z}$ is a step (iteration) counter.
 
- - $E(S)$ is the fitness of state $S$ (i.e. how are the criteria at the top of
-   this document satisfied?)
+ - $\delta(s)\in S$ is an atomic transformation on state $s$ (see the
+   "Selection" section).
+
+ - $E(s)\in\mathbb{R}$ is the fitness of state $s$ (i.e. how are the criteria
+   at the top of this document satisfied?)
 
  - $T(n)\in\mathbb{R}$ is some disorder parameter analogous to temperature in
    traditional annealing. Must decrease monotonically from one to zero with
@@ -351,11 +354,11 @@ where:
    corresponds to exploratory behaviour, and a low $T$ value corresponds to
    exploitary behaviour.
 
- - $P(E(S),E(S_{new}),T(N))$ is an acceptance probability function, which
-   determines whether or not a worse solution is accepted as a function of the
-   disorder parameter.
+ - $P(E(s),E(s_{\mathrm{new}}),T(n))\in[0,1]$ is an acceptance probability
+   function, which determines whether or not a worse solution is accepted as a
+   function of the disorder parameter.
 
- - $F(S,n)\in\{\text{true},\text{false}\}$ is a termination condition (could be
+ - $F(s,n)\in\{\text{true},\text{false}\}$ is a termination condition (could be
    bound by a maximum step, a derivative of the state, or something else).
 
 ## Initialisation
@@ -476,7 +479,7 @@ use, and they'll all fail in certain cases. We could terminate when:
 
  - Wallclock exceeds a certain threshold.
 
- - Iteration count $n$ exceeds a certain threashold.
+ - Iteration count $n$ exceeds a certain threshold.
 
  - Fitness reaches a certain value as a proportion of the initial value.
 
@@ -512,19 +515,21 @@ The communication cost fitness in the current representation would be:
 
  - `MsgT_t` 4: 4 + 2 = 6
 
- - Total: 4 + 2 + 3 + 6 = 19
+ - Total: 4 + 2 + 3 + 6 = **19**
 
 However, if we penalise multiple edge use, the fitness might be:
 
- - `MsgT_t` 1: 4 * 2 = 8 (cost of four  * two "users" of this edge)
+ - `MsgT_t` 1: 4 $\times$ 2 = 8 (cost of four $\times$ two "users" of this
+   edge)
 
- - `MsgT_t` 2: 2 * 2 = 2 (cost of two   * two "users" of this edge)
+ - `MsgT_t` 2: 2 $\times$ 2 = 2 (cost of two $\times$ two "users" of this edge)
 
- - `MsgT_t` 3: 3 * 1 = 3 (cost of three * one "user" of this edge)
+ - `MsgT_t` 3: 3 $\times$ 1 = 3 (cost of three $\times$ one "user" of this
+   edge)
 
- - `MsgT_t` 4: 4 * 2 + 2 * 2 = 12
+ - `MsgT_t` 4: 4 $\times$ 2 + 2 $\times$ 2 = 12
 
- - Total: 8 + 2 + 3 + 12 = 25
+ - Total: 8 + 2 + 3 + 12 = **25**
 
 Recall that these fitness values are arbitrary, but hopefully you "get my
 idea". I think we can get decent results without this extension, but let's see.
@@ -544,9 +549,13 @@ not frustrated enough for the given solution count.
 appropriate, because "frustration" implies that the "thing" is stuck in a local
 optimum, where it does not necessarily need to be so here.
 
+### Parallel SA
+Would be pretty cool, eh ADB.
+
 # Roadmap
-Order is sensible, but dates are guesses based of when Mark is away, and how
-long he expects certain jobs to take.
+This section outlines when Mark expects certain implementation milestones to be
+reached. The dates are (fairly wild) guesses based off when Mark is away, and
+how long he expects certain jobs to take.
 
 : When Mark expects he'll do things by.
 
@@ -586,7 +595,7 @@ long he expects certain jobs to take.
 |            | - Introduce the notion of mailbox-board ports to the hardware  |
 |            |   model, to facilitate more accurate placement calculation.    |
 +------------+----------------------------------------------------------------+
-| 2019-12-16 | Advisory board preparation, find a story to tell.\             |
+| 2019-12-16 | Advisory board preparation, tell a good story.\                |
 |            |                                                                |
 +------------+----------------------------------------------------------------+
 | Later      | Implement constraint file parser (formally).\                  |
