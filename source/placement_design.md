@@ -10,7 +10,7 @@ the structure and properties of the task.
 
 Explicitly, the "placement problem" in POETS is the mapping of the task
 (digraph) onto the hardware (simple weighted graph), such that the following
-are minimised/compromised:
+are minimised/compromised, subject to a finite set of constraints:
 
  - The weights on the edges of the task graph imposed by the hardware graph.
 
@@ -20,22 +20,27 @@ are minimised/compromised:
  - The number of edges in the task graph that overlay each given edge in the
    hardware graph.
 
-With this in mind, the design requirements for the placement system in the
-Orchestrator are:
+Such constraints may include:
 
- - To support of different algorithms, selectable at run time by the
-   Orchestrator operator. In early iterations, bucket filling and simulated
-   annealing is sufficient, but the design of the placement system should allow
-   algorithms to be added easily in future iterations to exploit the
-   hierarchical hardware graph (papers!).
+ - Imposing upper or lower bounds on the number of devices placed on each
+   thread.
+
+ - Pinning certain devices to certain threads.
+
+though many more may be contrived. With this in mind, the design requirements
+ for the placement system in the Orchestrator are:
+
+ - To support different algorithms, selectable at run time by the Orchestrator
+   operator. In early iterations, bucket filling and simulated annealing is
+   sufficient, but the design of the placement system should allow algorithms
+   to be added easily in future iterations to exploit the hierarchical hardware
+   graph (papers!).
 
  - To support run-time decisions about how the placement can be constrained,
    using a "walled-garden" set of constraints that can be
    parameterised. Application-level (from XML), hardware-level (from a
    configuration file) must both be supported, as well as constraints specified
-   by the operator at run-time. A failure of an algorithm to satisfy
-   constraints should not cause placement to fail, but should warn the
-   operator.
+   by the operator at run-time.
 
  - To support placement of multiple tasks in sequence, independently of each
    other.
@@ -45,10 +50,10 @@ Orchestrator are:
    modifications.
 
 # Data Structures
-This design proposes the introduction of several new data structures in Root
-(OrchBase), as well as the modification of the existing prototypical placement
-system. This section outlines those structures. A map of the proposed structure
-is shown in Figure 1.
+This design proposes the introduction of several new data structures in the
+placement system, as well as the modification of some in `OrchBase`. This
+section outlines those structures. A map of the proposed structure is shown in
+Figure 1.
 
 ![Data structure diagram, showing how placement may be conducted in the
 Orchestrator](images/placement_design_data_structure.pdf)
@@ -68,12 +73,13 @@ std::map<P_thread*, std::list<DevI_t*>> Placer::threadToDevices
 std::map<DevI_t*, P_thread*> Placer::deviceToThread
 ~~~
 
-These maps are the primary output of placement, and are investigated by the
-binary builder to establish the relationship between the application and the
-hardware. This is contrary to the current design of the Orchestrator, where
-`P_thread` objects have a vector within which corresponding `DevI_t*` values
-are stored, and each `DevI_t` holds the corresponding `P_thread`. Advantages of
-the two-map approach over the previous approach are:
+These maps are the primary output of placement, describe the placement of all
+applications in the Orchestrator, and are read by the binary builder to
+establish the relationship between the application and the hardware. This is
+contrary to the current design of the Orchestrator, where `P_thread` objects
+have a vector within which corresponding `DevI_t*` values are stored, and each
+`DevI_t` holds the corresponding `P_thread`. Advantages of the two-map approach
+over the previous approach are:
 
  - Encapsulation: `Placer` instances do not modify hardware or task data
    structures. Also makes teardown a little simpler.
@@ -84,36 +90,41 @@ The disadvantage is that any operation that involves looking up placement
 behaviour as a function of device `DevI_t`, for all devices, is slower (a map
 lookup versus a dereference). Once such case is when a task is "un-placed".
 
-### Placer and P_tasks/Algorithms/Constraints
+### Placer and Tasks/Algorithms/Constraints
 
-`Placer` objects hold a history of tasks that have been placed on them, along
-with the `Algorithm` object that performed the placement (`std::map<P_task*,
-Algorithm> history`). Each task may be placed only once without being
-"unplaced". This history is interacted with by the `float
-Placer::place(P_engine*, P_task*, string)`, which:
+`Placer` objects hold a map of tasks that have been placed on them, along with
+the `Algorithm` object that performed the placement (`std::map<P_task*,
+Algorithm> placedTasks`). Each task may be placed only once without being
+"unplaced". This map is interacted with by the `float Placer::place(P_engine*,
+P_task*, string)`, which:
 
- - Creates an entry in `history` with the `P_task*` passed as an argument, and
-   a new `Algorithm` instance, which is determined by the string passed as an
-   argument.
+ - Creates an entry in `placedTasks` with the `P_task*` passed as an argument,
+   and a new `Algorithm` instance, which is determined by the string passed as
+   an argument.
 
  - Runs the algorithm on the task.
 
  - Performs an integrity check (using
-   `Placer::check_all_devices_mapped(P_engine*, P_task*)`).
+   `Placer::check_all_devices_mapped(P_engine*, P_task*)`), which would ensure
+   that all devices for a task have been placed.
 
  - If all is well, returns the placement score from the algorithm. Otherwise,
    propagates an error back to the caller.
 
 In this way, the result of the `Algorithm` can be queried by the operator if
 desired. Tasks can also be unplaced with `Placer::unplace(P_engine*, P_task*)`,
-which:
+which[^load]:
 
  - Iterates through all of the `DevI_t` instances in the task graph and removes
    them from the placement maps.
 
  - Removes all constraints associated with that task.
 
- - Removes the history entry for that task.
+ - Removes the entry for that task from `placedTasks`.
+
+[^load]: Clearly this process involves a lot of work (indexing a map for each
+    device), but it doesn't matter too much because this operation is
+    sufficiently rare.
 
 `Placer` objects hold a list of constraints `std::list<Constraint>
 constraints`, which `Algorithm` objects can query during placement.
@@ -157,11 +168,14 @@ have the following associated with them:
 
  - A cost penalty to impose on the algorithm if broken.
 
-Possible constraints include:
+ - A boolean (`mandatory`), which causes the algorithm to automatically reject
+   states that fail this constraint (it's up to the algorithm to respect this).
+
+Possible constraints include (this is by no means an exhaustive list):
 
  - Restricting the maximum number of devices that can be placed on a thread.
 
- - Fix device (by name) to thread (good for debugging, I guess).
+ - Fix device (by name) to thread (debugging, timing).
 
  - Restricting two devices to exist on the same thread/core/mailbox/board/box.
 
@@ -277,12 +291,12 @@ interact with the placement system:
    Writes an error to the operator if no task with name TASKNAME has been
    placed.
 
- - `placement /unplace = TASKNAME`: Completely clears placement information
-   (including history) for a task with name `TASKNAME`. Writes an error to the
-   operator if no task with that name has been placed.
+ - `placement /unplace = TASKNAME`: Completely clears placement information for
+   a task with name `TASKNAME`. Writes an error to the operator if no task with
+   that name has been placed.
 
- - `placement /reset`: Completely clears placement information, history, and
-   constraints, and unlinks the hardware stack from all devices.
+ - `placement /reset`: Completely clears placement information and constraints,
+   and unlinks the hardware stack from all devices.
 
  - `placement /constraint = TYPE(ARGS, ...)`: Add a system-wide constraint to
    the placer, with a set of arguments.
@@ -377,14 +391,15 @@ maintain a `std::map<DevT_t*, std::list<P_core*>> validCoresForDeviceType`,
 which initially allows all normal devices to be placed on all cores, but cores
 are removed (or added) as devices are moved around.
 
-However the starting state is created it's fitness must be computed to
+However the starting state is created, its fitness must be computed to
 establish a baseline. We can quantify fitness as the sum of:
 
  - The cost of each device graph edge (found by summing the appropriate
-   `hardwareCosts` or `supervisorCosts` entry with the thread->core and
-   core->thread cost)
+   `hardwareCosts` or `supervisorCosts` entry with the thread-to-core and
+   core-to-thread cost).
 
- - The penalty from all broken constraints
+ - The penalty from all broken constraints (the state is outright rejected if
+   any mandatory constraints are broken).
 
 though I realise that this is overly reductionist, as it doesn't account
 for:
@@ -424,8 +439,15 @@ delta of the sum of the edges affected by the swap or move process - so only
 those need to be recomputed and compared.
 
 Constraints should also be reevaluated using their `is_satisfied_delta` method
-(and constraints associated with a different task are ignored). For example, if
-a `MaxDevicesPerThread` constraint:
+(and constraints associated with a different task are ignored). If a mandatory
+constraint is broken, the state is discarded, returning to
+"Selection"[^nincrement]. For example, if a `MaxDevicesPerThread` constraint:
+
+[^nincrement]: Whether or not $n$ is incremented in response to a state being
+discarded is up for debate. If $n$ is not incremented, the algorithm may get
+stuck when it is in a state where all transformations result in a failed
+mandatory constraint, and when the termination condition is not satisfied. If
+$n$ is incremented, termination may be premature.
 
  - was already satisfied, it only needs to check the changed threads to
    evaluate whether or not it has been broken.

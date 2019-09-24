@@ -126,7 +126,7 @@ by Algorithm:do_it.<BR ALIGN="TEXT"/>
 + deviceToThread : map&lt;DevI_t*,<BR ALIGN="LEFT"/>
                        P_thread*&gt;<BR ALIGN="LEFT"/>
 + constraints : list&lt;Constraint&gt;<BR ALIGN="LEFT"/>
-+ history : map&lt;P_task*, Algorithm&gt;<BR ALIGN="LEFT"/>
++ placedTasks : map&lt;P_task*, Algorithm&gt;<BR ALIGN="LEFT"/>
 + threadToDevices : map&lt;P_thread*,<BR ALIGN="LEFT"/>
                         list&lt;DevI_t*&gt;&gt;<BR ALIGN="LEFT"/>
 </TD></TR>
@@ -286,7 +286,7 @@ Does bucket filling.<BR ALIGN="TEXT"/>
     {edge[arrowhead="diamond"];
         OrchBase -> P_task[label=" OrchBase.P_taskm"];
         Placer -> Constraint[label=" Placer.constraints"];
-        Placer -> Algorithm[label=" Placer.history"];
+        Placer -> Algorithm[label=" Placer.placedTasks"];
         GraphI_t -> DevI_t[label=" GraphI_t.G\n (node)"];
         GraphI_t -> MsgT_t[label=" GraphI_t.G\n (edge)"];
 
