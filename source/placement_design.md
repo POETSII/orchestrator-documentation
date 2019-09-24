@@ -543,7 +543,7 @@ TODO: Dates and durations
 
    - Placer
 
-   - Constraint (and some derivatives)
+   - Constraint (and some derivatives), but not a CLI.
 
    - constraintCategory
 
@@ -571,6 +571,8 @@ TODO: Dates and durations
 
    - The other small bits (swapping, moving, fitness delta computation,
      termination)
+
+ - CLI approach for introducing constraints
 
  - Simulated annealing extensions (not yet).
 
