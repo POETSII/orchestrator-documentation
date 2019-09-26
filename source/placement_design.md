@@ -3,22 +3,26 @@
 # Placement Overview and Design Requirements
 This document defines the design of the placement system in the
 Orchestrator. The "placement problem" has been well explored in the literature,
-though there is a little novelty in placement in POETS, as the hardware model
-is hierarchical in nature, thus resulting in an unusual search
-codomain. Placing a task requires knowledge of the hardware model, as well as
-the structure and properties of the task.
+though there is novelty in POETS placement, as the hardware model is
+hierarchical in nature, thus resulting in an unusual search
+codomain[^programmableRouting]. Placing an application requires knowledge of
+the hardware model, as well as the structure and properties of the application.
 
-Explicitly, the "placement problem" in POETS is the mapping of the task
+[^programmableRouting]: With programmable routing in the pipeline, it's become
+    a lot more publishable.
+
+Explicitly, the "placement problem" in POETS is the mapping of the application
 (digraph) onto the hardware (simple weighted graph), such that the following
 are minimised/compromised, subject to a finite set of constraints:
 
- - The weights on the edges of the task graph imposed by the hardware graph.
+ - The weights on the edges of the application graph imposed by the hardware
+   graph.
 
  - The number of devices (`DevI_t`s) placed on threads (`P_thread`s), to avoid
    overloading cores.
 
- - The number of edges in the task graph that overlay each given edge in the
-   hardware graph.
+ - The number of edges in the application graph that overlay each given edge in
+   the hardware graph.
 
 Such constraints may include:
 
@@ -33,8 +37,8 @@ though many more may be contrived. With this in mind, the design requirements
  - To support different algorithms, selectable at run time by the Orchestrator
    operator. In early iterations, bucket filling and simulated annealing is
    sufficient, but the design of the placement system should allow algorithms
-   to be added easily in future iterations to exploit the hierarchical hardware
-   graph (papers!).
+   to be added easily in future iterations to exploit properties specific to
+   the POETS placement problem (papers!).
 
  - To support run-time decisions about how the placement can be constrained,
    using a "walled-garden" set of constraints that can be
@@ -42,8 +46,8 @@ though many more may be contrived. With this in mind, the design requirements
    configuration file) must both be supported, as well as constraints specified
    by the operator at run-time.
 
- - To support placement of multiple tasks in sequence, independently of each
-   other.
+ - To support placement of multiple applications in sequence, independently of
+   each other.
 
  - To support detailed diagnostics (dumps) for problem diagnosis, to support
    algorithm development and implementation, and to motivate algorithm
@@ -81,46 +85,47 @@ have a vector within which corresponding `DevI_t*` values are stored, and each
 `DevI_t` holds the corresponding `P_thread`. Advantages of the two-map approach
 over the previous approach are:
 
- - Encapsulation: `Placer` instances do not modify hardware or task data
+ - Encapsulation: `Placer` instances do not modify hardware or application data
    structures. Also makes teardown a little simpler.
 
  - Modularity, local storage of information.
 
 The disadvantage is that any operation that involves looking up placement
 behaviour as a function of device `DevI_t`, for all devices, is slower (a map
-lookup versus a dereference). Once such case is when a task is "un-placed".
+lookup versus a dereference). Once such case is when a application is
+"un-placed".
 
-### Placer and Tasks/Algorithms/Constraints
+### Placer and Applications/Algorithms/Constraints
 
-`Placer` objects hold a map of tasks that have been placed on them, along with
-the `Algorithm` object that performed the placement (`std::map<P_task*,
-Algorithm> placedTasks`). Each task may be placed only once without being
-"unplaced". This map is interacted with by the `float Placer::place(P_engine*,
-P_task*, string)`, which:
+`Placer` objects hold a map of applications that have been placed on them,
+along with the `Algorithm` object that performed the placement
+(`std::map<P_task*, Algorithm> placedTasks`). Each application may be placed
+only once without being "unplaced". This map is interacted with by the `float
+Placer::place(P_engine*, P_task*, string)`, which:
 
  - Creates an entry in `placedTasks` with the `P_task*` passed as an argument,
    and a new `Algorithm` instance, which is determined by the string passed as
    an argument.
 
- - Runs the algorithm on the task.
+ - Runs the algorithm on the application.
 
  - Performs an integrity check (using
    `Placer::check_all_devices_mapped(P_engine*, P_task*)`), which would ensure
-   that all devices for a task have been placed.
+   that all devices for a application have been placed.
 
  - If all is well, returns the placement score from the algorithm. Otherwise,
    propagates an error back to the caller.
 
 In this way, the result of the `Algorithm` can be queried by the operator if
-desired. Tasks can also be unplaced with `Placer::unplace(P_engine*, P_task*)`,
-which[^load]:
+desired. Applications can also be unplaced with `Placer::unplace(P_engine*,
+P_task*)`, which[^load]:
 
- - Iterates through all of the `DevI_t` instances in the task graph and removes
-   them from the placement maps.
+ - Iterates through all of the `DevI_t` instances in the application graph and
+   removes them from the placement maps.
 
- - Removes all constraints associated with that task.
+ - Removes all constraints associated with that application.
 
- - Removes the entry for that task from `placedTasks`.
+ - Removes the entry for that application from `placedTasks`.
 
 [^load]: Clearly this process involves a lot of work (indexing a map for each
     device), but it doesn't matter too much because this operation is
@@ -151,7 +156,8 @@ have the following associated with them:
    `Placer`) for constraints of a certain "type".
 
  - A pointer to the `P_task` it was loaded from, if it was introduced from an
-   application file. This is necessary to check which task it applies to.
+   application file. This is necessary to check which application it applies
+   to.
 
  - A boolean (`satisfied`) to store previous computation of whether or not the
    constraint is satisfied. This is necessary to ease the computation of the
@@ -188,14 +194,15 @@ Possible constraints include (this is by no means an exhaustive list):
 
 ## Algorithms
 Algorithms represent "placement methods", like bucket filling, or simulated
-annealing. Algorithms control the placement of devices in a given task onto the
-engine, without disrupting the placement of devices from other tasks (recall
-that algorithms should act on one task and not be predictive, from the design
-requirements). All algorithms inherit from an `Algorithm` class, and they must
-define the `float Algorithm::do_it(P_engine*, P_task*, Placer*)` method. Since
-`Placer` objects expose the placement information maps and all constraints, the
-algorithm has sufficient information to do its business. This method returns an
-arbitrary "score" - the context of this is dependent on the algorithm used.
+annealing. Algorithms control the placement of devices in a given application
+onto the engine, without disrupting the placement of devices from other
+applications (recall that algorithms should act on one application and not be
+predictive, from the design requirements). All algorithms inherit from an
+`Algorithm` class, and they must define the `float Algorithm::do_it(P_engine*,
+P_task*, Placer*)` method. Since `Placer` objects expose the placement
+information maps and all constraints, the algorithm has sufficient information
+to do its business. This method returns an arbitrary "score" - the context of
+this is dependent on the algorithm used.
 
 Algorithm instances store (in a `Result` structure):
 
@@ -203,7 +210,7 @@ Algorithm instances store (in a `Result` structure):
 
  - The placement "score".
 
- - The maximum amount of devices placed on a thread for this task.
+ - The maximum amount of devices placed on a thread for this application.
 
  - The greatest "cost" between connected placed devices (stored for easier
    lookup at dump-time)
@@ -211,7 +218,7 @@ Algorithm instances store (in a `Result` structure):
 One may initially elect to represent placement algorithms as `Placer` methods,
 as opposed to classes in their own right. The motivation for defining them as
 classes is to facilitate the use of the command pattern to log a history of
-algorithms-applied-to-tasks, so that dumping can be meaningful (i.e. the
+algorithms-applied-to-applications, so that dumping can be meaningful (i.e. the
 operator can see the order things were placed, what algorithm put them there,
 etc.)
 
@@ -220,28 +227,28 @@ stored in the D_graph object) during computation. The `MsgT_t` class must be
 extended with a `float weight` member to accommodate this[^hypocrisy].
 
 [^hypocrisy]: Now I hear you cry "you were going on about modularity earlier,
-    and here you are writing to the task object!", and you would absolutely be
-    correct to call me a hypocrite. However, there are a lot of devices, and
-    it's convenient to look up the costs from both node-pairs (fitness delta)
-    and an edge (fitness total), which `pdigraph` allows us to do pretty
-    quickly (remember, it's maps all the way down...).
+    and here you are writing to the application object!", and you would
+    absolutely be correct to call me a hypocrite. However, there are a lot of
+    devices, and it's convenient to look up the costs from both node-pairs
+    (fitness delta) and an edge (fitness total), which `pdigraph` allows us to
+    do pretty quickly (remember, it's maps all the way down...).
 
 # How the Operator Interacts with the Placement System
 Here's a speculative list of commands for how the Orchestrator operator would
 interact with the placement system:
 
- - `placement /ALGORITHM = TASKNAME`: Performs the `ALGORITHM` algorithm to
-   place the task named `TASKNAME` onto the hardware model. Writes an error to
-   the operator if:
+ - `placement /ALGORITHM = APPLICATIONNAME`: Performs the `ALGORITHM` algorithm
+   to place the application named `APPLICATIONNAME` onto the hardware
+   model. Writes an error to the operator if:
 
-   - There is no task loaded with the name TASKNAME.
+   - There is no application loaded with the name APPLICATIONNAME.
 
    - There is no hardware model loaded.
 
-   - The task could not fit into the hardware model.
+   - The application could not fit into the hardware model.
 
-   - A task with the name TASKNAME has already been placed (tells the operator
-     to unplace the task before proceeding).
+   - A application with the name APPLICATIONNAME has already been placed (tells
+     the operator to unplace the application before proceeding).
 
    Writes warnings to the operator for each constraint that could not be
    satisfied. If there were no errors, writes to the operator confirming the
@@ -252,46 +259,47 @@ interact with the placement system:
 
 [^algorithmName]: Just don't call your algorithm "dump", or "place" (please).
 
- - `placement /dump = TASKNAME`: Dumps placement information for the task named
-   `TASKNAME`, specifically:
+ - `placement /dump = APPLICATIONNAME`: Dumps placement information for the
+   application named `APPLICATIONNAME`, specifically:
 
-   - Information on how each device in the task has been placed on the
+   - Information on how each device in the application has been placed on the
      hardware, line by line. Each record is of the form
      "`<DEVICENAME>\t<THREADNAME>`" (where `<THREADNAME>` is
      hierarchical). This information is dumped to
-     `placement_task_to_hardware_<TASKNAME>_<ISO8601DT>.txt`.
+     `placement_task_to_hardware_<APPLICATIONNAME>_<ISO8601DT>.txt`.
 
    - Diagnostic information from the algorithm object, dumped to\
-     `placement_diagnostics_<TASKNAME>_<ISO8601DT>.txt`. This information
-     includes:
+     `placement_diagnostics_<APPLICATIONNAME>_<ISO8601DT>.txt`. This
+     information includes:
 
-     - When the task was placed.
+     - When the application was placed.
 
-     - The algorithm type used to place the task.
+     - The algorithm type used to place the application.
 
      - The placement score (supplied by the algorithm).
 
      - The greatest "distance" between connected placed devices (supplied by
        the algorithm).
 
-     - The maximum amount of devices placed on a thread for this task (supplied
-       by the algorithm).
+     - The maximum amount of devices placed on a thread for this application
+       (supplied by the algorithm).
 
-     - Detailed information about "cost" between each task graph edge (supplied
-       by the `MsgT_t`s in the task), line by line. Each record is of the form
-       `<DEVICENAME>\t<DEVICENAME>\t<COST>`, and is dumped to
-       `placement_task_edges_<TASKNAME>_<ISO8601DT>.txt`.
+     - Detailed information about "cost" between each application graph edge
+       (supplied by the `MsgT_t`s in the application), line by line. Each
+       record is of the form `<DEVICENAME>\t<DEVICENAME>\t<COST>`, and is
+       dumped to\
+       `placement_task_edges_<APPLICATIONNAME>_<ISO8601DT>.txt`.
 
    I'd prefer it if the operator could specify paths on the command line, but I
    can't see an elegant way of doing this using the command infrastructure we
    have.
 
-   Writes an error to the operator if no task with name TASKNAME has been
-   placed.
+   Writes an error to the operator if no application with name APPLICATIONNAME
+   has been placed.
 
- - `placement /unplace = TASKNAME`: Completely clears placement information for
-   a task with name `TASKNAME`. Writes an error to the operator if no task with
-   that name has been placed.
+ - `placement /unplace = APPLICATIONNAME`: Completely clears placement
+   information for a application with name `APPLICATIONNAME`. Writes an error
+   to the operator if no application with that name has been placed.
 
  - `placement /reset`: Completely clears placement information and constraints,
    and unlinks the hardware stack from all devices.
@@ -375,10 +383,13 @@ algorithm.
 
 One might assume the former map would use up "a lot" of memory, but I
 disagree. For the eight-box system, 16 mailboxes-per-board $\times$ 6
-boards-per-box $\times$ 8 boxes $=$ 768 mailboxes. Given a four-byte float, the
-map will take approximately
-$768\times768\times4\text{bytes}\approx2.4\text{Mbytes}$ (which is not that
-much)
+boards-per-box $\times$ 8 boxes $=$ 768 mailboxes. Given a four-byte floats and
+an eight-byte pointers, the values (floats) in the map will claim
+$768\times768\times4\text{bytes}\approx2.4\text{Mbytes}$ of memory, where the
+values (pairs of pointers) will claim
+$768\times768\times8\text{bytes}\approx4.7\text{Mbytes}$ of memory. Even
+incorporating STL overheads, these aren't particularly large numbers (I wrote a
+test program!).
 
 ### Starting State
 "Random" placement is sufficient for this, but I suspect a "smart random"
@@ -420,7 +431,7 @@ neighbouring state. It can be proven that a combination of move and swap
 operations, both of which select neighbouring states, are sufficient to explore
 the state space.
 
-This mechanism would randomly select a device in the task, a core in the
+This mechanism would randomly select a device in the application, a core in the
 hardware model that is valid for devices of this type (from
 `validCoresForDeviceType`), a thread index in the core, and an index `i` in
 [0,1023]. If there aren't `i` devices in the target thread, we move the
@@ -439,8 +450,8 @@ delta of the sum of the edges affected by the swap or move process - so only
 those need to be recomputed and compared.
 
 Constraints should also be reevaluated using their `is_satisfied_delta` method
-(and constraints associated with a different task are ignored). If a mandatory
-constraint is broken, the state is discarded, returning to
+(and constraints associated with a different application are ignored). If a
+mandatory constraint is broken, the state is discarded, returning to
 "Selection"[^nincrement]. For example, if a `MaxDevicesPerThread` constraint:
 
 [^nincrement]: Whether or not $n$ is incremented in response to a state being
@@ -578,7 +589,8 @@ how long he expects certain jobs to take.
 |            |  - `Result`                                                    |
 +------------+----------------------------------------------------------------+
 | 2019-10-29 | Implement a fitness evaluator, which accounts for the edges of |
-|            | the task graph, and the costs of any broken constraints.\      |
+|            | the application graph, and the costs of any broken             |
+|            | constraints. \                                                 |
 |            |                                                                |
 +------------+----------------------------------------------------------------+
 | 2019-11-14 | Simulated annealing implementation, with:                      |
