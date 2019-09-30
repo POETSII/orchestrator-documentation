@@ -164,6 +164,7 @@ between two connected devices.<BR ALIGN="TEXT"/>
 <TR><TD>Constraint</TD></TR>
 <TR><TD ALIGN="LEFT">
 + category : virtual const constraintCategory<BR ALIGN="LEFT"/>
++ mandatory: bool<BR ALIGN="LEFT"/>
 + penalty : float<BR ALIGN="LEFT"/>
 + satisfied : bool<BR ALIGN="LEFT"/>
 + task : P_task* (PNULL is valid)<BR ALIGN="LEFT"/>
