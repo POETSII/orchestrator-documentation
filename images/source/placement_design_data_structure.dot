@@ -132,9 +132,7 @@ by Algorithm:do_it.<BR ALIGN="TEXT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + compute_fitness(P_task*) : float<BR ALIGN="LEFT"/>
-+ compute_fitness(DevI_t*,<BR ALIGN="LEFT"/>
-                  DevI_t*) : float<BR ALIGN="LEFT"/>
-+ dump() : void<BR ALIGN="LEFT"/>
++ Dump(FILE*) : void<BR ALIGN="LEFT"/>
 + load_constraint_file(string) : void<BR ALIGN="LEFT"/>
 + place(P_engine*, P_task*,<BR ALIGN="LEFT"/>
         string) : float<BR ALIGN="LEFT"/>
@@ -170,7 +168,7 @@ between two connected devices.<BR ALIGN="TEXT"/>
 + task : P_task* (PNULL is valid)<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
-+ dump() : void<BR ALIGN="LEFT"/>
++ virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
 + virtual is_satisfied(Placer*) : bool<BR ALIGN="LEFT"/>
 + virtual is_satisfied_delta(Placer*,<BR ALIGN="LEFT"/>
                              vector&lt;DevI_t*&gt;) : bool<BR ALIGN="LEFT"/>
@@ -214,7 +212,7 @@ devices that can be placed on any thread.<BR ALIGN="TEXT"/>
 <TR><TD ALIGN="LEFT">
 + virtual do_it(P_engine*, P_task*,<BR ALIGN="LEFT"/>
                 Placer*) : float<BR ALIGN="LEFT"/>
-+ dump() : void<BR ALIGN="LEFT"/>
++ virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Represents the execution<BR ALIGN="TEXT"/>
