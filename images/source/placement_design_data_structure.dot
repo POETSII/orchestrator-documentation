@@ -136,8 +136,9 @@ by Algorithm:do_it.<BR ALIGN="TEXT"/>
 + Dump(FILE*) : void<BR ALIGN="LEFT"/>
 + load_constraint_file(string) : void<BR ALIGN="LEFT"/>
 + place(P_task*, string) : float<BR ALIGN="LEFT"/>
-+ unplace(P_task*) : uint<BR ALIGN="LEFT"/>
-- check_all_devices_mapped(P_task*) : bool<BR ALIGN="LEFT"/>
++ unplace(P_task*) : void<BR ALIGN="LEFT"/>
+- check_all_devices_mapped(P_task*<BR ALIGN="LEFT"/>
+                           vector&lt;DevI_t*&gt;*) : bool<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Manages placement of tasks into<BR ALIGN="TEXT"/>

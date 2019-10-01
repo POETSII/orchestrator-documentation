@@ -111,8 +111,8 @@ Placer::place(P_engine*, P_task*, string)`, which:
  - Runs the algorithm on the application.
 
  - Performs an integrity check (using
-   `Placer::check_all_devices_mapped(P_engine*, P_task*)`), which would ensure
-   that all devices for a application have been placed.
+   `Placer::check_all_devices_mapped(P_task*, vector<DevI_t>*)`), which would
+   ensure that all devices for a application have been placed.
 
  - If all is well, returns the placement score from the algorithm. Otherwise,
    propagates an error back to the caller.
