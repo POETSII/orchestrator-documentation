@@ -123,9 +123,10 @@ by Algorithm:do_it.<BR ALIGN="TEXT"/>
     Placer[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>Placer</TD></TR>
 <TR><TD ALIGN="LEFT">
++ constraints : list&lt;Constraint*&gt;<BR ALIGN="LEFT"/>
 + deviceToThread : map&lt;DevI_t*,<BR ALIGN="LEFT"/>
                        P_thread*&gt;<BR ALIGN="LEFT"/>
-+ constraints : list&lt;Constraint*&gt;<BR ALIGN="LEFT"/>
++ engine : P_engine*<BR ALIGN="LEFT"/>
 + placedTasks : map&lt;P_task*, Algorithm*&gt;<BR ALIGN="LEFT"/>
 + threadToDevices : map&lt;P_thread*,<BR ALIGN="LEFT"/>
                         list&lt;DevI_t*&gt;&gt;<BR ALIGN="LEFT"/>
@@ -134,11 +135,9 @@ by Algorithm:do_it.<BR ALIGN="TEXT"/>
 + compute_fitness(P_task*) : float<BR ALIGN="LEFT"/>
 + Dump(FILE*) : void<BR ALIGN="LEFT"/>
 + load_constraint_file(string) : void<BR ALIGN="LEFT"/>
-+ place(P_engine*, P_task*,<BR ALIGN="LEFT"/>
-        string) : float<BR ALIGN="LEFT"/>
-+ unplace(P_engine*, P_task*) : uint<BR ALIGN="LEFT"/>
-- check_all_devices_mapped(P_engine*,<BR ALIGN="LEFT"/>
-                           P_task*) : bool<BR ALIGN="LEFT"/>
++ place(P_task*, string) : float<BR ALIGN="LEFT"/>
++ unplace(P_task*) : uint<BR ALIGN="LEFT"/>
+- check_all_devices_mapped(P_task*) : bool<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Manages placement of tasks into<BR ALIGN="TEXT"/>
@@ -210,7 +209,7 @@ devices that can be placed on any thread.<BR ALIGN="TEXT"/>
 + result : Result<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
-+ virtual do_it(P_engine*, P_task*,<BR ALIGN="LEFT"/>
++ virtual do_it(P_task*,<BR ALIGN="LEFT"/>
                 Placer*) : float<BR ALIGN="LEFT"/>
 + virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
@@ -267,6 +266,7 @@ Does bucket filling.<BR ALIGN="TEXT"/>
         Algorithm -> Result[label=" Algorithm.result"];
         OrchBase -> P_engine[label=" OrchBase->pE"];
         P_task -> GraphI_t[label=" P_task->pD"];
+        Placer -> P_engine[label=" Placer->engine"];
     }
 
     /* Containment across ellipsis nodes. */

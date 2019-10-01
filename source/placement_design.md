@@ -66,7 +66,8 @@ Orchestrator](images/placement_design_data_structure.pdf)
 The `Placer` encapsulates placement behaviour in the Orchestrator. The
 `OrchBase` class holds a `Placer` member (with name `placer`). When the
 `P_engine` stored by `OrchBase` is changed (i.e. `topology /load`), then
-`OrchBase` replaces its `OrchBase::placer` member.
+`OrchBase` replaces its `OrchBase::placer` member. `OrchBase` passes a pointer
+to the `Placer` on construction as a shortcut.
 
 `Placer` instances hold two public maps - one which maps device addresses to
 thread addresses, and one which maps thread addresses to a list of device
