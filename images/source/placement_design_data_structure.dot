@@ -125,8 +125,8 @@ by Algorithm:do_it.<BR ALIGN="TEXT"/>
 <TR><TD ALIGN="LEFT">
 + deviceToThread : map&lt;DevI_t*,<BR ALIGN="LEFT"/>
                        P_thread*&gt;<BR ALIGN="LEFT"/>
-+ constraints : list&lt;Constraint&gt;<BR ALIGN="LEFT"/>
-+ placedTasks : map&lt;P_task*, Algorithm&gt;<BR ALIGN="LEFT"/>
++ constraints : list&lt;Constraint*&gt;<BR ALIGN="LEFT"/>
++ placedTasks : map&lt;P_task*, Algorithm*&gt;<BR ALIGN="LEFT"/>
 + threadToDevices : map&lt;P_thread*,<BR ALIGN="LEFT"/>
                         list&lt;DevI_t*&gt;&gt;<BR ALIGN="LEFT"/>
 </TD></TR>
@@ -161,7 +161,7 @@ between two connected devices.<BR ALIGN="TEXT"/>
     Constraint[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>Constraint</TD></TR>
 <TR><TD ALIGN="LEFT">
-+ category : virtual const constraintCategory<BR ALIGN="LEFT"/>
++ category : const constraintCategory<BR ALIGN="LEFT"/>
 + mandatory: bool<BR ALIGN="LEFT"/>
 + penalty : float<BR ALIGN="LEFT"/>
 + satisfied : bool<BR ALIGN="LEFT"/>

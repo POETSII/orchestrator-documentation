@@ -99,7 +99,7 @@ lookup versus a dereference). Once such case is when a application is
 
 `Placer` objects hold a map of applications that have been placed on them,
 along with the `Algorithm` object that performed the placement
-(`std::map<P_task*, Algorithm> placedTasks`). Each application may be placed
+(`std::map<P_task*, Algorithm*> placedTasks`). Each application may be placed
 only once without being "unplaced". This map is interacted with by the `float
 Placer::place(P_engine*, P_task*, string)`, which:
 
@@ -131,9 +131,14 @@ P_task*)`, which[^load]:
     device), but it doesn't matter too much because this operation is
     sufficiently rare.
 
-`Placer` objects hold a list of constraints `std::list<Constraint>
+`Placer` objects hold a list of constraints `std::list<Constraint*>
 constraints`, which `Algorithm` objects can query during placement. This list
 is populated by `Placer:load_constraint_file(std::string)`.
+
+`Algorithm`s and `Constraint`s are dynamically allocated, to avoid object
+slicing when derived class instances are stored in the `placedTasks` and
+`constraints`, respectively. On `Placer` destruction, these objects are
+explicitly `delete`d.
 
 ## Constraints
 As per the design requirements, constraints can be introduced from three
