@@ -207,11 +207,12 @@ devices that can be placed on any thread.<BR ALIGN="TEXT"/>
     Algorithm[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>Algorithm</TD></TR>
 <TR><TD ALIGN="LEFT">
++ placer : Placer*<BR ALIGN="LEFT"/>
 + result : Result<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
-+ virtual do_it(P_task*,<BR ALIGN="LEFT"/>
-                Placer*) : float<BR ALIGN="LEFT"/>
++ Algorithm(Placer*)<BR ALIGN="LEFT"/>
++ virtual do_it(P_task*) : float<BR ALIGN="LEFT"/>
 + virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
