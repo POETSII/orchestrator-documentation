@@ -269,6 +269,7 @@ Does bucket filling.<BR ALIGN="TEXT"/>
         OrchBase -> P_engine[label=" OrchBase->pE"];
         P_task -> GraphI_t[label=" P_task->pD"];
         Placer -> P_engine[label=" Placer->engine"];
+        Algorithm -> Placer[label=" Algorithm->placer"];
     }
 
     /* Containment across ellipsis nodes. */
