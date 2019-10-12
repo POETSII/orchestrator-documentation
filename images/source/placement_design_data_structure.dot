@@ -22,7 +22,7 @@ digraph G {
 <TR><TD ALIGN="LEFT">
 + pE : P_engine*<BR ALIGN="LEFT"/>
 + P_taskm : map&lt;string, P_task*&gt;<BR ALIGN="LEFT"/>
-+ placer : Placer<BR ALIGN="LEFT"/>
++ pPlacer : Placer*<BR ALIGN="LEFT"/>
  ...<BR ALIGN="TEXT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
@@ -263,7 +263,7 @@ Does bucket filling.<BR ALIGN="TEXT"/>
 
     /* Containment. */
     {edge[arrowhead="vee"];
-        OrchBase -> Placer[label=" OrchBase.placer"];
+        OrchBase -> Placer[label=" OrchBase->pPlacer"];
         Constraint -> constraintCategory[label=" Constraint.category"];
         Algorithm -> Result[label=" Algorithm.result"];
         OrchBase -> P_engine[label=" OrchBase->pE"];
