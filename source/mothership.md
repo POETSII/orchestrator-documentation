@@ -54,7 +54,7 @@ features of the Mothership are:
 # Threads and Queues: Producer-Consumer
 To support these features, a Producer-Consumer approach is used by the
 Mothership. Figure 1 shows a schematic of how the Mothership employs this
-pattern. The threads are:
+pattern using POSIX threads. The threads are:
 
  - `main`: The root thread, which spawns the other threads below and waits for
    them to exit.
@@ -103,3 +103,22 @@ threads, black-filled boxes represent queues, black arrows represent the
 producer-consumer relationship, red arrows represent MPI message flow, and blue
 arrows represent backend packet flow. Logging not shown (all threads can `Post`
 over MPI)](images/mothership_producer_consumer.pdf)
+
+## TODO Communication and Semaphores
+How do we quit? How do we communicate when queues are full? How do we block
+queues while writing/reading? (POSIX thread mutexes, probably).
+
+# TODO Command and Control
+What do we need to control?
+
+## TODO Message Key Patterns
+A table of (valid) message key patterns that the Mothership accepts
+
+## TODO Manipulating Tasks
+Defining a task, loading, initialising, and running. Paths?
+
+# TODO Supervisor Interface
+What is the API? How will it work?
+
+# TODO Debugging
+Both the Mothership itself, and applications using DebugLink.
