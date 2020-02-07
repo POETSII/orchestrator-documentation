@@ -1,0 +1,87 @@
+digraph G {
+
+    fontname="Inconsolata";
+    fontsize=12;
+    margin=0;
+    ranksep=0.35;
+
+    // Threads
+    node[color="#000000",
+         fillcolor="#ffffff:#eeeeee",
+         fontcolor="#111111",
+         fontname="Inconsolata",
+         fontsize=12,
+         gradientangle=270,
+         height=0,
+         margin=0.05;
+         penwidth=1;
+         shape="rect",
+         style="filled",
+         width=0];
+
+    MPIInputBroker;
+    MPICncResolver;
+    MPIApplicationResolver;
+    BackendOutputBroker;
+    BackendInputBroker;
+    DebugInputBroker;
+
+    // Queues
+    node[color="#000000",
+         fillcolor="#000000:#111111",
+         fontcolor="#eeeeee"];
+
+    MPIApplicationQueue;
+    MPICncQueue;
+    BackendOutputQueue;
+    BackendInputQueue;
+    DebugInputQueue;
+
+    // Communication Buses
+    node[color="#FFFFFF",
+         fillcolor="#FFFFFF"];
+
+    MPI [fontcolor="#550000"];
+    Backend [label="Compute Backend", fontcolor="#000055"];
+
+    // Producer-consumer relationship
+    edge[color="#000000",
+         fontname="Inconsolata",
+         fontsize=12;
+         penwidth=1];
+
+    MPIInputBroker -> MPIApplicationQueue;
+    MPIInputBroker -> MPICncQueue;
+    MPICncQueue -> MPICncResolver;
+    MPIApplicationQueue -> MPIApplicationResolver;
+    MPIApplicationResolver -> BackendOutputQueue;
+    BackendOutputQueue -> BackendOutputBroker;
+    BackendInputBroker -> BackendInputQueue;
+    BackendInputQueue -> BackendInputBroker;
+    DebugInputBroker -> DebugInputQueue;
+    DebugInputQueue -> DebugInputBroker;
+
+    // MPI
+    edge[color="#550000",
+         fontcolor="#550000"];
+
+    MPI -> MPIInputBroker [label=" From anywhere (really)"];
+    MPIApplicationResolver -> MPI [label=" From\nsupervisors"];
+    //MPICncResolver -> MPI;
+    BackendInputBroker -> MPI [label=" For externals\n or supervisors"];
+    //DebugInputBroker -> MPI;
+
+    // Backend
+    edge[color="#000055",
+         fontcolor="#000055"];
+
+    Backend -> BackendInputBroker [label="From normal\ndevices"];
+    Backend -> DebugInputBroker;
+    BackendOutputBroker -> Backend;
+
+    // Movement
+    { rank=min; MPI; }
+    { rank=max; Backend; }
+    { rank=same; BackendInputQueue; DebugInputQueue; }
+    { rank=same; BackendInputBroker; DebugInputBroker; }
+}
