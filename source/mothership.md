@@ -45,8 +45,8 @@ features of the Mothership are:
 
 # A Quick Note on Terminology
 
- - *Message*: An addressed item with some payload that traverses the MPI
-   network.
+ - *Message*: An addressed item (`(P)Msg_p` depending on context) with some
+   payload that traverses the MPI network via the CommonBase interface.
 
  - *Packet*: An addressed item with some payload that traverses the compute
    fabric.
@@ -54,10 +54,13 @@ features of the Mothership are:
 # Threads and Queues: Producer-Consumer
 To support these features, a Producer-Consumer approach is used by the
 Mothership. Figure 1 shows a schematic of how the Mothership employs this
-pattern using POSIX threads. The threads are:
+pattern using POSIX threads. Each thread has access to a Mothership object, in
+which queues and mutexes for the producer-consumer pattern are stored. The
+threads are:
 
  - `main`: The root thread, which spawns the other threads below and waits for
-   them to exit.
+   them to exit. All threads are running for the duration of the Mothership
+   process (excepting process startup and teardown).
 
  - `MPIInputBroker`: Responsible for filtering MPI messages into either the
    Mothership C&C queue (`MPICncQueue`), or the Application-handling queue
@@ -108,17 +111,77 @@ over MPI)](images/mothership_producer_consumer.pdf)
 How do we quit? How do we communicate when queues are full? How do we block
 queues while writing/reading? (POSIX thread mutexes, probably).
 
-# TODO Command and Control
-What do we need to control?
+# Command and Control
+The operator controls Mothership processes through the console in the Root
+process. The Root process sends messages to the Mothership to perform various
+C&C jobs, including task manipulation. Table 1 denotes subkeys of messages that
+Motherships act upon (not including default handlers introduced by
+`CommonBase`). Messages are received by the `MPIInputBroker` consumer, which
+inherits from `CommonBase`. Messages with invalid key combinations are dropped.
 
-## TODO Message Key Patterns
-A table of (valid) message key patterns that the Mothership accepts
+---------------------------------------------------------------------------------------
+Key Permutation Arguments                      Function
+--------------- ------------------------------ ----------------------------------------
+`EXIT`                                         Stops processing of further messages and
+                                               packets, and shuts down the Mothership
+                                               as *gracefully* as possible.
+
+`SYST`, `KILL`                                 Stops processing of further messages and
+                                               packets, and shuts down the Mothership
+                                               as *quickly* as possible.
+
+`NAME`, `SPEC`  `std::string taskName`         Defines that a task on the receiving
+                `uint32_t distCount`           Mothership must have received
+                                               `distCount` unique distribution (`NAME`,
+                                               `DIST`) messages in order to be fully
+                                               defined.
+
+`NAME`, `DIST`  `std::string taskName`         Defines the properties for a given core
+                `std::string codePath`         for a given application on this
+                `std::string dataPath`         Mothership.
+                `uint32_t coreAddr`
+                `uint8_t numThreads`
+
+`NAME`, `RECL`  `std::string taskName`         Removes information for a task, by name,
+                                               from the Mothership. Does nothing on a
+                                               running task (it must be stopped first).
+
+`CMND`, `INIT`  `std::string taskName`         Takes a fully-defined task, loads its
+                                               code and data binaries onto the
+                                               appropriate hardware, boots the
+                                               appropriate boards, loads supervisors,
+                                               and holds execution of normal devices
+                                               at the softswitch barrier.
+
+`CMND`, `RUN`   `std::string taskName`         Takes a task held at the softswitch
+                                               barrier, and "starts" it by sending a
+                                               barrier-breaking message to all normal
+                                               devices owned by that task on this
+                                               Mothership.
+
+`CMND`, `STOP`  `std::string taskName`         Takes a running task and sends a stop
+                                               packet to all normal devices owned by
+                                               that task on the Mothership.
+
+`SUPR`          `P_Sup_Msg_t message`          Calls a method from a loaded supervisor.
+
+`PKTS`          `std::vector<P_Msg_t> packets` Pumps a series of packets into the
+                                               backend.
+---------------------------------------------------------------------------------------
+
+Table: Input message key permutations that the Mothership understands, and what
+the Mothership does with those messages.
 
 ## TODO Manipulating Tasks
-Defining a task, loading, initialising, and running. Paths?
+Defining a task, loading, initialising, and running. Paths? Task states?
 
 # TODO Supervisor Interface
 What is the API? How will it work?
+
+ - A safe directory
+ - A messaging interface
+ - A way to identify a leader (lowest relevant Mothership rank, probably. Or
+   perhaps most populated)
 
 # TODO Debugging
 Both the Mothership itself, and applications using DebugLink.
