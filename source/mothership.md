@@ -169,65 +169,73 @@ introduced by `CommonBase`). Messages are received by the `MPIInputBroker`
 consumer, which inherits from `CommonBase`. Messages with invalid key
 combinations are dropped.
 
--------------------------------------------------------------------------------
-Key Permutation Arguments                      Function
---------------- ------------------------------ --------------------------------
-`EXIT`                                         Stops processing of further
-                                               messages and packets, and shuts
-                                               down the Mothership process as
-                                               *gracefully* as possible.
-
-`SYST`, `KILL`                                 Stops processing of further
-                                               messages and packets, and shuts
-                                               down the Mothership process as
-                                               *quickly* as possible.
-
-`NAME`, `SPEC`  `std::string appName`          Defines that an application on
-                `uint32_t distCount`           the receiving Mothership process
-                                               must have received `distCount`
-                                               unique distribution (`NAME`,
-                                               `DIST`) messages in order to be
-                                               fully defined.
-
-`NAME`, `DIST`  `std::string appName`          Defines the properties for a
-                `std::string codePath`         given core for a given
-                `std::string dataPath`         application on this Mothership
-                `uint32_t coreAddr`            process.
-                `uint8_t numThreads`
-
-`NAME`, `RECL`  `std::string appName`          Removes information for an
-                                               application, by name, from the
-                                               Mothership. Does nothing on a
-                                               running application (it must be
-                                               stopped first).
-
-`CMND`, `INIT`  `std::string appName`          Takes a fully-defined
-                                               application, loads its code and
-                                               data binaries onto the
-                                               appropriate hardware, boots the
-                                               appropriate boards, loads
-                                               supervisors, and holds execution
-                                               of normal devices at the
-                                               softswitch barrier.
-
-`CMND`, `RUN`   `std::string appName`          Takes an application held at the
-                                               softswitch barrier, and "starts"
-                                               it by sending a barrier-breaking
-                                               message to all normal devices
-                                               owned by that application on
-                                               this Mothership process.
-
-`CMND`, `STOP`  `std::string appName`          Takes a running application and
-                                               sends a stop packet to all
-                                               normal devices owned by that
-                                               task on the Mothership process.
-
-`SUPR`          `P_Sup_Msg_t message`          Calls a method from a loaded
-                                               supervisor.
-
-`PKTS`          `std::vector<P_Msg_t> packets` Pumps a series of packets into
-                                               the backend.
----------------------------------------------------------------------------------------
++-----------------+-----------------------+-----------------------------------+
+| Key Permutation | Arguments             | Function                          |
++=================+=======================+===================================+
+| `EXIT`          | None                  | Stops processing of further       |
+|                 |                       | messages and packets, and         |
+|                 |                       | shuts down the Mothership         |
+|                 |                       | process as *gracefully* as        |
+|                 |                       | possible.                         |
++-----------------+-----------------------+-----------------------------------+
+|`SYST`, `KILL`   | None                  | Stops processing of further       |
+|                 |                       | messages and packets, and shuts   |
+|                 |                       | down the Mothership process as    |
+|                 |                       | *quickly* as possible.            |
++-----------------+-----------------------+-----------------------------------+
+| `NAME`, `SPEC`  | 1. `std::string`      | Defines that an application on    |
+|                 |    `appName`          | the receiving Mothership process  |
+|                 | 2. `uint32_t`         | must have received `distCount`    |
+|                 |    `distCount`        | unique distribution (`NAME`,      |
+|                 |                       | `DIST`) messages in order to be   |
+|                 |                       | fully defined.                    |
++-----------------+-----------------------+-----------------------------------+
+| `NAME`, `DIST`  | 1. `std::string`      | Defines the properties for a      |
+|                 |    `appName`          | given core for a given            |
+|                 | 2. `std::string`      | application on this Mothership    |
+|                 |    `codePath`         | process.                          |
+|                 | 3. `std::string`      |                                   |
+|                 |    `dataPath`         |                                   |
+|                 | 4. `uint32_t`         |                                   |
+|                 |    `coreAddr`         |                                   |
+|                 | 5. `uint8_t`          |                                   |
+|                 |    `numThreads`       |                                   |
++-----------------+-----------------------+-----------------------------------+
+| `NAME`, `RECL`  | 1. `std::string`      | Removes information for an        |
+|                 |    `appName`          | application, by name, from the    |
+|                 |                       | Mothership. Does nothing on a     |
+|                 |                       | running application (it must be   |
+|                 |                       | stopped first).                   |
++-----------------+-----------------------+-----------------------------------+
+| `CMND`, `INIT`  | 1. `std::string`      | Takes a fully-defined             |
+|                 |    `appName`          | application, loads its code and   |
+|                 |                       | data binaries onto the            |
+|                 |                       | appropriate hardware, boots the   |
+|                 |                       | appropriate boards, loads         |
+|                 |                       | supervisors, and holds execution  |
+|                 |                       | of normal devices at the          |
+|                 |                       | softswitch barrier.               |
++-----------------+-----------------------+-----------------------------------+
+|`CMND`, `RUN`    | 1. `std::string`      | Takes an application held at the  |
+|                 |    `appName`          | softswitch barrier, and "starts"  |
+|                 |                       | it by sending a barrier-breaking  |
+|                 |                       | message to all normal devices     |
+|                 |                       | owned by that application on      |
+|                 |                       | this Mothership process.          |
++-----------------+-----------------------+-----------------------------------+
+| `CMND`, `STOP`  | 1. `std::string`      | Takes a running application and   |
+|                 |    `appName`          | sends a stop packet to all        |
+|                 |                       | normal devices owned by that      |
+|                 |                       | task on the Mothership process.   |
++-----------------+-----------------------+-----------------------------------+
+| `SUPR`          | 1. `P_Sup_Msg_t`      | Calls a method from a loaded      |
+|                 |    `message`          | supervisor. The supervisor is     |
+|                 |                       | identified by querying `NameBase` |
+|                 |                       | using the address in `message`.   |
++-----------------+-----------------------+-----------------------------------+
+| `PKTS`          | 1. `std::vector<`     | Queues a series of packets into   |
+|                 |    `P_Msg_t> packets` | the backend.                      |
++-----------------+-----------------------+-----------------------------------+
 
 Table: Input message key permutations that the Mothership process understands,
 and what the Mothership does with those messages.
@@ -236,14 +244,16 @@ The Mothership process occasionally also sends messages to the Root
 process. Table 2 denotes subkeys of messages that Mothership processes send to
 Root, along with their intended use. They're mostly acknowledgements.
 
--------------------------------------------------------------------------------
-Key Permutation Arguments                      Reason
---------------- ------------------------------ --------------------------------
-TODO            TODO                           Some task-defined
-                                               acknowledgement message.
++-----------------+----------------------------+------------------------------+
+| Key Permutation | Arguments                  | Reason                       |
++=================+============================+==============================+
+| TODO            | - Something                | Some task-defined            |
+|                 | - Something else with a    | acknowledgement message.     |
+|                 |   lot of text.             |                              |
++-----------------+----------------------------+------------------------------+
+| TODO            | TODO                       | TODO                         |
++-----------------+----------------------------+------------------------------+
 
-TODO            TODO                           TODO
--------------------------------------------------------------------------------
 
 Table: Output message key permutations that the Mothership process sends to the
 Root process, and why.
