@@ -4,11 +4,12 @@
 This document describes the mothership, which is the Orchestrator process that
 facilitates communication between the compute backend (normally Tinsel) on its
 box, and the rest of the Orchestrator via MPI. It also describes interfacing
-with Supervisor devices, which operate within the Mothership. The desirable
-features of the Mothership are:
+with Supervisor devices, which operate within the Mothership process. The
+desirable features of the Mothership process are:
 
  - To house supervisor devices: Supervisor logic must be loaded at application
-   run-time, and the Mothership must be robust to invalid Supervisor binaries.
+   run-time, and the Mothership process must be robust to invalid Supervisor
+   binaries.
 
  - To drain the compute fabric as quickly as possible: One performance-failure
    condition of a POETS compute job is for the compute fabric (Network-On-Chip
@@ -17,12 +18,12 @@ features of the Mothership are:
    applications with devices that regularly report their results to their
    supervisor device, and causes packets from normal devices to be delayed by
    this traffic, significantly hampering execution time. This problem is abated
-   when the Mothership drains packets destined for the supervisor as quickly as
-   possible, without significant compromise to its other features.
+   when the Mothership process drains packets destined for the supervisor as
+   quickly as possible, without significant compromise to its other features.
 
  - To support multiple applications simultaneously running on its box: This
    means applications may be loaded while one is already running, and means
-   that the Mothership must support the loading of multiple supervisor
+   that the Mothership process must support the loading of multiple supervisor
    binaries.
 
  - Support a debugging interface (UART, in the case of Tinsel): Problems with
@@ -33,42 +34,50 @@ features of the Mothership are:
 
  - Respond reasonably quickly to instructions sent to it (over MPI): Note that,
    while resolving traffic from the compute fabric is a high priority activity,
-   certain Mothership command-and-control (C&C) instructions are more important
-   still, including quitting, and killing an application. The Mothership must
+   certain command-and-control (C&C) instructions are more important still,
+   including quitting, and killing an application. The Mothership process must
    enact these commands in reasonable time, without significantly compromising
    fabric-draining performance.
 
  - Support swappable backends: In the future, to use the Orchestrator with
-   non-Tinsel backends. The Mothership should support a common interface to
-   multiple fabrics. This feature is not immediately essential, but should be
-   designed around.
+   non-Tinsel backends. The Mothership process should support a common
+   interface to multiple fabrics. This feature is not immediately essential,
+   but should be designed around.
 
-# A Quick Note on Terminology
+NB: Terminology in this document:
 
  - *Message*: An addressed item (`(P)Msg_p` depending on context) with some
    payload that traverses the MPI network via the CommonBase interface.
 
- - *Packet*: An addressed item with some payload that traverses the compute
-   fabric.
+ - *Packet*: An addressed item (usually `P_Msg_t`) with some payload that
+   traverses the compute fabric.
+
+ - *Thread*: POSIX thread running under the Mothership process (x86-land). NB:
+   Not a "thread" in the compute fabric.
+
+ - *Mothership*: Occasionally, I refer to the Mothership as a class (or
+   object/instance), and a process. This is legacy - documentation is written
+   to take people from the past to the present after all. I'll try to be
+   explicit wherever I use this term.
 
 # Threads and Queues: Producer-Consumer
 To support these features, a Producer-Consumer approach is used by the
-Mothership. Figure 1 shows a schematic of how the Mothership employs this
-pattern using POSIX threads. Each thread has access to a Mothership object, in
-which queues and mutexes for the producer-consumer pattern are stored. The
-threads are:
+Mothership. Figure 1 shows a schematic of how the Mothership process employs
+this pattern using POSIX threads. Each thread has access to a Mothership
+object, in which queues and mutexes for the producer-consumer pattern are
+stored. The threads are:
 
  - `main`: The root thread, which spawns the other threads below and waits for
    them to exit. All threads are running for the duration of the Mothership
    process (excepting process startup and teardown).
 
  - `MPIInputBroker`: Responsible for filtering MPI messages into either the
-   Mothership C&C queue (`MPICncQueue`), or the Application-handling queue
-   (`MPIApplicationQueue`). This "splitting" is needed because, if
-   poorly-written supervisor[^malicious] could flood the Mothership with MPI
-   messages, it will not be possible for the operator to stop the application
-   in reasonable time, potentially compromising the running of other
-   applications on the compute fabric.
+   Mothership object C&C queue (`MPICncQueue`), or the Application-handling
+   queue (`MPIApplicationQueue`). This "splitting" is needed because, if a
+   poorly-written supervisor[^malicious] floods with MPI messages, it will not
+   be possible for the operator to stop the application in reasonable time,
+   potentially compromising the running of other applications on the compute
+   fabric. It calls `CommonBase::MPISpinner`.
 
  - `MPICncResolver`: Responsible for draining the `MPICncQueue` queue, and
    enacting those messages in sequence as appropriate.
@@ -102,11 +111,11 @@ threads are:
 [^backendinput]: I know Tinsel implements such a queue, but other backends may
     not. Better to have some uniformity, I think.
 
-![Mothership producer-consumer pattern. White-filled boxes represent looping
-threads, black-filled boxes represent queues, black arrows represent the
-producer-consumer relationship, red arrows represent MPI message flow, and blue
-arrows represent backend packet flow. Logging not shown (all threads can `Post`
-over MPI)](images/mothership_producer_consumer.pdf)
+![Mothership process producer-consumer pattern. White-filled boxes represent
+looping threads, black-filled boxes represent queues, black arrows represent
+the producer-consumer relationship, red arrows represent MPI message flow, and
+blue arrows represent backend packet flow. Logging not shown (all threads can
+`Post` over MPI)](images/mothership_producer_consumer.pdf)
 
 ## Communication and Semaphores
 The following communication constructs are accessible to all threads, via the
@@ -153,32 +162,33 @@ mutexes):
 
 # Command and Control
 The operator controls Mothership processes through the console in the Root
-process. The Root process sends messages to the Mothership to perform various
-C&C jobs, including task manipulation. Table 1 denotes subkeys of messages that
-Motherships act upon (not including default handlers introduced by
-`CommonBase`). Messages are received by the `MPIInputBroker` consumer, which
-inherits from `CommonBase`. Messages with invalid key combinations are dropped.
+process. The Root process sends messages to the Mothership process to perform
+various C&C jobs, including task manipulation. Table 1 denotes subkeys of
+messages that Mothership processes act upon (not including default handlers
+introduced by `CommonBase`). Messages are received by the `MPIInputBroker`
+consumer, which inherits from `CommonBase`. Messages with invalid key
+combinations are dropped.
 
 ---------------------------------------------------------------------------------------
 Key Permutation Arguments                      Function
 --------------- ------------------------------ ----------------------------------------
 `EXIT`                                         Stops processing of further messages and
                                                packets, and shuts down the Mothership
-                                               as *gracefully* as possible.
+                                               process as *gracefully* as possible.
 
 `SYST`, `KILL`                                 Stops processing of further messages and
                                                packets, and shuts down the Mothership
-                                               as *quickly* as possible.
+                                               process as *quickly* as possible.
 
 `NAME`, `SPEC`  `std::string taskName`         Defines that a task on the receiving
-                `uint32_t distCount`           Mothership must have received
+                `uint32_t distCount`           Mothership process must have received
                                                `distCount` unique distribution (`NAME`,
                                                `DIST`) messages in order to be fully
                                                defined.
 
 `NAME`, `DIST`  `std::string taskName`         Defines the properties for a given core
                 `std::string codePath`         for a given application on this
-                `std::string dataPath`         Mothership.
+                `std::string dataPath`         Mothership process.
                 `uint32_t coreAddr`
                 `uint8_t numThreads`
 
@@ -197,11 +207,11 @@ Key Permutation Arguments                      Function
                                                barrier, and "starts" it by sending a
                                                barrier-breaking message to all normal
                                                devices owned by that task on this
-                                               Mothership.
+                                               Mothership process.
 
 `CMND`, `STOP`  `std::string taskName`         Takes a running task and sends a stop
                                                packet to all normal devices owned by
-                                               that task on the Mothership.
+                                               that task on the Mothership process.
 
 `SUPR`          `P_Sup_Msg_t message`          Calls a method from a loaded supervisor.
 
@@ -209,8 +219,8 @@ Key Permutation Arguments                      Function
                                                backend.
 ---------------------------------------------------------------------------------------
 
-Table: Input message key permutations that the Mothership understands, and what
-the Mothership does with those messages.
+Table: Input message key permutations that the Mothership process understands,
+and what the Mothership does with those messages.
 
 ## TODO Manipulating Tasks
 Defining a task, loading, initialising, and running. Paths? Task states?
