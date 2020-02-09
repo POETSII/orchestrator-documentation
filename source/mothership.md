@@ -99,7 +99,8 @@ threads are:
 [^malicious]: Or a maliciously-written supervisor, but we assume people will be
     playing nice for now.
 
-[^backendinput]: I know Tinsel supports this, but other backends may not.
+[^backendinput]: I know Tinsel implements such a queue, but other backends may
+    not. Better to have some uniformity, I think.
 
 ![Mothership producer-consumer pattern. White-filled boxes represent looping
 threads, black-filled boxes represent queues, black arrows represent the
@@ -107,9 +108,48 @@ producer-consumer relationship, red arrows represent MPI message flow, and blue
 arrows represent backend packet flow. Logging not shown (all threads can `Post`
 over MPI)](images/mothership_producer_consumer.pdf)
 
-## TODO Communication and Semaphores
-How do we quit? How do we communicate when queues are full? How do we block
-queues while writing/reading? (POSIX thread mutexes, probably).
+## Communication and Semaphores
+The following communication constructs are accessible to all threads, via the
+`Mothership::ThreadComms` class:
+
+ - `bool quit`: Defaults to `false`, is set to `true` when one thread
+   encounters a fatal error[^fatalerror], or an `EXIT` C&C message. Threads
+   regularly poll this variable, and gracefully join when it is `true`.
+
+ - Various `pthread_mutex_t`s lock operations of different queues to prevent
+   race conditions between push and pop operations. Queues that are only
+   read/written by one thread have no mutexes:
+
+     - `pthread_mutex_t MPICncQueueMutex` locks `MPICncQueue`.
+
+     - `pthread_mutex_t MPIApplicationQueueMutex` locks `MPIApplicationQueue`.
+
+     - `pthread_mutex_t BackendOutputQueueMutex` locks
+       `BackendOutputQueueMutex`.
+
+The above variables are private, and can be accessed by the following getters
+and setters in `Mothership::ThreadComms` (which manipulate the queues and
+mutexes):
+
+ - `void set_quit()`: Sets `quit` (and also sends a logserver message).
+
+ - `void is_it_time_to_go()`: Reads `quit`.
+
+ - `bool pop_from_MPI_cnc(PMsg_p& message)`: Moves the message from the end of
+   the `MPICncQueue` queue to message. Returns `false` if the queue is empty
+   (leaving `message` unmodified), and `true` otherwise.
+
+ - `void push_to_from_MPI_cnc(PMsg_p message)`: Pushes `message` to the start
+   of the `MPICncQueue` queue.
+
+ - The two above methods are also defined for the `MPIApplicationQueue` queue,
+   and for the `BackendOutputQueue`, `BackendInputQueue`, and
+   `DebugInputQueue`, where the latter three operate with `P_Msg_t packet`s as
+   opposed to `PMsg_p message`s.
+
+[^fatalerror]: By "fatal error", I mean that an exception is thrown in the
+    thread logic, which is not caught. When this happens, the error is logged,
+    and a graceful shutdown is attempted.
 
 # Command and Control
 The operator controls Mothership processes through the console in the Root
