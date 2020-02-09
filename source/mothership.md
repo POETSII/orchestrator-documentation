@@ -163,67 +163,78 @@ mutexes):
 # Command and Control
 The operator controls Mothership processes through the console in the Root
 process. The Root process sends messages to the Mothership process to perform
-various C&C jobs, including task manipulation. Table 1 denotes subkeys of
-messages that Mothership processes act upon (not including default handlers
+various C&C jobs, including application manipulation. Table 1 denotes subkeys
+of messages that Mothership processes act upon (not including default handlers
 introduced by `CommonBase`). Messages are received by the `MPIInputBroker`
 consumer, which inherits from `CommonBase`. Messages with invalid key
 combinations are dropped.
 
----------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 Key Permutation Arguments                      Function
---------------- ------------------------------ ----------------------------------------
-`EXIT`                                         Stops processing of further messages and
-                                               packets, and shuts down the Mothership
-                                               process as *gracefully* as possible.
+--------------- ------------------------------ --------------------------------
+`EXIT`                                         Stops processing of further
+                                               messages and packets, and shuts
+                                               down the Mothership process as
+                                               *gracefully* as possible.
 
-`SYST`, `KILL`                                 Stops processing of further messages and
-                                               packets, and shuts down the Mothership
-                                               process as *quickly* as possible.
+`SYST`, `KILL`                                 Stops processing of further
+                                               messages and packets, and shuts
+                                               down the Mothership process as
+                                               *quickly* as possible.
 
-`NAME`, `SPEC`  `std::string taskName`         Defines that a task on the receiving
-                `uint32_t distCount`           Mothership process must have received
-                                               `distCount` unique distribution (`NAME`,
-                                               `DIST`) messages in order to be fully
-                                               defined.
+`NAME`, `SPEC`  `std::string appName`          Defines that an application on
+                `uint32_t distCount`           the receiving Mothership process
+                                               must have received `distCount`
+                                               unique distribution (`NAME`,
+                                               `DIST`) messages in order to be
+                                               fully defined.
 
-`NAME`, `DIST`  `std::string taskName`         Defines the properties for a given core
-                `std::string codePath`         for a given application on this
-                `std::string dataPath`         Mothership process.
-                `uint32_t coreAddr`
+`NAME`, `DIST`  `std::string appName`          Defines the properties for a
+                `std::string codePath`         given core for a given
+                `std::string dataPath`         application on this Mothership
+                `uint32_t coreAddr`            process.
                 `uint8_t numThreads`
 
-`NAME`, `RECL`  `std::string taskName`         Removes information for a task, by name,
-                                               from the Mothership. Does nothing on a
-                                               running task (it must be stopped first).
+`NAME`, `RECL`  `std::string appName`          Removes information for an
+                                               application, by name, from the
+                                               Mothership. Does nothing on a
+                                               running application (it must be
+                                               stopped first).
 
-`CMND`, `INIT`  `std::string taskName`         Takes a fully-defined task, loads its
-                                               code and data binaries onto the
+`CMND`, `INIT`  `std::string appName`          Takes a fully-defined
+                                               application, loads its code and
+                                               data binaries onto the
                                                appropriate hardware, boots the
-                                               appropriate boards, loads supervisors,
-                                               and holds execution of normal devices
-                                               at the softswitch barrier.
+                                               appropriate boards, loads
+                                               supervisors, and holds execution
+                                               of normal devices at the
+                                               softswitch barrier.
 
-`CMND`, `RUN`   `std::string taskName`         Takes a task held at the softswitch
-                                               barrier, and "starts" it by sending a
-                                               barrier-breaking message to all normal
-                                               devices owned by that task on this
-                                               Mothership process.
+`CMND`, `RUN`   `std::string appName`          Takes an application held at the
+                                               softswitch barrier, and "starts"
+                                               it by sending a barrier-breaking
+                                               message to all normal devices
+                                               owned by that application on
+                                               this Mothership process.
 
-`CMND`, `STOP`  `std::string taskName`         Takes a running task and sends a stop
-                                               packet to all normal devices owned by
-                                               that task on the Mothership process.
+`CMND`, `STOP`  `std::string appName`          Takes a running application and
+                                               sends a stop packet to all
+                                               normal devices owned by that
+                                               task on the Mothership process.
 
-`SUPR`          `P_Sup_Msg_t message`          Calls a method from a loaded supervisor.
+`SUPR`          `P_Sup_Msg_t message`          Calls a method from a loaded
+                                               supervisor.
 
-`PKTS`          `std::vector<P_Msg_t> packets` Pumps a series of packets into the
-                                               backend.
+`PKTS`          `std::vector<P_Msg_t> packets` Pumps a series of packets into
+                                               the backend.
 ---------------------------------------------------------------------------------------
 
 Table: Input message key permutations that the Mothership process understands,
 and what the Mothership does with those messages.
 
-## TODO Manipulating Tasks
-Defining a task, loading, initialising, and running. Paths? Task states?
+## TODO Manipulating Applications
+Defining a application, loading, initialising, and running. Paths? Application
+states?
 
 # TODO Supervisor Interface
 What is the API? How will it work?
