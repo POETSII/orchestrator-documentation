@@ -315,3 +315,6 @@ What is the API? How will it work?
 
 # TODO Debugging
 Both the Mothership itself, and applications using DebugLink.
+
+# TODO Big Class Structure Diagram
+Include NameBase/SBase in here.
