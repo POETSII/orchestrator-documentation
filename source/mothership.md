@@ -232,9 +232,78 @@ Key Permutation Arguments                      Function
 Table: Input message key permutations that the Mothership process understands,
 and what the Mothership does with those messages.
 
-## TODO Manipulating Applications
-Defining a application, loading, initialising, and running. Paths? Application
-states?
+The Mothership process occasionally also sends messages to the Root
+process. Table 2 denotes subkeys of messages that Mothership processes send to
+Root, along with their intended use. They're mostly acknowledgements.
+
+-------------------------------------------------------------------------------
+Key Permutation Arguments                      Reason
+--------------- ------------------------------ --------------------------------
+TODO            TODO                           Some task-defined
+                                               acknowledgement message.
+
+TODO            TODO                           TODO
+-------------------------------------------------------------------------------
+
+Table: Output message key permutations that the Mothership process sends to the
+Root process, and why.
+
+# Applications
+The Mothership class maintains a map, `std::map<std::string, AppInfo>
+Mothership.appdb`, which describes applications that the Mothership process has
+been informed of, as a function of their name. This map complements the
+database provided by `NameBase` (from which the Mothership inherits), by
+defining the states of applications and loading information, as opposed to
+purely addressing information. `AppInfo` is a structure with these fields:
+
+ - `std::string name`: The name of the application, redundant with the map key.
+
+ - `AppState state`: The state that the application is in. These states are
+   enumerated by `AppState` as:
+
+   - `UNDERDEFINED`: The application has been partly sent to the Mothership
+     process, but some cores have not been defined, or their binaries refer to
+     files that could not be found on the filesystem.
+
+   - `DEFINED`: The application and its cores and binaries have been completely
+     defined on this Mothership, but nothing has been loaded onto hardware yet.
+
+   - `LOADING`: As with `DEFINED`, but the loading process (`INIT`) has begun.
+
+   - `READY`: All cores and supervisors are ready to start for this
+     application.
+
+   - `RUNNING`: As with `READY`, and the running process (`RUN`) has begun.
+
+   - `STOPPING`: The application is running, but the stopping process (`STOP`)
+     has begin.
+
+   - `STOPPED`: The application was running, has been stopped
+
+ - `uint32_t distCountExpected`: Expected number of distribution messages for
+   this application.
+
+ - `uint32_t distCountCurrent`: Current number of distribution messages
+   processed for this application. When this is equal to `distCountExpected`,
+   the application is fully defined.
+
+ - `std::map<coreAddr, CoreInfo> coreInfos`: Information about the cores known
+   about, and their loading state. CoreInfo is a structure with these fields:
+
+   - `std::string codePath`: Path to the instruction binary for this core.
+
+   - `std::string dataPath`: Path to the data binary for this core.
+
+   - `uint8_t numThreadsExpected`: Number of threads expected to report back
+     for this core.
+
+   - `uint8_t numThreadsCurrent`: Number of threads that have reported back
+     after loading the core.
+
+There is a corresponding backwards map, `std::map<uint32_t, std::string>
+Mothership.coreToApp`, which maps core addresses to the name of the application
+that has claimed them. This map allows the Mothership process to more elegantly
+catch when applications have been incorrectly overlayed.
 
 # TODO Supervisor Interface
 What is the API? How will it work?
