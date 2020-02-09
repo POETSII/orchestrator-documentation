@@ -178,7 +178,7 @@ combinations are dropped.
 |                 |                       | process as *gracefully* as        |
 |                 |                       | possible.                         |
 +-----------------+-----------------------+-----------------------------------+
-|`SYST`, `KILL`   | None                  | Stops processing of further       |
+| `SYST`, `KILL`  | None                  | Stops processing of further       |
 |                 |                       | messages and packets, and shuts   |
 |                 |                       | down the Mothership process as    |
 |                 |                       | *quickly* as possible.            |
