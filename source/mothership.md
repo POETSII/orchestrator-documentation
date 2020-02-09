@@ -208,25 +208,39 @@ combinations are dropped.
 |                 |                       | stopped first).                   |
 +-----------------+-----------------------+-----------------------------------+
 | `CMND`, `INIT`  | 1. `std::string`      | Takes a fully-defined             |
-|                 |    `appName`          | application, loads its code and   |
+|                 |    `appName`          | application (with state           |
+|                 |                       | `DEFINED`), loads its code and    |
 |                 |                       | data binaries onto the            |
 |                 |                       | appropriate hardware, boots the   |
 |                 |                       | appropriate boards, loads         |
 |                 |                       | supervisors, and holds execution  |
 |                 |                       | of normal devices at the          |
-|                 |                       | softswitch barrier.               |
+|                 |                       | softswitch barrier. If the        |
+|                 |                       | application is not `DEFINED`      |
+|                 |                       | this message is acted on when it  |
+|                 |                       | reaches that state.               |
 +-----------------+-----------------------+-----------------------------------+
-|`CMND`, `RUN`    | 1. `std::string`      | Takes an application held at the  |
-|                 |    `appName`          | softswitch barrier, and "starts"  |
-|                 |                       | it by sending a barrier-breaking  |
+| `CMND`, `RUN`   | 1. `std::string`      | Takes an application held at the  |
+|                 |    `appName`          | softswitch barrier (with state    |
+|                 |                       | `READY`, and "starts" it by       |
+|                 |                       | sending a barrier-breaking        |
 |                 |                       | message to all normal devices     |
 |                 |                       | owned by that application on      |
-|                 |                       | this Mothership process.          |
+|                 |                       | this Mothership process. If the   |
+|                 |                       | application is not `READY`, this  |
+|                 |                       | message is acted on when it       |
+|                 |                       | reaches that state.               |
 +-----------------+-----------------------+-----------------------------------+
-| `CMND`, `STOP`  | 1. `std::string`      | Takes a running application and   |
-|                 |    `appName`          | sends a stop packet to all        |
-|                 |                       | normal devices owned by that      |
-|                 |                       | task on the Mothership process.   |
+| `CMND`, `STOP`  | 1. `std::string`      | Takes a running application (with |
+|                 |    `appName`          | state `RUNNING`) and sends a stop |
+|                 |                       | packet to all normal devices      |
+|                 |                       | owned by that task on the         |
+|                 |                       | Mothership process. If the        |
+|                 |                       | application is not `RUNNING`,     |
+|                 |                       | this message is acted on when it  |
+|                 |                       | reaches that state (stopping      |
+|                 |                       | before it starts will not stop it |
+|                 |                       | from starting).                   |
 +-----------------+-----------------------+-----------------------------------+
 | `SUPR`          | 1. `P_Sup_Msg_t`      | Calls a method from a loaded      |
 |                 |    `message`          | supervisor. The supervisor is     |
@@ -242,17 +256,33 @@ and what the Mothership does with those messages.
 
 The Mothership process occasionally also sends messages to the Root
 process. Table 2 denotes subkeys of messages that Mothership processes send to
-Root, along with their intended use. They're mostly acknowledgements.
+Root, along with their intended use. They're mostly acknowledgements of work
+done.
 
-+-----------------+----------------------------+------------------------------+
-| Key Permutation | Arguments                  | Reason                       |
-+=================+============================+==============================+
-| TODO            | - Something                | Some task-defined            |
-|                 | - Something else with a    | acknowledgement message.     |
-|                 |   lot of text.             |                              |
-+-----------------+----------------------------+------------------------------+
-| TODO            | TODO                       | TODO                         |
-+-----------------+----------------------------+------------------------------+
++-----------------+-----------------------+-----------------------------------+
+| Key Permutation | Arguments             | Reason                            |
++=================+=======================+===================================+
+| `MSHP`, `NOBE`  | None                  | Notifies the Root process that    |
+|                 |                       | the Mothership was unable to      |
+|                 |                       | connect to the backend compute    |
+|                 |                       | fabric.                           |
++-----------------+-----------------------+-----------------------------------+
+| `MSHP`, `ACK`,  | 1. `std::string`      | Notifies the Root process that    |
+| `DEFD`          |    `appName`          | the application has been fully    |
+|                 |                       | defined.                          |
++-----------------+-----------------------+-----------------------------------+
+| `MSHP`, `ACK`   | 1. `std::string`      | Notifies the Root process that    |
+| `LOAD`          |    `appName`          | the application has been fully    |
+|                 |                       | loaded.                           |
++-----------------+-----------------------+-----------------------------------+
+| `MSHP`, `ACK`   | 1. `std::string`      | Notifies the Root process that    |
+| `RUN`           |    `appName`          | the application has started       |
+|                 |                       | running.                          |
++-----------------+-----------------------+-----------------------------------+
+| `MSHP`, `ACK`   | 1. `std::string`      | Notifies the Root process that    |
+| `STOP`          |    `appName`          | the application has been fully    |
+|                 |                       | stopped.                          |
++-----------------+-----------------------+-----------------------------------+
 
 
 Table: Output message key permutations that the Mothership process sends to the
@@ -264,7 +294,7 @@ Mothership.appdb`, which describes applications that the Mothership process has
 been informed of, as a function of their name. This map complements the
 database provided by `NameBase` (from which the Mothership inherits), by
 defining the states of applications and loading information, as opposed to
-purely addressing information. `AppInfo` is a structure with these fields:
+purely addressing information. `AppInfo` is a class with these fields:
 
  - `std::string name`: The name of the application, redundant with the map key.
 
@@ -290,6 +320,19 @@ purely addressing information. `AppInfo` is a structure with these fields:
 
    - `STOPPED`: The application was running, has been stopped
 
+ - `uint8_t pendingCommands`: Bit-vector storing pending commands from other
+   processes (Root). This is private - accessed and set using these methods:
+
+   - `void stage_init()`: Setter for the `INIT` command.
+
+   - `void stage_run()`: Setter for the `RUN` command.
+
+   - `void stage_stop()`: Setter for the `STOP` command.
+
+   - `bool continue()`: Given the current values of `state` and
+     `pendingCommands`, returns `true` if the application is to "advance to the
+     next state", and `false` otherwise.
+
  - `uint32_t distCountExpected`: Expected number of distribution messages for
    this application.
 
@@ -314,6 +357,12 @@ There is a corresponding backwards map, `std::map<uint32_t, std::string>
 Mothership.coreToApp`, which maps core addresses to the name of the application
 that has claimed them. This map allows the Mothership process to more elegantly
 catch when applications have been incorrectly overlayed.
+
+## TODO States and Commands
+A picture showing state transitions, something like: `UNDERDEFINED`
+--(`DIST`,`SPEC`)--> `DEFINED` --(`INIT`)--> `LOADING`, `READY` --(`RUN`)-->
+`RUNNING` --(`STOP`)--> `STOPPING`, `STOPPED`. All --(`RECL`)--> `DELETED` (not
+a state)
 
 # TODO Supervisor Interface
 What is the API? How will it work?
