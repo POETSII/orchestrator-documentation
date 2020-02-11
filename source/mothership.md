@@ -242,8 +242,8 @@ combinations are dropped.
 |                 |                       | before it starts will not stop it |
 |                 |                       | from starting).                   |
 +-----------------+-----------------------+-----------------------------------+
-| `SUPR`          | 1. `P_Sup_Msg_t`      | Calls a method from a loaded      |
-|                 |    `message`          | supervisor. The supervisor is     |
+| `SUPR`          | 1. `P_Msg_t message`  | Calls a method from a loaded      |
+|                 |                       | supervisor. The supervisor is     |
 |                 |                       | identified by querying `NameBase` |
 |                 |                       | using the address in `message`.   |
 +-----------------+-----------------------+-----------------------------------+
