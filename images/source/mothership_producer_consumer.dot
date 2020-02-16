@@ -19,12 +19,12 @@ digraph G {
          style="filled",
          width=0];
 
-    MPIInputBroker;
-    MPICncResolver;
-    MPIApplicationResolver;
-    BackendOutputBroker;
-    BackendInputBroker;
-    DebugInputBroker;
+    MPIInputBroker[label="MPIInputBroker\n(fast)"];
+    MPICncResolver[label="MPICncResolver\n(slow)"];
+    MPIApplicationResolver[label="MPIApplicationResolver\n(slow)"];
+    BackendOutputBroker[label="BackendOutputBroker\n(slow)"];
+    BackendInputBroker[label="BackendInputBroker\n(fast)"];
+    DebugInputBroker[label="DebugInputBroker\n(slow)"];
 
     // Queues
     node[color="#000000",
