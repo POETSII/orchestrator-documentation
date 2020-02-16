@@ -49,8 +49,8 @@ NB: Terminology in this document:
  - *Message*: An addressed item (`(P)Msg_p` depending on context) with some
    payload that traverses the MPI network via the CommonBase interface.
 
- - *Packet*: An addressed item (usually `P_Msg_t`) with some payload that
-   traverses the compute fabric.
+ - *Packet*: An addressed item (usually `P_Msg_t`, or `P_Pkt_t` if GMB's change
+   has been accepted) with some payload that traverses the compute fabric.
 
  - *Thread*: POSIX thread running under the Mothership process (x86-land). NB:
    Not a "thread" in the compute fabric.
