@@ -297,15 +297,15 @@ done.
 | `DEFD`          |    `appName`          | the application has been fully    |
 |                 |                       | defined.                          |
 +-----------------+-----------------------+-----------------------------------+
-| `MSHP`, `ACK`   | 1. `std::string`      | Notifies the Root process that    |
+| `MSHP`, `ACK`,  | 1. `std::string`      | Notifies the Root process that    |
 | `LOAD`          |    `appName`          | the application has been fully    |
 |                 |                       | loaded.                           |
 +-----------------+-----------------------+-----------------------------------+
-| `MSHP`, `ACK`   | 1. `std::string`      | Notifies the Root process that    |
+| `MSHP`, `ACK`,  | 1. `std::string`      | Notifies the Root process that    |
 | `RUN`           |    `appName`          | the application has started       |
 |                 |                       | running.                          |
 +-----------------+-----------------------+-----------------------------------+
-| `MSHP`, `ACK`   | 1. `std::string`      | Notifies the Root process that    |
+| `MSHP`, `ACK`,  | 1. `std::string`      | Notifies the Root process that    |
 | `STOP`          |    `appName`          | the application has been fully    |
 |                 |                       | stopped.                          |
 +-----------------+-----------------------+-----------------------------------+
