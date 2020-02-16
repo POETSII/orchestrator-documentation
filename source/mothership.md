@@ -145,7 +145,7 @@ The following communication constructs are accessible to all threads, via the
 
  - Various `pthread_mutex_t`s lock operations of different queues to prevent
    race conditions between push and pop operations. Queues that are only
-   read/written by one thread have no mutexes:
+   read/written by one thread have no mutexes. The mutexes are:
 
      - `pthread_mutex_t MPICncQueueMutex` locks `MPICncQueue`.
 
@@ -162,14 +162,22 @@ mutexes):
 
  - `void is_it_time_to_go()`: Reads `quit`.
 
- - `bool pop_from_MPI_cnc(PMsg_p& message)`: Moves the message from the end of
-   the `MPICncQueue` queue to message. Returns `false` if the queue is empty
+ - `bool pop_from_MPI_cnc(PMsg_p* message)`: Moves the message from the end of
+   the `MPICncQueue` queue to message. Returns `false` if the queue was empty
    (leaving `message` unmodified), and `true` otherwise.
+
+ - `bool pop_from_MPI_cnc(std::vector<PMsg_p>* messages)`: Moves all messages
+   from `MPICncQueue` into `messages`. Returns `false` if the queue was empty
+   (leaving `messages` unmodified), and `true` otherwise.
 
  - `void push_to_from_MPI_cnc(PMsg_p message)`: Pushes `message` to the start
    of the `MPICncQueue` queue.
 
- - The two above methods are also defined for the `MPIApplicationQueue` queue,
+ - `void push_to_from_MPI_cnc(std::vector<PMsg_p>* messages)`: Pushes each
+   message in `messages` to the start of the `MPICncQueue` queue, in the order
+   that they exist `messages`. Does nothing if `messages` is empty.
+
+ - The four above methods are also defined for the `MPIApplicationQueue` queue,
    and for the `BackendOutputQueue`, `BackendInputQueue`, and
    `DebugInputQueue`, where the latter three operate with `P_Msg_t packet`s as
    opposed to `PMsg_p message`s.
