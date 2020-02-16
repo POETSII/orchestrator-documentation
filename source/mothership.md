@@ -65,7 +65,22 @@ To support these features, a Producer-Consumer approach is used by the
 Mothership. Figure 1 shows a schematic of how the Mothership process employs
 this pattern using POSIX threads. Each thread has access to a Mothership
 object, in which queues and mutexes for the producer-consumer pattern are
-stored. The threads are:
+stored. Consumer threads have exactly one spinner[^spinners], which is either
+a:
+
+ - Fast Spinners: These spin aggressively on the consumer queue, with no
+   delay between checks, ever.
+
+ - Slow Spinners: Once an event triggers the spinner, and has been resolved,
+   the next event is immediately checked for. If there is no next event, the
+   spinner delays for a brief period before checking again, and delays after
+   each check until an event triggers the spinner.
+
+[^spinners]: Spinner: Event loop, where events are items (packets or messages)
+    in the consumer queue.
+
+The discrepancy between spinner types is to encourage context to prioritise
+threads with fast spinners. The threads are:
 
  - `main`: The root thread, which spawns the other threads below and waits for
    them to exit. All threads are running for the duration of the Mothership
@@ -77,13 +92,13 @@ stored. The threads are:
    poorly-written supervisor[^malicious] floods with MPI messages, it will not
    be possible for the operator to stop the application in reasonable time,
    potentially compromising the running of other applications on the compute
-   fabric. It calls `CommonBase::MPISpinner`.
+   fabric. It calls `CommonBase::MPISpinner`. This is a fast spinner.
 
  - `MPICncResolver`: Responsible for draining the `MPICncQueue` queue, and
-   enacting those messages in sequence as appropriate.
+   enacting those messages in sequence as appropriate. This is a slow spinner.
 
  - `MPIApplicationResolver`: As above, but for the `MPIApplicationQueue`
-   queue. These messages will either be:
+   queue. This is a slow spinner. These messages will either be:
 
        - Converted into packets for the compute fabric, and placed in the
          `BackendOutputQueue` queue.
@@ -92,18 +107,20 @@ stored. The threads are:
          traffic).
 
  - `BackendOutputBroker`: Responsible for draining the `BackendOutputQueue`
-   queue by sending packets into the compute fabric. Waits for the compute
-   fabric to accept sending of each packet before actually sending it.
+   queue by sending packets into the compute fabric. This is a slow spinner,
+   which spins not only on the existence of packets in the queue, but also on
+   being able to send the message (on asking the compute fabric).
 
  - `BackendInputBroker`: Responsible for draining the compute fabric into a
    large (but finite) queue buffer (`BackendInputQueue`)[^backendinput]. When
    there are no packets to drain from the compute fabric, or when the
    `BackendInputQueue` buffer is full, this thread converts the next packet
-   into a message, and sends it to the appropriate destination over MPI.
+   into a message, and sends it to the appropriate destination over MPI. This
+   is a fast spinner.
 
  - `DebugInputBroker`: As above, but for the debugging interface provided by
    the backend. Debug packets are queued into the `DebugInputQueue` buffer
-   before being resolved in the same way.
+   before being resolved in the same way. This is a slow spinner.
 
 [^malicious]: Or a maliciously-written supervisor, but we assume people will be
     playing nice for now.
