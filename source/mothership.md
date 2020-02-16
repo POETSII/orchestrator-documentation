@@ -49,7 +49,7 @@ NB: Terminology in this document:
  - *Message*: An addressed item (`(P)Msg_p` depending on context) with some
    payload that traverses the MPI network via the CommonBase interface.
 
- - *Packet*: An addressed item (usually `P_Msg_t`, or `P_Pkt_t` if GMB's change
+ - *Packet*: An addressed item (usually `P_Pkt_t`, or `P_Pkt_t` if GMB's change
    has been accepted) with some payload that traverses the compute fabric.
 
  - *Thread*: POSIX thread running under the Mothership process (x86-land). NB:
@@ -179,7 +179,7 @@ mutexes):
 
  - The four above methods are also defined for the `MPIApplicationQueue` queue,
    and for the `BackendOutputQueue`, `BackendInputQueue`, and
-   `DebugInputQueue`, where the latter three operate with `P_Msg_t packet`s as
+   `DebugInputQueue`, where the latter three operate with `P_Pkt_t packet`s as
    opposed to `PMsg_p message`s.
 
 [^fatalerror]: By "fatal error", I mean that an exception is thrown in the
@@ -268,13 +268,13 @@ combinations are dropped.
 |                 |                       | before it starts will not stop it |
 |                 |                       | from starting).                   |
 +-----------------+-----------------------+-----------------------------------+
-| `SUPR`          | 1. `P_Msg_t message`  | Calls a method from a loaded      |
+| `SUPR`          | 1. `P_Pkt_t packet`   | Calls a method from a loaded      |
 |                 |                       | supervisor. The supervisor is     |
 |                 |                       | identified by querying `NameBase` |
-|                 |                       | using the address in `message`.   |
+|                 |                       | using the address in `packet`.    |
 +-----------------+-----------------------+-----------------------------------+
 | `PKTS`          | 1. `std::vector<`     | Queues a series of packets into   |
-|                 |    `P_Msg_t> packets` | the backend.                      |
+|                 |    `P_Pkt_t> packets` | the backend.                      |
 +-----------------+-----------------------+-----------------------------------+
 
 Table: Input message key permutations that the Mothership process understands,
