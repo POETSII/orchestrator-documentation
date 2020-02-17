@@ -351,8 +351,9 @@ Mothership with opcode values not defined by this list of constants (defined
 in-source) are routed to the supervisor as (`BEND`, `SUPR`) messages:
 
  - `P_CNC_INSTR`: A packet with instrumentation data, which causes the
-   instrumentation data to be written to a file (see the Instrumentation
-   section).
+   instrumentation data to be written to a set of CSV files in the
+   `~/.orchestrator/instrumentation` (left deliberately vague - it's also
+   covered in part in the Softswitch documentation).
 
  - `P_CNC_LOG`: A packet with a logging message (possibly created by a call to
    `handler_log`). The information from the packet is formatted, and `Post`-ed
@@ -572,10 +573,6 @@ packet payload and its origin. Applications can also call the `void
 handler_log(int level, const char* text)` free function in a handler, which
 sends a series of `P_CNC_LOG` packets to the Mothership, which are repackaged
 and forwarded onto the LogServer.
-
-# TODO Instrumentation
-
-Where? What?
 
 # TODO Big Class Structure Diagram
 Include NameBase/SBase in here.
