@@ -353,7 +353,7 @@ purely addressing information. `AppInfo` is a class with these fields:
    - `STOPPING`: The application is running, but the stopping process (`CMND`,
      `STOP`) has begin.
 
-   - `STOPPED`: The application was running, has been stopped
+   - `STOPPED`: The application was running, but has been stopped
 
  - `uint8_t pendingCommands`: Bit-vector storing pending commands from other
    processes (Root). This is private - accessed and set using these methods:
