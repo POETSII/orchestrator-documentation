@@ -67,10 +67,10 @@ NB: Terminology in this document:
 # Threads and Queues: Producer-Consumer
 To support these features, a Producer-Consumer approach is used by the
 Mothership. Figure 1 shows a schematic of how the Mothership process employs
-this pattern using POSIX threads. Each thread has access to a Mothership
-object, in which queues and mutexes for the producer-consumer pattern are
-stored. Consumer threads have exactly one spinner[^spinners], which is either
-a:
+this pattern using POSIX threads. Each thread has access to the Mothership
+object (of which there is only one per Mothership process), in which queues and
+mutexes for the producer-consumer pattern are stored. Consumer threads have
+exactly one spinner[^spinners], which is either a:
 
  - Fast Spinners: These spin aggressively on the consumer queue, with no
    delay between checks, ever.
