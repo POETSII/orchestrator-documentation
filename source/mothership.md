@@ -209,14 +209,14 @@ combinations are dropped.
 |                 |                       | down the Mothership process as    |
 |                 |                       | *quickly* as possible.            |
 +-----------------+-----------------------+-----------------------------------+
-| `NAME`, `SPEC`  | 1. `std::string`      | Defines that an application on    |
+| `APP`,  `SPEC`  | 1. `std::string`      | Defines that an application on    |
 |                 |    `appName`          | the receiving Mothership process  |
 |                 | 2. `uint32_t`         | must have received `distCount`    |
 |                 |    `distCount`        | unique distribution (`NAME`,      |
 |                 |                       | `DIST`) messages in order to be   |
 |                 |                       | fully defined.                    |
 +-----------------+-----------------------+-----------------------------------+
-| `NAME`, `DIST`  | 1. `std::string`      | Defines the properties for a      |
+| `APP`,  `DIST`  | 1. `std::string`      | Defines the properties for a      |
 |                 |    `appName`          | given core for a given            |
 |                 | 2. `std::string`      | application on this Mothership    |
 |                 |    `codePath`         | process.                          |
@@ -227,7 +227,7 @@ combinations are dropped.
 |                 | 5. `uint8_t`          |                                   |
 |                 |    `numThreads`       |                                   |
 +-----------------+-----------------------+-----------------------------------+
-| `NAME`, `RECL`  | 1. `std::string`      | Removes information for an        |
+| `APP`,  `RECL`  | 1. `std::string`      | Removes information for an        |
 |                 |    `appName`          | application, by name, from the    |
 |                 |                       | Mothership. Does nothing on a     |
 |                 |                       | running application (it must be   |
