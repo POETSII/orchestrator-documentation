@@ -227,7 +227,7 @@ combinations are dropped.
 |                 | 5. `uint8_t`          |                                   |
 |                 |    `numThreads`       |                                   |
 +-----------------+-----------------------+-----------------------------------+
-| `APP`,  `RECL`  | 1. `std::string`      | Removes information for an        |
+| `CMND`,  `RECL` | 1. `std::string`      | Removes information for an        |
 |                 |    `appName`          | application, by name, from the    |
 |                 |                       | Mothership. Does nothing on a     |
 |                 |                       | running application (it must be   |
@@ -309,7 +309,6 @@ done.
 | `STOP`          |    `appName`          | the application has been fully    |
 |                 |                       | stopped.                          |
 +-----------------+-----------------------+-----------------------------------+
-
 
 Table: Output message key permutations that the Mothership process sends to the
 Root process, and why.
