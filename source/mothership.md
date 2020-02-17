@@ -191,6 +191,11 @@ mutexes):
     and a graceful shutdown is attempted.
 
 # Command and Control
+The Mothership process exists on the front of two streams of data traffic - the
+MPI network connecting the Mothership to the rest of the Orchestrator, and the
+compute backend network (typically Tinsel)
+
+## MPI Command and Control
 The operator controls Mothership processes through the console in the Root
 process. The Root process sends messages to the Mothership process to perform
 various C&C jobs, including application manipulation. Table 1 denotes subkeys
@@ -324,6 +329,28 @@ done, and are useful for debugging.
 
 Table: Output message key permutations that the Mothership process sends to the
 Root process, and why.
+
+## TODO Tinsel Command and Control
+
+ - If the application state is `LOADING` and the payload is `0x00`: Increment
+   `Mothership.appdb.` `coreInfos[coreAddr].numThreadsCurrent` for the core in
+   question. If all of the threads for that core have reported back, appends
+   `coreAddr` to `coresLoaded`. Then, if all cores have been loaded (by
+   checking the length of coresLoaded), transitions the state of the
+   application from `LOADING` to `READY`.
+
+ - If the application state is `STOPPING` and the payload is `0x00`: Decrement
+   `Mothership.appdb.` `coreInfos[coreAddr].numThreadsCurrent` for the core in
+   question. If it is then zero, removes `coreAddr` from `coresLoaded`. Then,
+   if `coresLoaded` is empty, transitions the state of the application from
+   `STOPPING` to `STOPPED`.
+
+ - If the application state is `RUNNING` and the payload is `0xFF`: Send a
+   (`CMND`,`STOP`) message to the Mothership for this task, format the message,
+   and `Post` it to the LogServer (noting that the application is being
+   stopped).
+
+(talk about handler_log)
 
 # Applications
 The Mothership class maintains a map, `std::map<std::string, AppInfo>
@@ -490,37 +517,17 @@ Note that this API does not define methods for termination detection. It could
 do (using a Softswitch-based heartbeats mechanism), but it might be best to let
 sleeping dragons lie for now.
 
-# Debugging and Application Setup
+# Debugging
 In addition to the acknowledgement messages that the Mothership generates while
 transitioning tasks between states, and the `DUMP` message, it is useful to
 have more fine-grained debugging control over the Mothership. The Tinsel
 backend provides a debugging interface over its UART backchannel, which can be
 exploited to exfiltrate acknowledgement and debugging information from normal
 devices in the backend. The `DebugInputBroker` acts on packets received by the
-Mothership by identifying its corresponding application from its source address
-(using `Mothership.coreToApp`). From there:
+Mothership by `Post`ing a formatted message to the Logserver, including the
+packet payload and its origin.
 
- - If the application state is `LOADING` and the payload is `0x00`: Increment
-   `Mothership.appdb.` `coreInfos[coreAddr].numThreadsCurrent` for the core in
-   question. If all of the threads for that core have reported back, appends
-   `coreAddr` to `coresLoaded`. Then, if all cores have been loaded (by
-   checking the length of coresLoaded), transitions the state of the
-   application from `LOADING` to `READY`.
-
- - If the application state is `STOPPING` and the payload is `0x00`: Decrement
-   `Mothership.appdb.` `coreInfos[coreAddr].numThreadsCurrent` for the core in
-   question. If it is then zero, removes `coreAddr` from `coresLoaded`. Then,
-   if `coresLoaded` is empty, transitions the state of the application from
-   `STOPPING` to `STOPPED`.
-
- - If the application state is `RUNNING` and the payload is `0xFF`: Send a
-   (`CMND`,`STOP`) message to the Mothership for this task, format the message,
-   and `Post` it to the LogServer (noting that the application is being
-   stopped).
-
- - Otherwise, format the message and `Post` to the LogServer.
-
-## TODO Logging with `handler_log`
+Regarding `handler_log`, see the Tinsel Command and Control section.
 
 # TODO Big Class Structure Diagram
 Include NameBase/SBase in here.
