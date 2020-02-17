@@ -364,9 +364,12 @@ purely addressing information. `AppInfo` is a class with these fields:
 
    - `void stage_stop()`: Setter for the `STOP` command.
 
+   - `void stage_recl()`: Setter for the `RECL` command.
+
    - `bool continue()`: Given the current values of `state` and
      `pendingCommands`, returns `true` if the application is to "advance to the
-     next state", and `false` otherwise.
+     next state", and `false` otherwise. The "next state" is loosely defined in
+     Table 3, where `RECL` takes priority over other commands.
 
  - `uint32_t distCountExpected`: Expected number of distribution messages for
    this application.
