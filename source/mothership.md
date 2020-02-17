@@ -183,8 +183,8 @@ mutexes):
 
  - The four above methods are also defined for the `MPIApplicationQueue` queue,
    and for the `BackendOutputQueue`, `BackendInputQueue`, and
-   `DebugInputQueue`, where the latter three operate with `P_Pkt_t packet`s as
-   opposed to `PMsg_p message`s.
+   `DebugInputQueue`, where the latter three operate with `P_Pkt_t packet`-s as
+   opposed to `PMsg_p message`-s.
 
 [^fatalerror]: By "fatal error", I mean that an exception is thrown in the
     thread logic, which is not caught. When this happens, the error is logged,
@@ -264,28 +264,36 @@ combinations are dropped.
 |                 |    `appName`          | softswitch barrier (with state    |
 |                 |                       | `READY`, and "starts" it by       |
 |                 |                       | sending a barrier-breaking        |
-|                 |                       | message to all normal devices     |
-|                 |                       | owned by that application on      |
-|                 |                       | this Mothership process. If the   |
-|                 |                       | application is not `READY`, this  |
-|                 |                       | message is acted on when it       |
-|                 |                       | reaches that state.               |
+|                 |                       | message (`P_CNC_BARRIER`) to all  |
+|                 |                       | normal devices owned by that      |
+|                 |                       | application on this Mothership    |
+|                 |                       | process. If the application is    |
+|                 |                       | not `READY`, this message is      |
+|                 |                       | acted on when it reaches that     |
+|                 |                       | state.                            |
 +-----------------+-----------------------+-----------------------------------+
 | `CMND`, `STOP`  | 1. `std::string`      | Takes a running application (with |
 |                 |    `appName`          | state `RUNNING`) and sends a stop |
-|                 |                       | packet to all normal devices      |
-|                 |                       | owned by that task on the         |
-|                 |                       | Mothership process. If the        |
+|                 |                       | packet (`P_CNC_STOP`) to all      |
+|                 |                       | normal devicesowned by that task  |
+|                 |                       | on the Mothership process. If the |
 |                 |                       | application is not `RUNNING`,     |
 |                 |                       | this message is acted on when it  |
 |                 |                       | reaches that state (stopping      |
 |                 |                       | before it starts will not stop it |
 |                 |                       | from starting).                   |
 +-----------------+-----------------------+-----------------------------------+
-| `SUPR`          | 1. `P_Pkt_t packet`   | Calls a method from a loaded      |
-|                 |                       | supervisor. The supervisor is     |
-|                 |                       | identified by querying `NameBase` |
-|                 |                       | using the address in `packet`.    |
+| `BEND`, `CNC`   | 1. `P_Pkt_t packet`   | Calls a C&C method, via the       |
+|                 |                       | `MPICncQueue`. The opcode (and    |
+|                 |                       | hence the method) is identified   |
+|                 |                       | from `packet`.                    |
++-----------------+-----------------------+-----------------------------------+
+| `BEND`, `SUPR`  | 1. `P_Pkt_t packet`   | Calls a method from a loaded      |
+|                 |                       | supervisor, via the               |
+|                 |                       | `MPIApplicationQueue`. The        |
+|                 |                       | supervisor is identified by       |
+|                 |                       | querying `NameBase` using the     |
+|                 |                       | address in `packet`.              |
 +-----------------+-----------------------+-----------------------------------+
 | `PKTS`          | 1. `std::vector<`     | Queues a series of packets into   |
 |                 |    `P_Pkt_t> packets` | the backend.                      |
@@ -330,27 +338,62 @@ done, and are useful for debugging.
 Table: Output message key permutations that the Mothership process sends to the
 Root process, and why.
 
-## TODO Tinsel Command and Control
+## Tinsel Command and Control
 
- - If the application state is `LOADING` and the payload is `0x00`: Increment
-   `Mothership.appdb.` `coreInfos[coreAddr].numThreadsCurrent` for the core in
-   question. If all of the threads for that core have reported back, appends
-   `coreAddr` to `coresLoaded`. Then, if all cores have been loaded (by
-   checking the length of coresLoaded), transitions the state of the
-   application from `LOADING` to `READY`.
+Softswitches in the compute backend can send C&C packets to the Mothership
+process. These packets, in addition to being addressed to the supervisor, have
+a value defined in their `opcode` field in the software address (see the
+Software Addresses documentation). Such packets are packaged and queued for the
+Mothership in the MPI backend by `BackendInputBroker` as (`BEND`, `CNC`)
+messages. The sender of each packet is uniquely identified in `MPICncResolver`
+from the `pinAddr` component in the software address. Packets received by the
+Mothership with opcode values not defined by this list of constants (defined
+in-source) are routed to the supervisor as (`BEND`, `SUPR`) messages:
 
- - If the application state is `STOPPING` and the payload is `0x00`: Decrement
-   `Mothership.appdb.` `coreInfos[coreAddr].numThreadsCurrent` for the core in
-   question. If it is then zero, removes `coreAddr` from `coresLoaded`. Then,
-   if `coresLoaded` is empty, transitions the state of the application from
-   `STOPPING` to `STOPPED`.
+ - `P_CNC_INSTR`: A packet with instrumentation data, which causes the
+   instrumentation data to be written to a file (see the Instrumentation
+   section).
 
- - If the application state is `RUNNING` and the payload is `0xFF`: Send a
-   (`CMND`,`STOP`) message to the Mothership for this task, format the message,
-   and `Post` it to the LogServer (noting that the application is being
-   stopped).
+ - `P_CNC_LOG`: A packet with a logging message (possibly created by a call to
+   `handler_log`). The information from the packet is formatted, and `Post`-ed
+   to the Logserver.
 
-(talk about handler_log)
+ - `P_CNC_BARRIER`: A packet that, when received, informs the Mothership that a
+   given thread has reached the softswitch barrier. If the state of the
+   application to which this device belongs is `LOADING`, the field
+   `Mothership.appdb.coreInfos[coreAddr].numThreadsCurrent` for the core in
+   question is incremented. If all of the threads for that core have reported
+   back, `coreAddr` is appended to `coresLoaded`. Then, if all cores have been
+   loaded (by checking the length of coresLoaded), the state of the application
+   is transitioned from `LOADING` to `READY`.
+
+ - `P_CNC_STOP`: A packet that, when received, informs the Mothership that a
+   given thread has received the stop command (and has presumably now
+   stopped). If the state of the application to which this device belongs is
+   `STOPPING`, the field
+   `Mothership.appdb.coreInfos[coreAddr].numThreadsCurrent` for the core in
+   question is decremented. If all of the threads for that core have reported
+   back, `coreAddr` is removed from `coresLoaded`. Then, if `coresLoaded` is
+   empty, the state of the application is transitioned from `STOPPING` to
+   `STOPPED`, and the supervisor is unloaded.
+
+Notes:
+
+ - The bulleted logic above is enacted by `MPICncResolver`.
+
+ - Some of the opcodes listed above (e.g. `P_CNC_LOG`) can also meaningfully be
+   sent by the Mothership to devices in the compute fabric, specifically
+   `P_CNC_BARRIER` (which is the barrier-breaking packet sent as a result of a
+   (`CMND`, `INIT`)), and `P_CNC_STOP` (sent by (`CMND`, `STOP`)).
+
+ - There is no `P_CNC_KILL`. Applications can no longer stop the Mothership. A
+   normal device can send a packet to the supervisor, (via a (`BEND`, `SUPR`)
+   message), which causes the supervisor to call the `void Super::end()` API
+   method (documented in the Supervisor API section), which closes the
+   application gracefully.
+
+ - There is no `P_CNC_INIT`. This opcode was used in the barrier-breaking
+   packet for normal devices. It is replaced by `P_CNC_BARRIER`.
 
 # Applications
 The Mothership class maintains a map, `std::map<std::string, AppInfo>
@@ -501,13 +544,13 @@ that is common to certain applications:
    in-context.
 
  - `void Super::message_leader(uint8_t[SOME_NUMBER] payload)`: Packages the
-   payload into a `P_Pkt_t`, and sends it using a (`SUPR`) message to the
-   supervisor "leader" (which is simply the supervisor on the Mothership with
-   the lowest rank for this application).
+   payload into a `P_Pkt_t`, and sends it using a (`BEND`, `SUPR`) message to
+   the supervisor "leader" (which is simply the supervisor on the Mothership
+   with the lowest rank for this application).
 
  - `void Super::supervisor_broadcast(uint8_t[SOME_NUMBER] payload)`: Packages
-   the payload into a `P_Pkt_t`, and sends it using a (`SUPR`) message to all
-   supervisors running for this application, except this one.
+   the payload into a `P_Pkt_t`, and sends it using a (`BEND`, `SUPR`) message
+   to all supervisors running for this application, except this one.
 
  - Can you think of any more? There are probably more we need, but we're not
    going to get them all now. Simply implementing a framework by which this API
@@ -525,9 +568,14 @@ backend provides a debugging interface over its UART backchannel, which can be
 exploited to exfiltrate acknowledgement and debugging information from normal
 devices in the backend. The `DebugInputBroker` acts on packets received by the
 Mothership by `Post`ing a formatted message to the Logserver, including the
-packet payload and its origin.
+packet payload and its origin. Applications can also call the `void
+handler_log(int level, const char* text)` free function in a handler, which
+sends a series of `P_CNC_LOG` packets to the Mothership, which are repackaged
+and forwarded onto the LogServer.
 
-Regarding `handler_log`, see the Tinsel Command and Control section.
+# TODO Instrumentation
+
+Where? What?
 
 # TODO Big Class Structure Diagram
 Include NameBase/SBase in here.
