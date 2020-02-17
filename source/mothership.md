@@ -101,11 +101,11 @@ threads with fast spinners. The threads are:
  - `MPIApplicationResolver`: As above, but for the `MPIApplicationQueue`
    queue. This is a slow spinner. These messages will either be:
 
-       - Converted into packets for the compute fabric, and placed in the
-         `BackendOutputQueue` queue.
+   - Converted into packets for the compute fabric, and placed in the
+     `BackendOutputQueue` queue.
 
-       - Used to call a supervisor method (which may in turn produce more
-         traffic).
+   - Used to call a supervisor method (which may in turn produce more
+     traffic).
 
  - `BackendOutputBroker`: Responsible for draining the `BackendOutputQueue`
    queue by sending packets into the compute fabric. This is a slow spinner,
