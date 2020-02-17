@@ -323,8 +323,9 @@ purely addressing information. `AppInfo` is a class with these fields:
 
  - `std::string name`: The name of the application, redundant with the map key.
 
- - `AppState state`: The state that the application is in. These states are
-   enumerated by `AppState` as:
+ - `AppState state`: The state that the application is in. Table 3 shows how
+     C&C messages consumed by `MPICncResolver` drive application states.  These
+     states are enumerated by `AppState` as:
 
    - `UNDERDEFINED`: The application has been partly sent to the Mothership
      process, but some cores have not been defined, or their binaries refer to
@@ -383,11 +384,39 @@ Mothership.coreToApp`, which maps core addresses to the name of the application
 that has claimed them. This map allows the Mothership process to more elegantly
 catch when applications have been incorrectly overlayed.
 
-## TODO States and Commands
-A picture showing state transitions, something like: `UNDERDEFINED`
---(`DIST`,`SPEC`)--> `DEFINED` --(`INIT`)--> `LOADING`, `READY` --(`RUN`)-->
-`RUNNING` --(`STOP`)--> `STOPPING`, `STOPPED`. All --(`RECL`)--> `DELETED` (not
-a state)
++------------------+-----------------+------------------+
+| Key Permutation  | Input State     | Output State     |
++==================+=================+==================+
+| (`APP`, `SPEC`), | None [^none]    | `UNDERDEFINED`   |
+| (`APP`, `DIST`)  |                 |                  |
++------------------+-----------------+------------------+
+| (`APP`, `SPEC`), | `UNDERDEFINED`  | `DEFINED`        |
+| (`APP`, `DIST`)  |                 | [^last]          |
++------------------+-----------------+------------------+
+| `CMND`, `INIT`   | `DEFINED`       | `LOADING` (then  |
+|                  |                 | `READY`)         |
++------------------+-----------------+------------------+
+| `CMND`, `RUN`    | `READY`         | `RUNNING`        |
++------------------+-----------------+------------------+
+| `CMND`, `STOP`   | `RUNNING`       | `STOPPING` (then |
+|                  |                 | `STOPPED`)       |
++------------------+-----------------+------------------+
+| `CMND`, `RECL`   | `UNDERDEFINED`, | None             |
+|                  | `DEFINED`,      |                  |
+|                  | `READY`,        |                  |
+|                  | `STOPPED`       |                  |
++------------------+-----------------+------------------+
+
+Table: Input key permutations, and how they change the state of an application
+on the Mothership. Note that C&C messages processed before the application
+reaches the input state are "stored", and enacted when the application reaches
+the input state via some other C&C message.
+
+[^last]: This state is only set when the final message is received (see the
+    Command and Control section for more information on `APP` messages).
+
+[^none]: "None" here means that `Mothership.appdb` and `SBase` do not know
+    about the task, and do not hold any information on it.
 
 # TODO Supervisor Interface
 What is the API? How will it work?
