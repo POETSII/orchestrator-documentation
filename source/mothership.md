@@ -330,7 +330,7 @@ purely addressing information. `AppInfo` is a class with these fields:
  - `std::string name`: The name of the application, redundant with the map key.
 
  - `AppState state`: The state that the application is in. Table 3 shows how
-     C&C messages consumed by `MPICncResolver` drive application states.  These
+     C&C messages consumed by `MPICncResolver` drive application states. These
      states are enumerated by `AppState` as:
 
    - `UNDERDEFINED`: The application has been partly sent to the Mothership
@@ -396,35 +396,34 @@ Mothership.coreToApp`, which maps core addresses to the name of the application
 that has claimed them. This map allows the Mothership process to more elegantly
 catch when applications have been incorrectly overlayed.
 
-+------------------+-----------------+------------------+
-| Key Permutation  | Input State     | Output State     |
-+==================+=================+==================+
-| (`APP`, `SPEC`), | None [^none]    | `UNDERDEFINED`   |
-| (`APP`, `DIST`)  |                 |                  |
-| (`APP`, `SUPD`)  |                 |                  |
-+------------------+-----------------+------------------+
-| (`APP`, `SPEC`), | `UNDERDEFINED`  | `DEFINED`        |
-| (`APP`, `DIST`)  |                 | [^last]          |
-| (`APP`, `SUPD`)  |                 |                  |
-+------------------+-----------------+------------------+
-| `CMND`, `INIT`   | `DEFINED`       | `LOADING` (then  |
-|                  |                 | `READY`)         |
-+------------------+-----------------+------------------+
-| `CMND`, `RUN`    | `READY`         | `RUNNING`        |
-+------------------+-----------------+------------------+
-| `CMND`, `STOP`   | `RUNNING`       | `STOPPING` (then |
-|                  |                 | `STOPPED`)       |
-+------------------+-----------------+------------------+
-| `CMND`, `RECL`   | `UNDERDEFINED`, | None             |
-|                  | `DEFINED`,      |                  |
-|                  | `READY`,        |                  |
-|                  | `STOPPED`       |                  |
-+------------------+-----------------+------------------+
++--------------------+-----------------+------------------+------------------+
+| Key Permutation    | Input State     | Transition State | Output State     |
++====================+=================+==================+==================+
+| (`APP`, `SPEC`) or | None [^none]    |                  | `UNDERDEFINED`   |
+| (`APP`, `DIST`) or |                 |                  |                  |
+| (`APP`, `SUPD`)    |                 |                  |                  |
++--------------------+-----------------+------------------+------------------+
+| (`APP`, `SPEC`) or | `UNDERDEFINED`  |                  | `DEFINED`        |
+| (`APP`, `DIST`) or |                 |                  | [^last]          |
+| (`APP`, `SUPD`)    |                 |                  |                  |
++--------------------+-----------------+------------------+------------------+
+| `CMND`, `INIT`     | `DEFINED`       | `LOADING`        | `READY`          |
++--------------------+-----------------+------------------+------------------+
+| `CMND`, `RUN`      | `READY`         |                  | `RUNNING`        |
++--------------------+-----------------+------------------+------------------+
+| `CMND`, `STOP`     | `RUNNING`       | `STOPPING`       | `STOPPED`        |
++--------------------+-----------------+------------------+------------------+
+| `CMND`, `RECL`     | `UNDERDEFINED`  |                  | None             |
+|                    | or `DEFINED` or |                  |                  |
+|                    | `READY` or      |                  |                  |
+|                    | `STOPPED`       |                  |                  |
++--------------------+-----------------+------------------+------------------+
 
 Table: Input key permutations, and how they change the state of an application
 on the Mothership. Note that C&C messages processed before the application
 reaches the input state are "stored", and enacted when the application reaches
-the input state via some other C&C message.
+the input state via some other C&C message. Transition states exist to aid
+debugging.
 
 [^last]: This state is only set when the final message is received (see the
     Command and Control section for more information on `APP` messages).
