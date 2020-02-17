@@ -53,6 +53,9 @@ NB: Terminology in this document:
  - *Packet*: An addressed item (usually `P_Pkt_t`, or `P_Pkt_t` if GMB's change
    has been accepted) with some payload that traverses the compute fabric.
 
+ - *Debug packet*: An addressed item sent over DebugLink (UART) connection in
+   the Tinsel backend.
+
  - *Thread*: POSIX thread running under the Mothership process (x86-land). NB:
    Not a "thread" in the compute fabric.
 
@@ -282,6 +285,9 @@ combinations are dropped.
 | `PKTS`          | 1. `std::vector<`     | Queues a series of packets into   |
 |                 |    `P_Pkt_t> packets` | the backend.                      |
 +-----------------+-----------------------+-----------------------------------+
+| `DUMP`          | 1. `std::string path` | Dumps Mothership process state    |
+|                 |                       | to a file at `path`.              |
++-----------------+-----------------------+-----------------------------------+
 
 Table: Input message key permutations that the Mothership process understands,
 and what the Mothership does with those messages.
@@ -289,7 +295,7 @@ and what the Mothership does with those messages.
 The Mothership process occasionally also sends messages to the Root
 process. Table 2 denotes subkeys of messages that Mothership processes send to
 Root, along with their intended use. They're mostly acknowledgements of work
-done.
+done, and are useful for debugging.
 
 +-----------------+-----------------------+-----------------------------------+
 | Key Permutation | Arguments             | Reason                            |
@@ -385,16 +391,23 @@ purely addressing information. `AppInfo` is a class with these fields:
 
    - `std::string dataPath`: Path to the data binary for this core.
 
-   - `uint8_t numThreadsExpected`: Number of threads expected to report back
-     for this core.
+   - `uint8_t numThreadsExpected`: Number of backend threads expected to report
+     back for this core.
 
-   - `uint8_t numThreadsCurrent`: Number of threads that have reported back
-     after loading the core.
+   - `uint8_t numThreadsCurrent`: Number of backend threads that have reported
+     back after loading the core. Used to transition from the `LOADING` state
+     to the `READY` state. Also used for the opposite purpose, transitioning
+     from `STOPPING` to `STOPPED`.
+
+ - `std::set<coreAddr> coresLoaded`: Holds addresses for each core that have
+   been completely loaded (i.e. all threads have reported back), and not
+   stopped (see `numThreadsCurrent`)
 
 There is a corresponding backwards map, `std::map<uint32_t, std::string>
 Mothership.coreToApp`, which maps core addresses to the name of the application
 that has claimed them. This map allows the Mothership process to more elegantly
-catch when applications have been incorrectly overlayed.
+catch when applications have been incorrectly overlayed, and to enable the
+debug reporting feature of `DebugInputBroker`.
 
 +--------------------+-----------------+------------------+------------------+
 | Key Permutation    | Input State     | Transition State | Output State     |
@@ -423,7 +436,8 @@ Table: Input key permutations, and how they change the state of an application
 on the Mothership. Note that C&C messages processed before the application
 reaches the input state are "stored", and enacted when the application reaches
 the input state via some other C&C message. Transition states exist to aid
-debugging.
+loading and stopping "completion detection" by `DebugInputBroker` (see the
+Debugging section).
 
 [^last]: This state is only set when the final message is received (see the
     Command and Control section for more information on `APP` messages).
@@ -476,9 +490,39 @@ Note that this API does not define methods for termination detection. It could
 do (using a Softswitch-based heartbeats mechanism), but it might be best to let
 sleeping dragons lie for now.
 
-# TODO Debugging
-Both the Mothership itself, and applications using DebugLink. Mothership state
-dumping...
+# Debugging and Application Setup
+In addition to the acknowledgement messages that the Mothership generates while
+transitioning tasks between states, and the `DUMP` message, it is useful to
+have more fine-grained debugging control over the Mothership. The Tinsel
+backend provides a debugging interface over its UART backchannel, which can be
+exploited to exfiltrate acknowledgement and debugging information from normal
+devices in the backend. The `DebugInputBroker` acts on packets received by the
+Mothership by identifying its corresponding application from its source address
+(using `Mothership.coreToApp`). From there:
+
+ - If the application state is `LOADING` and the payload is `0x00`: Increment
+   `Mothership.appdb.` `coreInfos[coreAddr].numThreadsCurrent` for the core in
+   question. If all of the threads for that core have reported back, appends
+   `coreAddr` to `coresLoaded`. Then, if all cores have been loaded (by
+   checking the length of coresLoaded), transitions the state of the
+   application from `LOADING` to `READY`.
+
+ - If the application state is `STOPPING` and the payload is `0x00`: Decrement
+   `Mothership.appdb.` `coreInfos[coreAddr].numThreadsCurrent` for the core in
+   question. If it is then zero, removes `coreAddr` from `coresLoaded`. Then,
+   if `coresLoaded` is empty, transitions the state of the application from
+   `STOPPING` to `STOPPED`.
+
+ - If the application state is `RUNNING` and the payload is `0xFF`: Send a
+   (`CMND`,`STOP`) message to the Mothership for this task, format the message,
+   and `Post` it to the LogServer (noting that the application is being
+   stopped).
+
+ - Otherwise, format the message and `Post` to the LogServer.
+
+## TODO Logging with `handler_log`
 
 # TODO Big Class Structure Diagram
 Include NameBase/SBase in here.
+
+# TODO Implementation Planning
