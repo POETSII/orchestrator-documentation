@@ -47,7 +47,8 @@ desirable features of the Mothership process are:
 NB: Terminology in this document:
 
  - *Message*: An addressed item (`(P)Msg_p` depending on context) with some
-   payload that traverses the MPI network via the CommonBase interface.
+   payload that traverses the MPI network via the `CommonBase` interface. NB:
+   MPI messages sent/received in this way are asynchronous.
 
  - *Packet*: An addressed item (usually `P_Pkt_t`, or `P_Pkt_t` if GMB's change
    has been accepted) with some payload that traverses the compute fabric.
@@ -212,7 +213,7 @@ combinations are dropped.
 | `APP`,  `SPEC`  | 1. `std::string`      | Defines that an application on    |
 |                 |    `appName`          | the receiving Mothership process  |
 |                 | 2. `uint32_t`         | must have received `distCount`    |
-|                 |    `distCount`        | unique distribution (`NAME`,      |
+|                 |    `distCount`        | unique distribution (`APP`,       |
 |                 |                       | `DIST`) messages in order to be   |
 |                 |                       | fully defined.                    |
 +-----------------+-----------------------+-----------------------------------+
@@ -226,6 +227,11 @@ combinations are dropped.
 |                 |    `coreAddr`         |                                   |
 |                 | 5. `uint8_t`          |                                   |
 |                 |    `numThreads`       |                                   |
++-----------------+-----------------------+-----------------------------------+
+| `APP`,  `SUPD`  | 1. `std::string`      | Defines the properties for the    |
+|                 |    `appName`          | supervisor for a given            |
+|                 | 2. `std::string`      | application on this Mothership.   |
+|                 |    `soPath`           |                                   |
 +-----------------+-----------------------+-----------------------------------+
 | `CMND`,  `RECL` | 1. `std::string`      | Removes information for an        |
 |                 |    `appName`          | application, by name, from the    |
@@ -331,18 +337,21 @@ purely addressing information. `AppInfo` is a class with these fields:
      process, but some cores have not been defined, or their binaries refer to
      files that could not be found on the filesystem.
 
-   - `DEFINED`: The application and its cores and binaries have been completely
-     defined on this Mothership, but nothing has been loaded onto hardware yet.
+   - `DEFINED`: The application (`APP`, `SPEC`), its cores and binaries (`APP`,
+     `DIST`), and its supervisor (`APP`, `SUPD`) have been completely defined
+     on this Mothership, but nothing has been loaded onto hardware yet.
 
-   - `LOADING`: As with `DEFINED`, but the loading process (`INIT`) has begun.
+   - `LOADING`: As with `DEFINED`, but the loading process (`CMND`, `INIT`) has
+     begun.
 
    - `READY`: All cores and supervisors are ready to start for this
      application.
 
-   - `RUNNING`: As with `READY`, and the running process (`RUN`) has begun.
+   - `RUNNING`: As with `READY`, and the running process (`CMND`, `RUN`) has
+     begun.
 
-   - `STOPPING`: The application is running, but the stopping process (`STOP`)
-     has begin.
+   - `STOPPING`: The application is running, but the stopping process (`CMND`,
+     `STOP`) has begin.
 
    - `STOPPED`: The application was running, has been stopped
 
@@ -389,9 +398,11 @@ catch when applications have been incorrectly overlayed.
 +==================+=================+==================+
 | (`APP`, `SPEC`), | None [^none]    | `UNDERDEFINED`   |
 | (`APP`, `DIST`)  |                 |                  |
+| (`APP`, `SUPD`)  |                 |                  |
 +------------------+-----------------+------------------+
 | (`APP`, `SPEC`), | `UNDERDEFINED`  | `DEFINED`        |
 | (`APP`, `DIST`)  |                 | [^last]          |
+| (`APP`, `SUPD`)  |                 |                  |
 +------------------+-----------------+------------------+
 | `CMND`, `INIT`   | `DEFINED`       | `LOADING` (then  |
 |                  |                 | `READY`)         |
@@ -418,13 +429,50 @@ the input state via some other C&C message.
 [^none]: "None" here means that `Mothership.appdb` and `SBase` do not know
     about the task, and do not hold any information on it.
 
-# TODO Supervisor Interface
-What is the API? How will it work?
+# Supervisor API
+Supervisors are devices in an application that exist on the Mothership, and can
+communicate with normal devices serviced by the box associated with its
+Mothership, as well as external devices elsewhere. They are:
 
- - A safe directory
- - A messaging interface
- - A way to identify a leader (lowest relevant Mothership rank, probably. Or
-   perhaps most populated)
+ - Defined in the application description (XML)
+
+ - Compiled into shared object files by `P_Builder`
+
+ - Deployed to the Mothership process via an (`APP`, `SUPD`) message
+
+ - Loaded as part of an application by the Mothership process when the (`CMND`,
+   `INIT`) message is received.
+
+The following API is available to application-writers to support functionality
+that is common to certain applications:
+
+ - `std::string Super::get_safe_directory()`: Returns the absolute path of a
+   directory on the system that was guaranteed safe to write to as of when the
+   application was compiled. If you fill up the disk or change the permissions,
+   it's on you.
+
+ - `void Super::end()`: Stops the application, by sending a (`CMND`, `STOP`)
+   message to the Mothership process (The Supervisor is running on the
+   Mothership process, but this way the supervisor can be more easily cleaned
+   up, as the application is not stopped while the supervisor handler is
+   in-context.
+
+ - `void Super::message_leader(uint8_t[SOME_NUMBER] payload)`: Packages the
+   payload into a `P_Pkt_t`, and sends it using a (`SUPR`) message to the
+   supervisor "leader" (which is simply the supervisor on the Mothership with
+   the lowest rank for this application).
+
+ - `void Super::supervisor_broadcast(uint8_t[SOME_NUMBER] payload)`: Packages
+   the payload into a `P_Pkt_t`, and sends it using a (`SUPR`) message to all
+   supervisors running for this application, except this one.
+
+ - Can you think of any more? There are probably more we need, but we're not
+   going to get them all now. Simply implementing a framework by which this API
+   can be extended should be enough.
+
+Note that this API does not define methods for termination detection. It could
+do (using a Softswitch-based heartbeats mechanism), but it might be best to let
+sleeping dragons lie for now.
 
 # TODO Debugging
 Both the Mothership itself, and applications using DebugLink. Mothership state
