@@ -56,6 +56,7 @@ ALL_IMAGE_TARGETS := $(GRAPH_TARGETS_DIR)/addressing_structure.pdf \
                      $(GRAPH_TARGETS_DIR)/generic_graph.pdf \
                      $(GRAPH_TARGETS_DIR)/interaction_diagram.pdf \
                      $(GRAPH_TARGETS_DIR)/mailbox_board_interaction.pdf \
+                     $(GRAPH_TARGETS_DIR)/mothership_data_structure.pdf \
                      $(GRAPH_TARGETS_DIR)/mothership_producer_consumer.pdf
 .NOT_INTERMEDIATE: $(ALL_IMAGE_TARGETS)
 

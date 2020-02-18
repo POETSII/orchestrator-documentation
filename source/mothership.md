@@ -54,7 +54,7 @@ NB: Terminology in this document:
    has been accepted) with some payload that traverses the compute fabric.
 
  - *Debug packet*: An addressed item sent over DebugLink (UART) connection in
-   the Tinsel backend.
+   the Tinsel backend (`P_Debug_Pkt_t`, see the Debugging section).
 
  - *Thread*: POSIX thread running under the Mothership process (x86-land). NB:
    Not a "thread" in the compute fabric.
@@ -141,7 +141,7 @@ over MPI)](images/mothership_producer_consumer.pdf)
 
 ## Communication and Semaphores
 The following communication constructs are accessible to all threads, via the
-`Mothership::ThreadComms` class:
+`ThreadComms` class (accessed via `Mothership.threading`):
 
  - `bool quit`: Defaults to `false`, is set to `true` when one thread
    encounters a fatal error[^fatalerror], or an `EXIT` C&C message. Threads
@@ -151,12 +151,11 @@ The following communication constructs are accessible to all threads, via the
    race conditions between push and pop operations. Queues that are only
    read/written by one thread have no mutexes. The mutexes are:
 
-     - `pthread_mutex_t MPICncQueueMutex` locks `MPICncQueue`.
+     - `pthread_mutex_t mutex_MPI_cnc_queue` locks `MPICncQueue`.
 
-     - `pthread_mutex_t MPIApplicationQueueMutex` locks `MPIApplicationQueue`.
+     - `pthread_mutex_t mutex_MPI_app_queue` locks `MPIApplicationQueue`.
 
-     - `pthread_mutex_t BackendOutputQueueMutex` locks
-       `BackendOutputQueueMutex`.
+     - `pthread_mutex_t mutex_backend_output_queue` locks `BackendOutputQueue`.
 
 The above variables are private, and can be accessed by the following getters
 and setters in `Mothership::ThreadComms` (which manipulate the queues and
@@ -166,25 +165,25 @@ mutexes):
 
  - `void is_it_time_to_go()`: Reads `quit`.
 
- - `bool pop_from_MPI_cnc(PMsg_p* message)`: Moves the message from the end of
+ - `bool pop_MPI_cnc_queue(PMsg_p* message)`: Moves the message from the end of
    the `MPICncQueue` queue to message. Returns `false` if the queue was empty
    (leaving `message` unmodified), and `true` otherwise.
 
- - `bool pop_from_MPI_cnc(std::vector<PMsg_p>* messages)`: Moves all messages
+ - `bool pop_MPI_cnc_queue(std::vector<PMsg_p>* messages)`: Moves all messages
    from `MPICncQueue` into `messages`. Returns `false` if the queue was empty
    (leaving `messages` unmodified), and `true` otherwise.
 
- - `void push_to_from_MPI_cnc(PMsg_p message)`: Pushes `message` to the start
-   of the `MPICncQueue` queue.
+ - `void push_MPI_cnc_queue(PMsg_p message)`: Pushes `message` to the start of
+   the `MPICncQueue` queue.
 
- - `void push_to_from_MPI_cnc(std::vector<PMsg_p>* messages)`: Pushes each
+ - `void push_MPI_cnc_queue(std::vector<PMsg_p>* messages)`: Pushes each
    message in `messages` to the start of the `MPICncQueue` queue, in the order
    that they exist `messages`. Does nothing if `messages` is empty.
 
- - The four above methods are also defined for the `MPIApplicationQueue` queue,
-   and for the `BackendOutputQueue`, `BackendInputQueue`, and
-   `DebugInputQueue`, where the latter three operate with `P_Pkt_t packet`-s as
-   opposed to `PMsg_p message`-s.
+ - The four above methods are also defined for the `MPIApplicationQueue` queue
+   (using `PMsg_p` messages), for `BackendOutputQueue` and `BackendInputQueue`
+   (using `P_Pkt_t` packets), and for `DebugInputQueue` (using `P_Debug_Pkt_t`
+   debug packets, see the Debugging section).
 
 [^fatalerror]: By "fatal error", I mean that an exception is thrown in the
     thread logic, which is not caught. When this happens, the error is logged,
@@ -299,7 +298,8 @@ combinations are dropped.
 |                 |    `P_Pkt_t> packets` | the backend.                      |
 +-----------------+-----------------------+-----------------------------------+
 | `DUMP`          | 1. `std::string path` | Dumps Mothership process state    |
-|                 |                       | to a file at `path`.              |
+|                 |                       | to a file at `path`               |
+|                 |                       | (`Mothership::Dump(std::string)`) |
 +-----------------+-----------------------+-----------------------------------+
 
 Table: Input message key permutations that the Mothership process understands,
@@ -362,11 +362,12 @@ in-source) are routed to the supervisor as (`BEND`, `SUPR`) messages:
  - `P_CNC_BARRIER`: A packet that, when received, informs the Mothership that a
    given thread has reached the softswitch barrier. If the state of the
    application to which this device belongs is `LOADING`, the field
-   `Mothership.appdb.coreInfos[coreAddr].numThreadsCurrent` for the core in
-   question is incremented. If all of the threads for that core have reported
-   back, `coreAddr` is appended to `coresLoaded`. Then, if all cores have been
-   loaded (by checking the length of coresLoaded), the state of the application
-   is transitioned from `LOADING` to `READY`.
+   `Mothership.appdb.coreInfos[coreAddr].numThreadsCurrent` (where `coreAddr`
+   is a `uint32_t` hardware address) for the core in question is
+   incremented. If all of the threads for that core have reported back,
+   `coreAddr` is appended to `coresLoaded`. Then, if all cores have been loaded
+   (by checking the length of coresLoaded), the state of the application is
+   transitioned from `LOADING` to `READY`.
 
  - `P_CNC_STOP`: A packet that, when received, informs the Mothership that a
    given thread has received the stop command (and has presumably now
@@ -432,6 +433,9 @@ purely addressing information. `AppInfo` is a class with these fields:
 
    - `STOPPED`: The application was running, but has been stopped
 
+   - `BROKEN`: Something went wrong, and the issue has been reported. The
+     application is not stopped or otherwise "cleaned up" (for now).
+
  - `uint8_t pendingCommands`: Bit-vector storing pending commands from other
    processes (Root). This is private - accessed and set using these methods:
 
@@ -455,8 +459,9 @@ purely addressing information. `AppInfo` is a class with these fields:
    processed for this application. When this is equal to `distCountExpected`,
    the application is fully defined.
 
- - `std::map<coreAddr, CoreInfo> coreInfos`: Information about the cores known
-   about, and their loading state. CoreInfo is a structure with these fields:
+ - `std::map<uint32_t, CoreInfo> coreInfos`: Information about the cores known
+   about, and their loading state. The key is the hardware address of the
+   core. CoreInfo is a structure with these fields:
 
    - `std::string codePath`: Path to the instruction binary for this core.
 
@@ -470,7 +475,7 @@ purely addressing information. `AppInfo` is a class with these fields:
      to the `READY` state. Also used for the opposite purpose, transitioning
      from `STOPPING` to `STOPPED`.
 
- - `std::set<coreAddr> coresLoaded`: Holds addresses for each core that have
+ - `std::set<uint32_t> coresLoaded`: Holds addresses for each core that have
    been completely loaded (i.e. all threads have reported back), and not
    stopped (see `numThreadsCurrent`)
 
@@ -504,11 +509,11 @@ debug reporting feature of `DebugInputBroker`.
 +--------------------+-----------------+------------------+------------------+
 
 Table: Input key permutations, and how they change the state of an application
-on the Mothership. Note that C&C messages processed before the application
-reaches the input state are "stored", and enacted when the application reaches
-the input state via some other C&C message. Transition states exist to aid
-loading and stopping "completion detection" by `DebugInputBroker` (see the
-Debugging section).
+on the Mothership (assuming the operations succeed). Note that C&C messages
+processed before the application reaches the input state are "stored", and
+enacted when the application reaches the input state via some other C&C
+message. Transition states exist to aid loading and stopping "completion
+detection" by `DebugInputBroker` (see the Debugging section).
 
 [^last]: This state is only set when the final message is received (see the
     Command and Control section for more information on `APP` messages).
@@ -516,7 +521,7 @@ Debugging section).
 [^none]: "None" here means that `Mothership.appdb` and `SBase` do not know
     about the task, and do not hold any information on it.
 
-# Supervisor API
+# Supervisors
 Supervisors are devices in an application that exist on the Mothership, and can
 communicate with normal devices serviced by the box associated with its
 Mothership, as well as external devices elsewhere. They are:
@@ -530,6 +535,22 @@ Mothership, as well as external devices elsewhere. They are:
  - Loaded as part of an application by the Mothership process when the (`CMND`,
    `INIT`) message is received.
 
+ - Represented by a `Supervisor` object with the following fields (defined on
+   construction - a supervisor that cannot be loaded and is not fully defined
+   will cause the Mothership to report and set the application state to
+   `BROKEN`):
+
+     - `std::string path`: Where the supervisor was loaded from.
+
+     - `void* so`: The dynamically-loaded supervisor (using `dlopen`), from
+       which the Mothership calls methods defined therein.
+
+ - Stored in the Mothership object in `std::map<std::string, void*>
+   Mothership.supervisors`, keyed by task name. For an incoming packet, the
+   appropriate supervisor is identified from the task component of the software
+   address.
+
+## Supervisor API
 The following API is available to application-writers to support functionality
 that is common to certain applications:
 
@@ -569,10 +590,15 @@ backend provides a debugging interface over its UART backchannel, which can be
 exploited to exfiltrate acknowledgement and debugging information from normal
 devices in the backend. The `DebugInputBroker` acts on packets received by the
 Mothership by `Post`ing a formatted message to the Logserver, including the
-packet payload and its origin. Applications can also call the `void
-handler_log(int level, const char* text)` free function in a handler, which
-sends a series of `P_CNC_LOG` packets to the Mothership, which are repackaged
-and forwarded onto the LogServer.
+packet payload and its origin. Debug packets sent in this way are stored as
+`std::pair<uint32_t, uint8_t>` objects, where the first element of the pair
+represents the hardware address source (decoded using `HostLink::toAddr`), and
+the second element of the pair represents the byte payload. This class is
+type-defined as `P_Debug_Pkt_t`.
+
+Applications can also call the `void handler_log(int level, const char* text)`
+free function in a handler, which sends a series of `P_CNC_LOG` packets to the
+Mothership, which are repackaged and forwarded onto the LogServer.
 
 # TODO Big Class Structure Diagram
 Include NameBase/SBase in here.

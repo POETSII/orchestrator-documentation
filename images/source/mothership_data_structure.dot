@@ -1,0 +1,247 @@
+digraph G {
+    fontname="Inconsolata";
+    fontsize=11;
+    margin=0;
+    nodesep=0.3;
+    rankdir="UD";
+    ranksep=0.2;
+
+    /* Class definitions (as graph nodes) */
+    node[color="#005500",
+         fillcolor="#DBFFDE:#A8FF8F",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0,
+         shape="rect",
+         style="filled"];
+
+    HostLink[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>HostLink (backend)</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Backend packet<BR ALIGN="TEXT"/>
+interface.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    CommonBase[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>CommonBase (MPI-end)</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ CommonBase(int, char*, string, string)<BR ALIGN="LEFT"/>
++ Post(int, vector&lt;string&gt;) : bool<BR ALIGN="LEFT"/>
+! MPISpinner() : void<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+MPI message interface.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    AppState[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>AppState (enumeration)</TD></TR>
+<TR><TD ALIGN="LEFT">
+UNDERDEFINED<BR ALIGN="LEFT"/>
+DEFINED<BR ALIGN="LEFT"/>
+LOADING<BR ALIGN="LEFT"/>
+READY<BR ALIGN="LEFT"/>
+RUNNING<BR ALIGN="LEFT"/>
+STOPPING<BR ALIGN="LEFT"/>
+STOPPED<BR ALIGN="LEFT"/>
+BROKEN<BR ALIGN="LEFT"/>
+</TD></TR></TABLE>>];
+
+    CoreInfo[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>CoreInfo</TD></TR>
+<TR><TD ALIGN="LEFT">
++ codePath : string<BR ALIGN="LEFT"/>
++ dataPath : string<BR ALIGN="LEFT"/>
++ numThreadsExpected : uint8_t<BR ALIGN="LEFT"/>
++ numThreadsCurrent : uint8_t<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+None
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds information and loading-state on a core.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    AppInfo[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>AppInfo</TD></TR>
+<TR><TD ALIGN="LEFT">
++ distCountExpected : uint32_t<BR ALIGN="LEFT"/>
++ distCountCurrent : uint32_t<BR ALIGN="LEFT"/>
++ name : string<BR ALIGN="LEFT"/>
++ state : AppState<BR ALIGN="LEFT"/>
++ coreInfos : map&lt;uint32_t, CoreInfo&gt;<BR ALIGN="LEFT"/>
++ coresLoaded : set&lt;uint32_t&gt;<BR ALIGN="LEFT"/>
+- pendingCommands : uint8_t<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ stage_init() : void<BR ALIGN="LEFT"/>
++ stage_run() : void<BR ALIGN="LEFT"/>
++ stage_stop() : void<BR ALIGN="LEFT"/>
++ stage_recl() : void<BR ALIGN="LEFT"/>
++ continue() : bool<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds information and state on an<BR ALIGN="TEXT"/>
+application from the perspective<BR ALIGN="TEXT"/>
+of one Mothership object.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Supervisor[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Supervisor</TD></TR>
+<TR><TD ALIGN="LEFT">
++ path : string<BR ALIGN="LEFT"/>
++ so : void*<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
++ Supervisor(string)<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds a supervisor<BR ALIGN="TEXT"/>
+device for a given<BR ALIGN="TEXT"/>
+application.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Mothership[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Mothership</TD></TR>
+<TR><TD ALIGN="LEFT">
++ appdb : map&lt;string, AppInfo&gt;<BR ALIGN="LEFT"/>
++ backend : HostLink<BR ALIGN="LEFT"/>
++ coreToApp : map&lt;uint32_t, string&gt;<BR ALIGN="LEFT"/>
++ supervisors : map&lt;std::string, void*&gt;<BR ALIGN="LEFT"/>
++ threading : ThreadComms<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ Mothership(int, char*, string, string)<BR ALIGN="LEFT"/>
++ dump(string) : void<BR ALIGN="LEFT"/>
++ task_from_swaddr(uint32_t) : string<BR ALIGN="LEFT"/>
++ queue_mpi_message(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- check_create_app(string) : AppInfo*<BR ALIGN="LEFT"/>
+- check_defined_app(string) : bool<BR ALIGN="LEFT"/>
+- load_backend() : void<BR ALIGN="LEFT"/>
+MPI message handlers (called from MPI<BR ALIGN="LEFT"/>
+resolving threads):<BR ALIGN="LEFT"/>
+- HandleExit(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleKill(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleAppSpec(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleAppDist(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleAppSupd(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleCmndRecl(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleCmndInit(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleCmndRun(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleCmndStop(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+               ... and more!
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds the state of the<BR ALIGN="TEXT"/>
+Mothership process.
+</TD></TR></TABLE>>];
+
+    ThreadComms[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>ThreadComms</TD></TR>
+<TR><TD ALIGN="LEFT">
+- quit : bool<BR ALIGN="LEFT"/>
+- mutex_MPI_cnc_queue : pthread_mutex_t<BR ALIGN="LEFT"/>
+- MPICncResolver : pthread_t<BR ALIGN="LEFT"/>
+...<BR ALIGN="LEFT"/>
+<!--
+- mutex_MPI_app_queue : pthread_mutex_t<BR ALIGN="LEFT"/>
+- MPIApplicationResolver : pthread_t<BR ALIGN="LEFT"/>
+- mutex_backend_output_queue : pthread_mutex_t<BR ALIGN="LEFT"/>
+- BackendOutputBroker : pthread_t<BR ALIGN="LEFT"/>
+- MPIInputBroker : pthread_t<BR ALIGN="LEFT"/>
+- BackendInputBroker : pthread_t<BR ALIGN="LEFT"/>
+- DebugInputBroker : pthread_t<BR ALIGN="LEFT"/>
+-->
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ ThreadComms(Mothership*)<BR ALIGN="LEFT"/>
+Methods to moderate quitting:<BR ALIGN="LEFT"/>
++ set_quit() : void<BR ALIGN="LEFT"/>
++ is_it_time_to_go() : void<BR ALIGN="LEFT"/>
+Queue and mutex manipulation: <BR ALIGN="LEFT"/>
++ pop_MPI_cnc_queue(PMsg_p*) : bool<BR ALIGN="LEFT"/>
++ pop_MPI_cnc_queue(vector&lt;PMsg_p*&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_MPI_cnc_queue(PMsg_p) : void<BR ALIGN="LEFT"/>
++ push_MPI_cnc_queue(vector&lt;PMsg_p*&gt;*) : void<BR ALIGN="LEFT"/>
+...<BR ALIGN="LEFT"/>
+<!--
++ pop_MPI_app_queue(PMsg_p*) : bool<BR ALIGN="LEFT"/>
++ pop_MPI_app_queue(vector&lt;PMsg_p*&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_MPI_app_queue(PMsg_p) : void<BR ALIGN="LEFT"/>
++ push_MPI_app_queue(vector&lt;PMsg_p*&gt;*) : void<BR ALIGN="LEFT"/>
++ pop_backend_out_queue(P_Pkt_t*) : bool<BR ALIGN="LEFT"/>
++ pop_backend_out_queue(vector&lt;P_Pkt_t*&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_backend_out_queue(P_Pkt_t) : void<BR ALIGN="LEFT"/>
++ push_backend_out_queue(vector&lt;P_Pkt_t*&gt;*) : void<BR ALIGN="LEFT"/>
++ pop_backend_in_queue(P_Pkt_t*) : bool<BR ALIGN="LEFT"/>
++ pop_backend_in_queue(vector&lt;P_Pkt_t*&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_backend_in_queue(P_Pkt_t) : void<BR ALIGN="LEFT"/>
++ push_backend_in_queue(vector&lt;P_Pkt_t*&gt;*) : void<BR ALIGN="LEFT"/>
++ pop_debug_in_queue(P_Debug_Pkt_t*) : bool<BR ALIGN="LEFT"/>
++ pop_debug_in_queue(vector&lt;P_Debug_Pkt_t*&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_debug_in_queue(P_Debug_Pkt_t) : void<BR ALIGN="LEFT"/>
++ push_debug_in_queue(vector&lt;P_Debug_Pkt_t*&gt;*) : void<BR ALIGN="LEFT"/>
+-->
+Starting threads and waiting: <BR ALIGN="LEFT"/>
++ go() : void<BR ALIGN="LEFT"/>
+- start_MPI_cnc_resolver(Mothership*) : void<BR ALIGN="LEFT"/>
+- mpi_cnc_resolver(Mothership*) : void*<BR ALIGN="LEFT"/>
+...<BR ALIGN="LEFT"/>
+<!--
+- start_MPI_input_broker(Mothership*) : void<BR ALIGN="LEFT"/>
+- mpi_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
+- start_MPI_app_resolver(Mothership*) : void<BR ALIGN="LEFT"/>
+- mpi_app_resolver(Mothership*) : void*<BR ALIGN="LEFT"/>
+- start_backend_output_broker(Mothership*) : void<BR ALIGN="LEFT"/>
+- backend_output_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
+- start_backend_input_broker(Mothership*) : void<BR ALIGN="LEFT"/>
+- backend_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
+- start_debug_input_broker(Mothership*) : void<BR ALIGN="LEFT"/>
+- debug_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
+-->
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Manages communication between Mothership threads,<BR ALIGN="TEXT"/>
+abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    /* Relationship definitions (as graph edges) */
+    edge[color="#000000",
+         fontname="Inconsolata",
+         fontsize=11];
+
+    /* One-to-one containment. */
+    {edge[arrowhead="vee"];
+        AppInfo -> AppState[label=" AppInfo.state"];
+        Mothership -> HostLink[label=" Mothership.backend"];
+        Mothership -> ThreadComms[label=" Mothership.threading"];
+    }
+
+    /* One-to-many containment. */
+    {edge[arrowhead="diamond"];
+        Mothership -> AppInfo[label=" Mothership.appdb"];
+        Mothership -> Supervisor[label=" Mothership.supervisors"];
+        AppInfo -> CoreInfo[label=" AppInfo.coreInfos"];
+    }
+
+    /* Inheritance */
+    {edge[arrowhead="onormal", label=" (inherits from)"];
+        CommonBase -> Mothership[dir="back"];
+    }
+
+    /* Rank hackery */
+    {rank="same";
+        HostLink -> Mothership [style="invis"];
+        rankdir="LR";
+    }
+}
