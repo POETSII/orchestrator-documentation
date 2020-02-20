@@ -608,10 +608,53 @@ Applications can also call the `void handler_log(int level, const char* text)`
 free function in a handler, which sends a series of `P_CNC_LOG` packets to the
 Mothership, which are repackaged and forwarded onto the LogServer.
 
-# TODO Implementation Planning
+# A Rough Implementation Plan
+This Mothership design differs from the existing Mothership in the following
+ways:
 
- - Core implementation, can't directly translate old one to this one.
- - Performance comparisons: draining network more quickly, but increased
-   "processing latency"
- - SBase
- - Supervisor library thing
+ - Threads are all started at the beginning of the Mothership process
+   (i.e. before any messages are received), as opposed to the previous
+   Mothership, which starts Twig (the backend-receiving thread) in
+   advance. Furthermore, the thread that processes backend packets
+   (`BackendInputBroker` vs `Twig`) no longer "resolves" the packet, but simply
+   forwards it on
+
+ - MPI messages have different forms and arguments (though backend messages are
+   the same), and acknowledgement messages are sent back from the Mothership
+   process to the Root process.
+
+ - The data structures for holding task and supervisor information do not use
+   the hardware model, and are constructed from different pieces of
+   information.
+
+ - Quitting and cleanup operates independently of backend traffic. The proposed
+   design does not fail to exit or to terminate an application if it is
+   spamming the Mothership.
+
+ - The proposed design introduces intermediate application states for certain
+   stages, respects deploy and command messages arriving out-of-order (i.e. due
+   to traffic), and has a simpler state transition mechanism.
+
+ - The backend is now loaded independently of Mothership object construction,
+   and does not prevent the Orchestrator from starting if unable to load.
+
+ - Multiple supervisors-per-Mothership (not per application) are now supported,
+   and communication between supervisors is defined (albeit tenuously for now).
+
+Given these differences, this design will be implemented in the following way,
+where each stage represents a reviewable unit (probably by GMB):
+
+ 1. An implementation of the core constructs. This implementation will be the
+    minimum possible to replicate the feature set of the existing Mothership as
+    closely as possible.
+
+ 2. A performance comparison between the new and old Motherships to check for
+    regression. One key difference expected is that, since Twig calls
+    supervisor logic directly, there will be a slightly increased supervisor
+    message "processing latency", but the backend queue in the new Mothership
+    will be drained more quickly. Any regression issues will be resolved here.
+
+ 3. Given that it has been developed, SBase would be integrated next for
+    external device support.
+
+ 4. Implementation of the supervisor API (and other features cut in step 1).
