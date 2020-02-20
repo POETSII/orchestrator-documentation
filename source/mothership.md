@@ -609,3 +609,9 @@ free function in a handler, which sends a series of `P_CNC_LOG` packets to the
 Mothership, which are repackaged and forwarded onto the LogServer.
 
 # TODO Implementation Planning
+
+ - Core implementation, can't directly translate old one to this one.
+ - Performance comparisons: draining network more quickly, but increased
+   "processing latency"
+ - SBase
+ - Supervisor library thing
