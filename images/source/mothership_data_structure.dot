@@ -269,7 +269,7 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
 
     /* Rank hackery */
     {rank="same";
-        HostLink -> Mothership [style="invis"];
+        ThreadComms -> Mothership [style="invis"];
         rankdir="LR";
     }
 }
