@@ -136,11 +136,11 @@ threads with fast spinners. The threads are:
     not. Better to have some uniformity, I think.
 
 ![Mothership process producer-consumer pattern. White-filled boxes represent
-looping threads where the fast/slow annotations denote the behaviour of the
-spinner, black-filled boxes represent queues, black arrows represent the
-producer-consumer relationship, red arrows represent MPI message flow, and blue
-arrows represent backend packet flow. Logging not shown (all threads can `Post`
-over MPI)](images/mothership_producer_consumer.pdf)
+looping threads (spawned by `main`) where the fast/slow annotations denote the
+behaviour of the spinner, black-filled boxes represent queues, black arrows
+represent the producer-consumer relationship, red arrows represent MPI message
+flow, and blue arrows represent backend packet flow. Logging not shown (all
+threads can `Post` over MPI)](images/mothership_producer_consumer.pdf)
 
 ## Communication and Semaphores
 The following communication constructs are accessible to all threads, via the
