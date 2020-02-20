@@ -85,6 +85,22 @@ None
 Holds information and loading-state on a core.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
+    AppDB[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>AppDB</TD></TR>
+<TR><TD ALIGN="LEFT">
++ appInfos : map&lt;string, AppInfo&gt;<BR ALIGN="LEFT"/>
++ coreToApp : map&lt;uint32_t, string&gt;<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ check_create_app(string) : AppInfo*<BR ALIGN="LEFT"/>
++ check_defined_app(string) : bool<BR ALIGN="LEFT"/>
++ dump(string) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds the state of applications for<BR ALIGN="TEXT"/>
+a given Mothership.
+</TD></TR></TABLE>>];
+
     AppInfo[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>AppInfo</TD></TR>
 <TR><TD ALIGN="LEFT">
@@ -127,9 +143,8 @@ application.<BR ALIGN="TEXT"/>
     Mothership[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>Mothership</TD></TR>
 <TR><TD ALIGN="LEFT">
-+ appdb : map&lt;string, AppInfo&gt;<BR ALIGN="LEFT"/>
++ appdb : AppDB<BR ALIGN="LEFT"/>
 + backend : HostLink<BR ALIGN="LEFT"/>
-+ coreToApp : map&lt;uint32_t, string&gt;<BR ALIGN="LEFT"/>
 + supervisors : map&lt;std::string, void*&gt;<BR ALIGN="LEFT"/>
 + threading : ThreadComms<BR ALIGN="LEFT"/>
 </TD></TR>
@@ -138,8 +153,6 @@ application.<BR ALIGN="TEXT"/>
 + dump(string) : void<BR ALIGN="LEFT"/>
 + task_from_swaddr(uint32_t) : string<BR ALIGN="LEFT"/>
 + queue_mpi_message(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- check_create_app(string) : AppInfo*<BR ALIGN="LEFT"/>
-- check_defined_app(string) : bool<BR ALIGN="LEFT"/>
 - load_backend() : void<BR ALIGN="LEFT"/>
 MPI message handlers (called from MPI<BR ALIGN="LEFT"/>
 resolving threads):<BR ALIGN="LEFT"/>
@@ -238,11 +251,12 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
         AppInfo -> AppState[label=" AppInfo.state"];
         Mothership -> HostLink[label=" Mothership.backend"];
         Mothership -> ThreadComms[label=" Mothership.threading"];
+        Mothership -> AppDB[label=" Mothership.appdb"];
     }
 
     /* One-to-many containment. */
     {edge[arrowhead="diamond"];
-        Mothership -> AppInfo[label=" Mothership.appdb"];
+        AppDB -> AppInfo[label=" AppDB.appInfos"];
         Mothership -> Supervisor[label=" Mothership.supervisors"];
         AppInfo -> CoreInfo[label=" AppInfo.coreInfos"];
     }

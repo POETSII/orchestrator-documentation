@@ -401,12 +401,13 @@ Notes:
    packet for normal devices. It is replaced by `P_CNC_BARRIER`.
 
 # Applications
-The Mothership class maintains a map, `std::map<std::string, AppInfo>
-Mothership.appdb`, which describes applications that the Mothership process has
-been informed of, as a function of their name. This map complements the
-database provided by `NameBase` (from which the Mothership inherits), by
-defining the states of applications and loading information, as opposed to
-purely addressing information. `AppInfo` is a class with these fields:
+The Mothership class contains an instance of class AppDB (`Mothership.appdb`),
+which in turn maintains a map, `std::map<std::string, AppInfo> AppDB.appInfos`,
+which describes applications that the Mothership process has been informed of,
+as a function of their name. This map complements the database provided by
+`SBase` (from which the Mothership inherits), by defining the states of
+applications and loading information, as opposed to purely addressing
+information. `AppInfo` is a class with these fields:
 
  - `std::string name`: The name of the application, redundant with the map key.
 
@@ -483,8 +484,8 @@ purely addressing information. `AppInfo` is a class with these fields:
    stopped (see `numThreadsCurrent`)
 
 There is a corresponding backwards map, `std::map<uint32_t, std::string>
-Mothership.coreToApp`, which maps core addresses to the name of the application
-that has claimed them. This map allows the Mothership process to more elegantly
+AppDB.coreToApp`, which maps core addresses to the name of the application that
+has claimed them. This map allows the Mothership process to more elegantly
 catch when applications have been incorrectly overlayed, and to enable the
 debug reporting feature of `DebugInputBroker`.
 
@@ -521,8 +522,8 @@ detection" by `DebugInputBroker` (see the Debugging section).
 [^last]: This state is only set when the final message is received (see the
     Command and Control section for more information on `APP` messages).
 
-[^none]: "None" here means that `Mothership.appdb` and `SBase` do not know
-    about the task, and do not hold any information on it.
+[^none]: "None" here means that `AppDB` and `SBase` do not know about the task,
+    and do not hold any information on it.
 
 # Supervisors
 Supervisors are devices in an application that exist on the Mothership, and can
