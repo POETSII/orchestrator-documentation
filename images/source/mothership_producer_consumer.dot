@@ -57,6 +57,8 @@ digraph G {
     MPIApplicationResolver -> BackendOutputQueue;
     BackendOutputQueue -> BackendOutputBroker;
     BackendInputBroker -> BackendInputQueue;
+    BackendInputBroker -> MPIApplicationQueue;
+    BackendInputBroker -> MPICncQueue;
     BackendInputQueue -> BackendInputBroker;
     DebugInputBroker -> DebugInputQueue;
     DebugInputQueue -> DebugInputBroker;
@@ -65,23 +67,21 @@ digraph G {
     edge[color="#550000",
          fontcolor="#550000"];
 
-    MPI -> MPIInputBroker [label=" From anywhere (really)"];
+    MPI -> MPIInputBroker [label=" From anywhere"];
     MPIApplicationResolver -> MPI [label=" From\nsupervisors"];
     //MPICncResolver -> MPI;
-    BackendInputBroker -> MPI [label=" For externals\n or supervisors"];
+    BackendInputBroker -> MPI [label=" Externals"];
     //DebugInputBroker -> MPI;
 
     // Backend
     edge[color="#000055",
          fontcolor="#000055"];
 
-    Backend -> BackendInputBroker [label="From normal\ndevices"];
+    Backend -> BackendInputBroker [label=" From normal\ndevices"];
     Backend -> DebugInputBroker;
     BackendOutputBroker -> Backend;
 
     // Movement
     { rank=min; MPI; }
     { rank=max; Backend; }
-    { rank=same; BackendInputQueue; DebugInputQueue; }
-    { rank=same; BackendInputBroker; DebugInputBroker; }
 }

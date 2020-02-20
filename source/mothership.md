@@ -119,12 +119,15 @@ threads with fast spinners. The threads are:
    large (but finite) queue buffer (`BackendInputQueue`)[^backendinput]. When
    there are no packets to drain from the compute fabric, or when the
    `BackendInputQueue` buffer is full, this thread converts the next packet
-   into a message, and sends it to the appropriate destination over MPI. This
+   into a message, and either sends it to the appropriate destination over MPI,
+   or pushes it to `MPICncQueue` (Tinsel Command and Control) or
+   `MPIApplicationQueue` (Supervisor) if intended to be processed locally. This
    is a fast spinner.
 
- - `DebugInputBroker`: As above, but for the debugging interface provided by
-   the backend. Debug packets are queued into the `DebugInputQueue` buffer
-   before being resolved in the same way. This is a slow spinner.
+ - `DebugInputBroker`: Responsible for draining the debug fabric into a large
+   queue buffer (`DebugInputQueue`). When there are no packets to drain, or
+   when the `DebugInputQueue` buffer is full, this thread converts the next
+   packet into a message to be `Post`-ed, using MPI. This is a slow spinner.
 
 [^malicious]: Or a maliciously-written supervisor, but we assume people will be
     playing nice for now.
