@@ -70,21 +70,6 @@ STOPPED<BR ALIGN="LEFT"/>
 BROKEN<BR ALIGN="LEFT"/>
 </TD></TR></TABLE>>];
 
-    CoreInfo[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>CoreInfo</TD></TR>
-<TR><TD ALIGN="LEFT">
-+ codePath : string<BR ALIGN="LEFT"/>
-+ dataPath : string<BR ALIGN="LEFT"/>
-+ numThreadsExpected : uint8_t<BR ALIGN="LEFT"/>
-+ numThreadsCurrent : uint8_t<BR ALIGN="LEFT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-None
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds information and loading-state on a core.<BR ALIGN="TEXT"/>
-</TD></TR></TABLE>>];
-
     AppDB[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>AppDB</TD></TR>
 <TR><TD ALIGN="LEFT">
@@ -124,6 +109,22 @@ a given Mothership.
 Holds information and state on an<BR ALIGN="TEXT"/>
 application from the perspective<BR ALIGN="TEXT"/>
 of one Mothership object.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    CoreInfo[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>CoreInfo</TD></TR>
+<TR><TD ALIGN="LEFT">
++ codePath : string<BR ALIGN="LEFT"/>
++ dataPath : string<BR ALIGN="LEFT"/>
++ numThreadsExpected : uint8_t<BR ALIGN="LEFT"/>
++ numThreadsCurrent : uint8_t<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+None
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds information and loading<BR ALIGN="TEXT"/>
+state on a core.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
     SuperDB[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -178,8 +179,7 @@ threads):<BR ALIGN="LEFT"/>
 ... (for each input message permutation)<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
-Holds the state of the<BR ALIGN="TEXT"/>
-Mothership process.
+Holds the state of the Mothership process.
 </TD></TR></TABLE>>];
 
     ThreadComms[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -267,9 +267,9 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
 
     /* One-to-many containment. */
     {edge[arrowhead="diamond"];
-        SuperDB -> Supervisor[label=" SuperDB.supervisors"];
+        SuperDB -> Supervisor[label=" SuperDB.\nsupervisors"];
         AppDB -> AppInfo[label=" AppDB.appInfos"];
-        AppInfo -> CoreInfo[label=" AppInfo.coreInfos"];
+        AppInfo -> CoreInfo[label=" AppInfo.\ncoreInfos"];
     }
 
     /* Inheritance */
@@ -281,6 +281,12 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
     /* Rank hackery */
     {rank="same";
         ThreadComms -> Mothership [style="invis"];
+        rankdir="LR";
+    }
+    {rank="same";
+        CoreInfo;
+        AppState;
+        AppInfo;
         rankdir="LR";
     }
 }
