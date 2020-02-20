@@ -64,9 +64,13 @@ NB: Terminology in this document:
    to take people from the past to the present after all. I'll try to be
    explicit wherever I use this term.
 
+Figure 1 shows the class structure diagram for the proposed Mothership design.
+
+![Mothership class structure diagram](images/mothership_data_structure.pdf)
+
 # Threads and Queues: Producer-Consumer
 To support these features, a Producer-Consumer approach is used by the
-Mothership. Figure 1 shows a schematic of how the Mothership process employs
+Mothership. Figure 2 shows a schematic of how the Mothership process employs
 this pattern using POSIX threads. Each thread has access to the Mothership
 object (of which there is only one per Mothership process), in which queues and
 mutexes for the producer-consumer pattern are stored. Consumer threads have
@@ -549,10 +553,10 @@ Mothership, as well as external devices elsewhere. They are:
      - `void* so`: The dynamically-loaded supervisor (using `dlopen`), from
        which the Mothership calls methods defined therein.
 
- - Stored in the Mothership object in `std::map<std::string, void*>
-   Mothership.supervisors`, keyed by task name. For an incoming packet, the
-   appropriate supervisor is identified from the task component of the software
-   address.
+ - Stored in the `SuperDB` object (`Mothership.superdb`) within
+   `std::map<std::string, Supervisor> SuperDB.supervisors`, keyed by
+   application name. For an incoming packet, the appropriate supervisor is
+   identified from the task component of the software address.
 
 ## Supervisor API
 The following API is available to application-writers to support functionality
@@ -603,8 +607,5 @@ type-defined as `P_Debug_Pkt_t`.
 Applications can also call the `void handler_log(int level, const char* text)`
 free function in a handler, which sends a series of `P_CNC_LOG` packets to the
 Mothership, which are repackaged and forwarded onto the LogServer.
-
-# TODO Big Class Structure Diagram
-Include NameBase/SBase in here.
 
 # TODO Implementation Planning

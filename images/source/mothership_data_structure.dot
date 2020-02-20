@@ -118,11 +118,27 @@ a given Mothership.
 + stage_stop() : void<BR ALIGN="LEFT"/>
 + stage_recl() : void<BR ALIGN="LEFT"/>
 + continue() : bool<BR ALIGN="LEFT"/>
++ dump(string) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Holds information and state on an<BR ALIGN="TEXT"/>
 application from the perspective<BR ALIGN="TEXT"/>
 of one Mothership object.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    SuperDB[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>SuperDB</TD></TR>
+<TR><TD ALIGN="LEFT">
++ supervisors : map&lt;std::string, Supervisor&gt;<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ load_supervisor(string, string) : bool<BR ALIGN="LEFT"/>
++ unload_supervisor(string) : bool<BR ALIGN="LEFT"/>
++ dump(string) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds the state of supervisors for a<BR ALIGN="TEXT"/>
+given Mothership.
 </TD></TR></TABLE>>];
 
     Supervisor[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -145,7 +161,7 @@ application.<BR ALIGN="TEXT"/>
 <TR><TD ALIGN="LEFT">
 + appdb : AppDB<BR ALIGN="LEFT"/>
 + backend : HostLink<BR ALIGN="LEFT"/>
-+ supervisors : map&lt;std::string, void*&gt;<BR ALIGN="LEFT"/>
++ superdb : SuperDB<BR ALIGN="LEFT"/>
 + threading : ThreadComms<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
@@ -153,19 +169,13 @@ application.<BR ALIGN="TEXT"/>
 + dump(string) : void<BR ALIGN="LEFT"/>
 + task_from_swaddr(uint32_t) : string<BR ALIGN="LEFT"/>
 + queue_mpi_message(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- load_backend() : void<BR ALIGN="LEFT"/>
+- load_backend() : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
 MPI message handlers (called from MPI<BR ALIGN="LEFT"/>
 resolving threads):<BR ALIGN="LEFT"/>
 - HandleExit(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
 - HandleKill(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
 - HandleAppSpec(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleAppDist(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleAppSupd(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleCmndRecl(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleCmndInit(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleCmndRun(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleCmndStop(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-               ... and more!
+... (for each input message permutation)<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Holds the state of the<BR ALIGN="TEXT"/>
@@ -190,16 +200,16 @@ Mothership process.
 -->
 </TD></TR>
 <TR><TD ALIGN="LEFT">
-+ ThreadComms(Mothership*)<BR ALIGN="LEFT"/>
++ ThreadComms(Mothership*)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
 Methods to moderate quitting:<BR ALIGN="LEFT"/>
 + set_quit() : void<BR ALIGN="LEFT"/>
-+ is_it_time_to_go() : void<BR ALIGN="LEFT"/>
++ is_it_time_to_go() : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
 Queue and mutex manipulation: <BR ALIGN="LEFT"/>
 + pop_MPI_cnc_queue(PMsg_p*) : bool<BR ALIGN="LEFT"/>
 + pop_MPI_cnc_queue(vector&lt;PMsg_p*&gt;*) : bool<BR ALIGN="LEFT"/>
 + push_MPI_cnc_queue(PMsg_p) : void<BR ALIGN="LEFT"/>
 + push_MPI_cnc_queue(vector&lt;PMsg_p*&gt;*) : void<BR ALIGN="LEFT"/>
-...<BR ALIGN="LEFT"/>
+... (for each queue)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
 <!--
 + pop_MPI_app_queue(PMsg_p*) : bool<BR ALIGN="LEFT"/>
 + pop_MPI_app_queue(vector&lt;PMsg_p*&gt;*) : bool<BR ALIGN="LEFT"/>
@@ -222,7 +232,7 @@ Starting threads and waiting: <BR ALIGN="LEFT"/>
 + go() : void<BR ALIGN="LEFT"/>
 - start_MPI_cnc_resolver(Mothership*) : void<BR ALIGN="LEFT"/>
 - mpi_cnc_resolver(Mothership*) : void*<BR ALIGN="LEFT"/>
-...<BR ALIGN="LEFT"/>
+... (for each thread)<BR ALIGN="LEFT"/>
 <!--
 - start_MPI_input_broker(Mothership*) : void<BR ALIGN="LEFT"/>
 - mpi_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
@@ -250,14 +260,15 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
     {edge[arrowhead="vee"];
         AppInfo -> AppState[label=" AppInfo.state"];
         Mothership -> HostLink[label=" Mothership.backend"];
-        Mothership -> ThreadComms[label=" Mothership.threading"];
+        Mothership -> ThreadComms[label=" Mothership.\nthreading"];
         Mothership -> AppDB[label=" Mothership.appdb"];
+        Mothership -> SuperDB[label=" Mothership.superdb"];
     }
 
     /* One-to-many containment. */
     {edge[arrowhead="diamond"];
+        SuperDB -> Supervisor[label=" SuperDB.supervisors"];
         AppDB -> AppInfo[label=" AppDB.appInfos"];
-        Mothership -> Supervisor[label=" Mothership.supervisors"];
         AppInfo -> CoreInfo[label=" AppInfo.coreInfos"];
     }
 
