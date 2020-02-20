@@ -608,7 +608,63 @@ Applications can also call the `void handler_log(int level, const char* text)`
 free function in a handler, which sends a series of `P_CNC_LOG` packets to the
 Mothership, which are repackaged and forwarded onto the LogServer.
 
-# A Rough Implementation Plan
+# Appendix A: Message/Packet Handling Examples
+To follow along, use Figure 2 and the Command and Control section.
+
+## Example 1: An `EXIT` Message Arrives at the Mothership
+  1. The `MPIInputBroker` thread (which uses `CommonBase::MPISpinner()`) takes
+     the message, and decodes its key. On noting that the message is an `EXIT`
+     message, it is moved to the `MPICncQueue`.
+
+  2. The `MPICncResolver` thread reads from the `MPICncQueue`, takes the
+     message, and decodes its key. On noting that the message is an `EXIT`
+     message, the thread calls `Mothership->threading.set_quit()`.
+
+  3. Each thread, before receiving any more packets or messages, calls
+     `Mothership->threading.is_it_time_to_go()`. Because `set_quit()` has been
+     called, each thread will elegantly exit before handling any more packets
+     and messages.
+
+  4. The `main` thread joins successfully, and the Mothership process is exited
+     gracefully.
+
+  Note that (`SYST`, `KILL`) messages are handled similarly - when
+  `MPIInputBroker` is joined to `main`, `main` checks
+  `Mothership->threading.is_it_time_to_go()` and, if not set, cancels the
+  remaining threads directly and exits.
+
+## Example 2: A `P_CNC_STOP` Packet Arrives at the Backend
+  1. The `BackendInputBroker` consumes the packet and investigates its
+     destination and opcode. Given that the opcode is special and the
+     destination is for the supervisor, the thread wraps it in a (`BEND`,
+     `CNC`) message, and pushes it to the `MPICncQueue`.
+
+  2. The `MPICncResolver` thread reads from the `MPICncQueue`, takes the
+     message, and decodes its key. On noting that the message is a (`BEND`,
+     `CNC`) message, it decodes the packet key. On noting it's a `P_CNC_STOP`
+     packet, this thread updates `Mothership.appdb` as per section 3. If the
+     process has been stopped due to this, the Mothership sends a
+     (`MSHP`,`ACK`,`STOP`) message to the Root process.
+
+## Example 3: A non-opcoded Packet Arrives at the Backend Addressed to the Supervisor (as opposed to an External)
+  1. The `BackendInputBroker` consumes the packet and investigates its
+     destination and opcode. Given that the opcode is special and the
+     destination is for the supervisor, the thread wraps it in a (`BEND`,
+     `SUPR`) message, and pushes it to the `MPIApplicationQueue`.
+
+  2. The `MPIApplicationResolver` reads from the `MPIApplicationQueue`, takes
+     the message and decodes its key. On noting that the message is a (`BEND`,
+     `SUPR`) message, the thread calls the appropriate supervisor handler with
+     it. Then...
+
+### Example 3a: A Supervisor sends a packet to the compute fabric
+  3. The `MPIApplicationResolver` creates the packet and pushes it to the
+     `BackendOutputQueue`.
+
+  4. The `BackendOutputBroker` reads from the `BackendOutputQueue`, and pushes
+     the packet into the compute backend.
+
+# Appendix B: A Rough Implementation Plan
 This Mothership design differs from the existing Mothership in the following
 ways:
 
