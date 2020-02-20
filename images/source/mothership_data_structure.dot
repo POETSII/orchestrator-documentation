@@ -16,6 +16,19 @@ digraph G {
          shape="rect",
          style="filled"];
 
+    SBase[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>SBase</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Device/address lookup<BR ALIGN="TEXT"/>
+for externals.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
     HostLink[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>HostLink (backend)</TD></TR>
 <TR><TD ALIGN="TEXT">
@@ -236,6 +249,7 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
 
     /* Inheritance */
     {edge[arrowhead="onormal", label=" (inherits from)"];
+        SBase -> Mothership[dir="back"];
         CommonBase -> Mothership[dir="back"];
     }
 
