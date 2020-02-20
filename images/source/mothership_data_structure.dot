@@ -170,11 +170,11 @@ application.<BR ALIGN="TEXT"/>
 + task_from_swaddr(uint32_t) : string<BR ALIGN="LEFT"/>
 + queue_mpi_message(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
 - load_backend() : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
-MPI message handlers (called from MPI<BR ALIGN="LEFT"/>
-resolving threads):<BR ALIGN="LEFT"/>
-- HandleExit(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleKill(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleAppSpec(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
+MPI message handlers (called from MPI-resolving<BR ALIGN="LEFT"/>
+threads):<BR ALIGN="LEFT"/>
+- HandleExit(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleKill(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- HandleAppSpec(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
 ... (for each input message permutation)<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">

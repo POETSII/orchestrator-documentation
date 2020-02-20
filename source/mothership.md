@@ -593,11 +593,11 @@ sleeping dragons lie for now.
 # Debugging
 In addition to the acknowledgement messages that the Mothership generates while
 transitioning tasks between states, and the `DUMP` message, it is useful to
-have more fine-grained debugging control over the Mothership. The Tinsel
+have more fine-grained debugging control over running applications. The Tinsel
 backend provides a debugging interface over its UART backchannel, which can be
 exploited to exfiltrate acknowledgement and debugging information from normal
 devices in the backend. The `DebugInputBroker` acts on packets received by the
-Mothership by `Post`ing a formatted message to the Logserver, including the
+Mothership by `Post`-ing a formatted message to the Logserver, including the
 packet payload and its origin. Debug packets sent in this way are stored as
 `std::pair<uint32_t, uint8_t>` objects, where the first element of the pair
 represents the hardware address source (decoded using `HostLink::toAddr`), and
