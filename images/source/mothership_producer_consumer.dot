@@ -41,8 +41,8 @@ digraph G {
     node[color="#FFFFFF",
          fillcolor="#FFFFFF"];
 
-    MPI [fontcolor="#550000"];
-    Backend [label="Compute Backend", fontcolor="#000055"];
+    MPI [fontcolor="#BB0000"];
+    Backend [label="Compute Backend", fontcolor="#0000BB"];
 
     // Producer-consumer relationship
     edge[color="#000000",
@@ -64,8 +64,8 @@ digraph G {
     DebugInputQueue -> DebugInputBroker;
 
     // MPI
-    edge[color="#550000",
-         fontcolor="#550000"];
+    edge[color="#BB0000",
+         fontcolor="#BB0000"];
 
     MPI -> MPIInputBroker [label=" From anywhere"];
     MPIApplicationResolver -> MPI [label=" From\nsupervisors"];
@@ -74,8 +74,8 @@ digraph G {
     //DebugInputBroker -> MPI;
 
     // Backend
-    edge[color="#000055",
-         fontcolor="#000055"];
+    edge[color="#0000BB",
+         fontcolor="#0000BB"];
 
     Backend -> BackendInputBroker [label=" From normal\ndevices"];
     Backend -> DebugInputBroker;
