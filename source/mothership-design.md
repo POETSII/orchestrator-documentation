@@ -50,8 +50,8 @@ NB: Terminology in this document:
    payload that traverses the MPI network via the `CommonBase` interface. NB:
    MPI messages sent/received in this way are asynchronous.
 
- - *Packet*: An addressed item (usually `P_Pkt_t`, or `P_Pkt_t` if GMB's change
-   has been accepted) with some payload that traverses the compute fabric.
+ - *Packet*: An addressed item (`P_Pkt_t`) with some payload that traverses the
+   compute fabric.
 
  - *Debug packet*: An addressed item sent over DebugLink (UART) connection in
    the Tinsel backend (`P_Debug_Pkt_t`, see the Debugging section).
@@ -386,20 +386,29 @@ in-source) are routed to the supervisor as (`BEND`, `SUPR`) messages:
    empty, the state of the application is transitioned from `STOPPING` to
    `STOPPED`, and the supervisor is unloaded.
 
+ - `P_CNC_KILL`: A packet that, when received, shuts down the Mothership
+   process as *gracefully* as possible (similar to the `EXIT` message).
+
 Notes:
 
  - The bulleted logic above is enacted by `MPICncResolver`.
 
  - Some of the opcodes listed above (e.g. `P_CNC_LOG`) can also meaningfully be
-   sent by the Mothership to devices in the compute fabric, specifically
-   `P_CNC_BARRIER` (which is the barrier-breaking packet sent as a result of a
-   (`CMND`, `INIT`)), and `P_CNC_STOP` (sent by (`CMND`, `STOP`)).
+   sent by the Mothership to devices in the compute fabric, specifically:
 
- - There is no `P_CNC_KILL`. Applications can no longer stop the Mothership. A
-   normal device can send a packet to the supervisor, (via a (`BEND`, `SUPR`)
-   message), which causes the supervisor to call the `void Super::end()` API
-   method (documented in the Supervisor API section), which closes the
-   application gracefully.
+    - `P_CNC_BARRIER`, which is the barrier-breaking packet sent as a result of
+      a (`CMND`, `INIT`)
+
+    - `P_CNC_STOP`, sent by (`CMND`, `STOP`))
+
+    - `P_CNC_INSTR` to request instrumentation information from a softswitch.
+
+ - A rogue application can shut down the Mothership via a `P_CNC_KILL`
+   packet.
+
+ - Applications can stop themselves in two ways - either a normal device sends
+   a `P_CNC_STOP` packet to the Mothership, or the supervisor calls the `void
+   Super::end()` API method (documented in the Supervisor API section).
 
  - There is no `P_CNC_INIT`. This opcode was used in the barrier-breaking
    packet for normal devices. It is replaced by `P_CNC_BARRIER`.
@@ -437,7 +446,7 @@ information. `AppInfo` is a class with these fields:
      begun.
 
    - `STOPPING`: The application is running, but the stopping process (`CMND`,
-     `STOP`) has begin.
+     `STOP`) has begun.
 
    - `STOPPED`: The application was running, but has been stopped
 
@@ -582,6 +591,15 @@ that is common to certain applications:
    the payload into a `P_Pkt_t`, and sends it using a (`BEND`, `SUPR`) message
    to all supervisors running for this application, except this one.
 
+ - Some method to set an RTCL "wake up call". Such a method could accept a
+   paylod that is stored in the Mothership (as opposed to sent over the
+   network), which is read when RTCL issues the "wake up call". What's the
+   usecase again?
+
+ - Some method to query the SBase instance held by the Mothership. Perhaps we
+   could provide a closed API that exposes the methods we want? I'm not sure
+   exactly what we would want to expose... help?
+
  - Can you think of any more? There are probably more we need, but we're not
    going to get them all now. Simply implementing a framework by which this API
    can be extended should be enough.
@@ -711,6 +729,8 @@ where each stage represents a reviewable unit (probably by GMB):
     will be drained more quickly. Any regression issues will be resolved here.
 
  3. Given that it has been developed, SBase would be integrated next for
-    external device support.
+    external device support. This will require a small refactor of the
+    application deployment messages (`APP`, `*`) to identify the most efficient
+    solution.
 
  4. Implementation of the supervisor API (and other features cut in step 1).
