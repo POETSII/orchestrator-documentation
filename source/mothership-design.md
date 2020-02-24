@@ -124,9 +124,9 @@ threads with fast spinners. The threads are:
    there are no packets to drain from the compute fabric, or when the
    `BackendInputQueue` buffer is full, this thread converts the next packet
    into a message, and either sends it to the appropriate destination over MPI,
-   or pushes it to `MPICncQueue` (Tinsel Command and Control) or
-   `MPIApplicationQueue` (Supervisor) if intended to be processed locally. This
-   is a fast spinner.
+   or pushes it to `MPICncQueue` (Tinsel Command and Control). Note that it
+   does not push to `MPIApplicationQueue` (Supervisor) for fairness. This is a
+   fast spinner.
 
  - `DebugInputBroker`: Responsible for draining the debug fabric into a large
    queue buffer (`DebugInputQueue`). When there are no packets to drain, or

@@ -51,13 +51,13 @@ digraph G {
          penwidth=1];
 
     MPIInputBroker -> MPIApplicationQueue;
-    MPIInputBroker -> MPICncQueue;
+    MPIInputBroker -> MPICncQueue [label="Mothership command\nand control"];
     MPICncQueue -> MPICncResolver;
     MPIApplicationQueue -> MPIApplicationResolver;
-    MPIApplicationResolver -> BackendOutputQueue;
+    MPIApplicationResolver -> BackendOutputQueue
+        [label=" For normal\ndevices"];
     BackendOutputQueue -> BackendOutputBroker;
     BackendInputBroker -> BackendInputQueue;
-    BackendInputBroker -> MPIApplicationQueue;
     BackendInputBroker -> MPICncQueue;
     BackendInputQueue -> BackendInputBroker;
     DebugInputBroker -> DebugInputQueue;
@@ -70,7 +70,7 @@ digraph G {
     MPI -> MPIInputBroker [label=" From anywhere"];
     MPIApplicationResolver -> MPI [label=" From\nsupervisors"];
     //MPICncResolver -> MPI;
-    BackendInputBroker -> MPI [label=" Externals"];
+    BackendInputBroker -> MPI [label=" For externals\nand supervisors"];
     //DebugInputBroker -> MPI;
 
     // Backend
