@@ -306,7 +306,7 @@ combinations are dropped.
 +-----------------+-----------------------+-----------------------------------+
 | `DUMP`          | 1. `std::string path` | Dumps Mothership process state    |
 |                 |                       | to a file at `path`               |
-|                 |                       | (`Mothership::Dump(std::string)`) |
+|                 |                       | (`Mothership::Dump(ofstream*)`)   |
 +-----------------+-----------------------+-----------------------------------+
 
 Table: Input message key permutations that the Mothership process understands,
@@ -552,7 +552,7 @@ Mothership, as well as external devices elsewhere. They are:
  - Loaded as part of an application by the Mothership process when the (`CMND`,
    `INIT`) message is received.
 
- - Represented by a `Supervisor` object with the following fields (defined on
+ - Represented by a `SuperHolder` object with the following fields (defined on
    construction - a supervisor that cannot be loaded and is not fully defined
    will cause the Mothership to report and set the application state to
    `BROKEN`):
@@ -563,7 +563,7 @@ Mothership, as well as external devices elsewhere. They are:
        which the Mothership calls methods defined therein.
 
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
-   `std::map<std::string, Supervisor> SuperDB.supervisors`, keyed by
+   `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
    application name. For an incoming packet, the appropriate supervisor is
    identified from the task component of the software address.
 

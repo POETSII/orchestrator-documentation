@@ -79,7 +79,7 @@ BROKEN<BR ALIGN="LEFT"/>
 <TR><TD ALIGN="LEFT">
 + check_create_app(string) : AppInfo*<BR ALIGN="LEFT"/>
 + check_defined_app(string) : bool<BR ALIGN="LEFT"/>
-+ dump(string) : void<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Holds the state of applications for<BR ALIGN="TEXT"/>
@@ -103,7 +103,7 @@ a given Mothership.
 + stage_stop() : void<BR ALIGN="LEFT"/>
 + stage_recl() : void<BR ALIGN="LEFT"/>
 + continue() : bool<BR ALIGN="LEFT"/>
-+ dump(string) : void<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Holds information and state on an<BR ALIGN="TEXT"/>
@@ -130,31 +130,32 @@ state on a core.<BR ALIGN="TEXT"/>
     SuperDB[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>SuperDB</TD></TR>
 <TR><TD ALIGN="LEFT">
-+ supervisors : map&lt;std::string, Supervisor&gt;<BR ALIGN="LEFT"/>
++ supervisors : map&lt;std::string, SuperHolder&gt;<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
-+ load_supervisor(string, string) : bool<BR ALIGN="LEFT"/>
++ load_supervisor(string, string, string*) : bool<BR ALIGN="LEFT"/>
 + unload_supervisor(string) : bool<BR ALIGN="LEFT"/>
-+ dump(string) : void<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
-Holds the state of supervisors for a<BR ALIGN="TEXT"/>
-given Mothership.
+Holds the state of supervisors for<BR ALIGN="TEXT"/>
+a given Mothership.
 </TD></TR></TABLE>>];
 
-    Supervisor[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>Supervisor</TD></TR>
+    SuperHolder[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>SuperHolder</TD></TR>
 <TR><TD ALIGN="LEFT">
 + path : string<BR ALIGN="LEFT"/>
 + so : void*<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-+ Supervisor(string)<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="LEFT">
++ SuperHolder(string)<BR ALIGN="LEFT"/>
++ ~SuperHolder()<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
-Holds a supervisor<BR ALIGN="TEXT"/>
-device for a given<BR ALIGN="TEXT"/>
-application.<BR ALIGN="TEXT"/>
+Holds a supervisor device<BR ALIGN="TEXT"/>
+for a given application.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
     Mothership[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -167,7 +168,7 @@ application.<BR ALIGN="TEXT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + Mothership(int, char*, string, string)<BR ALIGN="LEFT"/>
-+ dump(string) : void<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/>
 + task_from_swaddr(uint32_t) : string<BR ALIGN="LEFT"/>
 + queue_mpi_message(PMsg_p, unsigned) : unsigned<BR ALIGN="LEFT"/>
 - load_backend() : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
@@ -185,6 +186,7 @@ Holds the state of the Mothership process.
     ThreadComms[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>ThreadComms</TD></TR>
 <TR><TD ALIGN="LEFT">
+- mothership : Mothership*<BR ALIGN="LEFT"/>
 - quit : bool<BR ALIGN="LEFT"/>
 - mutex_MPI_cnc_queue : pthread_mutex_t<BR ALIGN="LEFT"/>
 - MPICncResolver : pthread_t<BR ALIGN="LEFT"/>
@@ -206,9 +208,9 @@ Methods to moderate quitting:<BR ALIGN="LEFT"/>
 + is_it_time_to_go() : bool<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
 Queue and mutex manipulation: <BR ALIGN="LEFT"/>
 + pop_MPI_cnc_queue(PMsg_p*) : bool<BR ALIGN="LEFT"/>
-+ pop_MPI_cnc_queue(vector&lt;PMsg_p*&gt;*) : bool<BR ALIGN="LEFT"/>
++ pop_MPI_cnc_queue(vector&lt;PMsg_p&gt;*) : bool<BR ALIGN="LEFT"/>
 + push_MPI_cnc_queue(PMsg_p) : void<BR ALIGN="LEFT"/>
-+ push_MPI_cnc_queue(vector&lt;PMsg_p*&gt;*) : void<BR ALIGN="LEFT"/>
++ push_MPI_cnc_queue(vector&lt;PMsg_p&gt;*) : void<BR ALIGN="LEFT"/>
 ... (for each queue)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
 <!--
 + pop_MPI_app_queue(PMsg_p*) : bool<BR ALIGN="LEFT"/>
@@ -230,19 +232,19 @@ Queue and mutex manipulation: <BR ALIGN="LEFT"/>
 -->
 Starting threads and waiting: <BR ALIGN="LEFT"/>
 + go() : void<BR ALIGN="LEFT"/>
-- start_MPI_cnc_resolver(Mothership*) : void<BR ALIGN="LEFT"/>
+- start_MPI_cnc_resolver() : void<BR ALIGN="LEFT"/>
 - mpi_cnc_resolver(Mothership*) : void*<BR ALIGN="LEFT"/>
 ... (for each thread)<BR ALIGN="LEFT"/>
 <!--
-- start_MPI_input_broker(Mothership*) : void<BR ALIGN="LEFT"/>
+- start_MPI_input_broker() : void<BR ALIGN="LEFT"/>
 - mpi_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
-- start_MPI_app_resolver(Mothership*) : void<BR ALIGN="LEFT"/>
+- start_MPI_app_resolver() : void<BR ALIGN="LEFT"/>
 - mpi_app_resolver(Mothership*) : void*<BR ALIGN="LEFT"/>
-- start_backend_output_broker(Mothership*) : void<BR ALIGN="LEFT"/>
+- start_backend_output_broker() : void<BR ALIGN="LEFT"/>
 - backend_output_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
-- start_backend_input_broker(Mothership*) : void<BR ALIGN="LEFT"/>
+- start_backend_input_broker() : void<BR ALIGN="LEFT"/>
 - backend_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
-- start_debug_input_broker(Mothership*) : void<BR ALIGN="LEFT"/>
+- start_debug_input_broker() : void<BR ALIGN="LEFT"/>
 - debug_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
 -->
 </TD></TR>
@@ -267,7 +269,7 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
 
     /* One-to-many containment. */
     {edge[arrowhead="diamond"];
-        SuperDB -> Supervisor[label=" SuperDB.\nsupervisors"];
+        SuperDB -> SuperHolder[label=" SuperDB.\nsupervisors"];
         AppDB -> AppInfo[label=" AppDB.appInfos"];
         AppInfo -> CoreInfo[label=" AppInfo.\ncoreInfos"];
     }
