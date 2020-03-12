@@ -77,7 +77,7 @@ BROKEN<BR ALIGN="LEFT"/>
 + coreToApp : map&lt;uint32_t, string&gt;<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
-+ check_create_app(string) : AppInfo*<BR ALIGN="LEFT"/>
++ check_create_app(string, uint32_t) : AppInfo*<BR ALIGN="LEFT"/>
 + check_defined_app(string) : bool<BR ALIGN="LEFT"/>
 + dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
