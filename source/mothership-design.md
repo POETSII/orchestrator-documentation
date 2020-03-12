@@ -464,7 +464,7 @@ information. `AppInfo` is a class with these fields:
 
    - `void stage_recl()`: Setter for the `RECL` command.
 
-   - `bool continue()`: Given the current values of `state` and
+   - `bool should_we_continue()`: Given the current values of `state` and
      `pendingCommands`, returns `true` if the application is to "advance to the
      next state", and `false` otherwise. The "next state" is loosely defined in
      Table 3, where `RECL` takes priority over other commands.

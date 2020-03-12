@@ -102,7 +102,7 @@ a given Mothership.
 + stage_run() : void<BR ALIGN="LEFT"/>
 + stage_stop() : void<BR ALIGN="LEFT"/>
 + stage_recl() : void<BR ALIGN="LEFT"/>
-+ continue() : bool<BR ALIGN="LEFT"/>
++ should_we_continue() : bool<BR ALIGN="LEFT"/>
 + dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
