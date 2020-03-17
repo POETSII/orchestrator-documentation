@@ -228,8 +228,9 @@ combinations are dropped.
 |                 |    `appName`          | the receiving Mothership process  |
 |                 | 2. `uint32_t`         | must have received `distCount`    |
 |                 |    `distCount`        | unique distribution (`APP`,       |
-|                 |                       | `DIST`) messages in order to be   |
-|                 |                       | fully defined.                    |
+|                 |                       | `DIST` and `APP`, `SUPD`)         |
+|                 |                       | messages in order to be fully     |
+|                 |                       | defined.                          |
 +-----------------+-----------------------+-----------------------------------+
 | `APP`,  `DIST`  | 1. `std::string`      | Defines the properties for a      |
 |                 |    `appName`          | given core for a given            |
@@ -466,15 +467,20 @@ information. `AppInfo` is a class with these fields:
 
    - `bool should_we_continue()`: Given the current values of `state` and
      `pendingCommands`, returns `true` if the application is to "advance to the
-     next state", and `false` otherwise. The "next state" is loosely defined in
-     Table 3, where `RECL` takes priority over other commands.
+     next state", and `false` otherwise.
+
+   - `bool should_we_recall()`: As above, but for recalling.
 
  - `uint32_t distCountExpected`: Expected number of distribution messages for
-   this application.
+   this application. Note that if an application is created by a distribution
+   message, and a specification message has not been received, this is set to
+   zero. Zero is treated as a special value denoting that the application is
+   missing its specification message. Note that this also includes the
+   supervisor distribution message for this Mothership process.
 
  - `uint32_t distCountCurrent`: Current number of distribution messages
-   processed for this application. When this is equal to `distCountExpected`,
-   the application is fully defined.
+   processed for this application. When this is equal to `distCountExpected`
+   (and `distCountExpected` is nonzero), the application is fully defined.
 
  - `std::map<uint32_t, CoreInfo> coreInfos`: Information about the cores known
    about, and their loading state. The key is the hardware address of the

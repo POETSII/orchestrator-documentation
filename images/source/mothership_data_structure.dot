@@ -103,6 +103,7 @@ a given Mothership.
 + stage_stop() : void<BR ALIGN="LEFT"/>
 + stage_recl() : void<BR ALIGN="LEFT"/>
 + should_we_continue() : bool<BR ALIGN="LEFT"/>
++ should_we_recall() : bool<BR ALIGN="LEFT"/>
 + dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
