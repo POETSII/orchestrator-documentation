@@ -178,7 +178,7 @@ MPI message handlers (called from MPI-resolving<BR ALIGN="LEFT"/>
 threads):<BR ALIGN="LEFT"/>
 - handle_exit(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
 - handle_kill(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- handle_app_spec(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
++ handle_app_spec(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
 ... (for each input message permutation)<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
