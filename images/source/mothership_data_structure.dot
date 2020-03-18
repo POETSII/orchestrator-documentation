@@ -176,9 +176,9 @@ for a given application.<BR ALIGN="TEXT"/>
 - setup_mpi_hooks() : void<BR ALIGN="LEFT"/>
 MPI message handlers (called from MPI-resolving<BR ALIGN="LEFT"/>
 threads):<BR ALIGN="LEFT"/>
-- HandleExit(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleKill(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
-- HandleAppSpec(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- handle_exit(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- handle_kill(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
+- handle_app_spec(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
 ... (for each input message permutation)<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
