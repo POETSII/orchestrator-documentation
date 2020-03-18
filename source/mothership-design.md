@@ -282,7 +282,7 @@ combinations are dropped.
 | `CMND`, `STOP`  | 1. `std::string`      | Takes a running application (with |
 |                 |    `appName`          | state `RUNNING`) and sends a stop |
 |                 |                       | packet (`P_CNC_STOP`) to all      |
-|                 |                       | normal devicesowned by that task  |
+|                 |                       | normal devices owned by that task |
 |                 |                       | on the Mothership process. If the |
 |                 |                       | application is not `RUNNING`,     |
 |                 |                       | this message is acted on when it  |
@@ -306,8 +306,7 @@ combinations are dropped.
 |                 |    `P_Pkt_t> packets` | the backend.                      |
 +-----------------+-----------------------+-----------------------------------+
 | `DUMP`          | 1. `std::string path` | Dumps Mothership process state    |
-|                 |                       | to a file at `path`               |
-|                 |                       | (`Mothership::Dump(ofstream*)`)   |
+|                 |                       | to a file at `path`.              |
 +-----------------+-----------------------+-----------------------------------+
 
 Table: Input message key permutations that the Mothership process understands,
