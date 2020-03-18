@@ -290,13 +290,13 @@ combinations are dropped.
 |                 |                       | before it starts will not stop it |
 |                 |                       | from starting).                   |
 +-----------------+-----------------------+-----------------------------------+
-| `BEND`, `CNC`   | 1. `P_Pkt_t packet`   | Calls a C&C method, via the       |
-|                 |                       | `MPICncQueue`. The opcode (and    |
+| `BEND`, `CNC`   | 1. `std::vector<`     | Calls a C&C method, via the       |
+|                 |    `P_Pkt_t> packets` | `MPICncQueue`. The opcode (and    |
 |                 |                       | hence the method) is identified   |
 |                 |                       | from `packet`.                    |
 +-----------------+-----------------------+-----------------------------------+
-| `BEND`, `SUPR`  | 1. `P_Pkt_t packet`   | Calls a method from a loaded      |
-|                 |                       | supervisor, via the               |
+| `BEND`, `SUPR`  | 1. `std::vector<`     | Calls a method from a loaded      |
+|                 |    `P_Pkt_t> packets` | supervisor, via the               |
 |                 |                       | `MPIApplicationQueue`. The        |
 |                 |                       | supervisor is identified by       |
 |                 |                       | querying `NameBase` using the     |
