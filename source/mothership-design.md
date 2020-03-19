@@ -357,10 +357,8 @@ from the `pinAddr` component in the software address. Packets received by the
 Mothership with opcode values not defined by this list of constants (defined
 in-source) are routed to the supervisor as (`BEND`, `SUPR`) messages:
 
- - `P_CNC_INSTR`: A packet with instrumentation data, which causes the
-   instrumentation data to be written to a set of CSV files in the
-   `~/.orchestrator/instrumentation` (left deliberately vague - it's also
-   covered in part in the Softswitch documentation).
+ - `P_CNC_INSTR`: A packet with instrumentation data. See the Instrumentation
+   section.
 
  - `P_CNC_LOG`: A packet with a logging message (possibly created by a call to
    `handler_log`). The information from the packet is formatted, and `Post`-ed
@@ -630,6 +628,18 @@ type-defined as `P_Debug_Pkt_t`.
 Applications can also call the `void handler_log(int level, const char* text)`
 free function in a handler, which sends a series of `P_CNC_LOG` packets to the
 Mothership, which are repackaged and forwarded onto the LogServer.
+
+# Instrumentation
+Along with logging, it is useful to understand how the compute backend is
+performing during a given task, to help with optimisation and problem
+diagnosis. The Mothership object holds an `InstrumentationWriter` instance,
+which consumes instrumentation data sent from the compute backend, and produces
+a set of CSV files at `$HOME/.orchestrator/instrumentation`, one per compute
+thread, describing the performance. `InstrumentationWriter` has no `dump`
+method, because it writes data to a file on receipt of a packet anyway.
+
+This topic is explained further, from the perspective of the Softswitch, in the
+Softswitch documentation.
 
 # Appendix A: Message/Packet Handling Examples
 To follow along, use Figure 2 and the Command and Control section.

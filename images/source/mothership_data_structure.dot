@@ -159,11 +159,46 @@ Holds a supervisor device<BR ALIGN="TEXT"/>
 for a given application.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
+    InstrumentationWriter[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>InstrumentationWriter</TD></TR>
+<TR><TD ALIGN="LEFT">
++ cumulativeData : map&lt;uint32_t,<BR ALIGN="LEFT"/>
+    ThreadInstrumentationDatum&gt;<BR ALIGN="LEFT"/>
+- fileFailureTriggered : bool<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ InstrumentationWriter()<BR ALIGN="LEFT"/>
++ InstrumentationWriter(string)<BR ALIGN="LEFT"/>
++ consume_instrumentation_packet(P_Pkt_t*) : bool<BR ALIGN="LEFT"/>
+- setup_directory(string) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Processes instrumentation data from the compute<BR ALIGN="TEXT"/>
+fabric, and writes them to files.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    ThreadInstrumentationDatum[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>ThreadInstrumentationDatum</TD></TR>
+<TR><TD ALIGN="LEFT">
++ totalTime : double<BR ALIGN="LEFT"/>
++ txCount : uint64_t<BR ALIGN="LEFT"/>
++ rxCount : uint64_t<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+None
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds cumulative<BR ALIGN="TEXT"/>
+instrumentation data for<BR ALIGN="TEXT"/>
+threads.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
     Mothership[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>Mothership</TD></TR>
 <TR><TD ALIGN="LEFT">
 + appdb : AppDB<BR ALIGN="LEFT"/>
 + backend : HostLink<BR ALIGN="LEFT"/>
++ instrumentation : InstrumentationWriter <BR ALIGN="LEFT"/>
 + superdb : SuperDB<BR ALIGN="LEFT"/>
 + threading : ThreadComms<BR ALIGN="LEFT"/>
 </TD></TR>
@@ -267,6 +302,7 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
         Mothership -> ThreadComms[label=" Mothership.\nthreading"];
         Mothership -> AppDB[label=" Mothership.appdb"];
         Mothership -> SuperDB[label=" Mothership.superdb"];
+        Mothership -> InstrumentationWriter[label=" Mothership.\ninstrumentation"];
     }
 
     /* One-to-many containment. */
@@ -274,6 +310,7 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
         SuperDB -> SuperHolder[label=" SuperDB.\nsupervisors"];
         AppDB -> AppInfo[label=" AppDB.appInfos"];
         AppInfo -> CoreInfo[label=" AppInfo.\ncoreInfos"];
+        InstrumentationWriter -> ThreadInstrumentationDatum[label=" InstrumentationWriter.\ncumulativeData"];
     }
 
     /* Inheritance */
