@@ -240,8 +240,9 @@ combinations are dropped.
 |                 |    `dataPath`         |                                   |
 |                 | 4. `uint32_t`         |                                   |
 |                 |    `coreAddr`         |                                   |
-|                 | 5. `uint8_t`          |                                   |
-|                 |    `numThreads`       |                                   |
+|                 | 5. `std::vector<`     |                                   |
+|                 |    `uint32_t>`        |                                   |
+|                 |    `threadsExpected`  |                                   |
 +-----------------+-----------------------+-----------------------------------+
 | `APP`,  `SUPD`  | 1. `std::string`      | Defines the properties for the    |
 |                 |    `appName`          | supervisor for a given            |
@@ -370,22 +371,22 @@ in-source) are routed to the supervisor as (`BEND`, `SUPR`) messages:
  - `P_CNC_BARRIER`: A packet that, when received, informs the Mothership that a
    given thread has reached the softswitch barrier. If the state of the
    application to which this device belongs is `LOADING`, the field
-   `Mothership.appdb.coreInfos[coreAddr].numThreadsCurrent` (where `coreAddr`
-   is a `uint32_t` hardware address) for the core in question is
-   incremented. If all of the threads for that core have reported back,
-   `coreAddr` is appended to `coresLoaded`. Then, if all cores have been loaded
-   (by checking the length of coresLoaded), the state of the application is
-   transitioned from `LOADING` to `READY`.
+   `Mothership.appdb.coreInfos[coreAddr].threadsCurrent` (where `coreAddr` is a
+   `uint32_t` hardware address) for the core in question has the address of the
+   sending thread inserted into it. If all of the threads for that core have
+   reported back, `coreAddr` is appended to `coresLoaded`. Then, if all cores
+   have been loaded (by checking the length of coresLoaded), the state of the
+   application is transitioned from `LOADING` to `READY`.
 
  - `P_CNC_STOP`: A packet that, when received, informs the Mothership that a
    given thread has received the stop command (and has presumably now
    stopped). If the state of the application to which this device belongs is
-   `STOPPING`, the field
-   `Mothership.appdb.coreInfos[coreAddr].numThreadsCurrent` for the core in
-   question is decremented. If all of the threads for that core have reported
-   back, `coreAddr` is removed from `coresLoaded`. Then, if `coresLoaded` is
-   empty, the state of the application is transitioned from `STOPPING` to
-   `STOPPED`, and the supervisor is unloaded.
+   `STOPPING`, the field `Mothership.appdb.coreInfos[coreAddr].threadsCurrent`
+   for the core in question has the address of the sending thread removed from
+   it. If all of the threads for that core have reported back, `coreAddr` is
+   removed from `coresLoaded`. Then, if `coresLoaded` is empty, the state of
+   the application is transitioned from `STOPPING` to `STOPPED`, and the
+   supervisor is unloaded.
 
  - `P_CNC_KILL`: A packet that, when received, shuts down the Mothership
    process as *gracefully* as possible (similar to the `EXIT` message).
@@ -490,17 +491,17 @@ information. `AppInfo` is a class with these fields:
 
    - `std::string dataPath`: Path to the data binary for this core.
 
-   - `uint8_t numThreadsExpected`: Number of backend threads expected to report
-     back for this core.
+   - `std::set<uint32_t> threadsExpected`: Addresses of backend threads
+     expected to report back for this core.
 
-   - `uint8_t numThreadsCurrent`: Number of backend threads that have reported
-     back after loading the core. Used to transition from the `LOADING` state
-     to the `READY` state. Also used for the opposite purpose, transitioning
-     from `STOPPING` to `STOPPED`.
+   - `std::set<uint32_t> threadsCurrent`: Addresses of backend threads that
+     have reported back after loading the core. Used to transition from the
+     `LOADING` state to the `READY` state. Also used for the opposite purpose,
+     transitioning from `STOPPING` to `STOPPED`.
 
  - `std::set<uint32_t> coresLoaded`: Holds addresses for each core that have
    been completely loaded (i.e. all threads have reported back), and not
-   stopped (see `numThreadsCurrent`)
+   stopped (see `threadsCurrent`)
 
 There is a corresponding backwards map, `std::map<uint32_t, std::string>
 AppDB.coreToApp`, which maps core addresses to the name of the application that

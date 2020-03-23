@@ -75,6 +75,7 @@ BROKEN<BR ALIGN="LEFT"/>
 <TR><TD ALIGN="LEFT">
 + appInfos : map&lt;string, AppInfo&gt;<BR ALIGN="LEFT"/>
 + coreToApp : map&lt;uint32_t, string&gt;<BR ALIGN="LEFT"/>
++ threadToCoreAddr : map&lt;uint32_t, uint32_t&gt;<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + check_create_app(string, uint32_t) : AppInfo*<BR ALIGN="LEFT"/>
@@ -117,8 +118,8 @@ of one Mothership object.<BR ALIGN="TEXT"/>
 <TR><TD ALIGN="LEFT">
 + codePath : string<BR ALIGN="LEFT"/>
 + dataPath : string<BR ALIGN="LEFT"/>
-+ numThreadsExpected : uint8_t<BR ALIGN="LEFT"/>
-+ numThreadsCurrent : uint8_t<BR ALIGN="LEFT"/>
++ threadsExpected : set&lt;uint32_t&gt;<BR ALIGN="LEFT"/>
++ threadsCurrent : set&lt;uint32_t&gt;<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 None
