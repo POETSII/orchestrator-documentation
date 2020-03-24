@@ -563,8 +563,13 @@ Mothership, as well as external devices elsewhere. They are:
 
      - `std::string path`: Where the supervisor was loaded from.
 
-     - `void* so`: The dynamically-loaded supervisor (using `dlopen`), from
-       which the Mothership calls methods defined therein.
+     - `void* so`: The dynamically-loaded supervisor (using `dlopen`), which
+       populates the function pointer members.
+
+     - `int (*initialise)()`: Called when the application is started.
+
+     - `int (*entryPoint)(PMsg_p, PMsg_p)`: The entry point for all supervisor
+       calls while the application is running.
 
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by

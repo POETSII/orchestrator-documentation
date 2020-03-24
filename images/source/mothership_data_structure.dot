@@ -148,7 +148,10 @@ a given Mothership.
 <TR><TD>SuperHolder</TD></TR>
 <TR><TD ALIGN="LEFT">
 + path : string<BR ALIGN="LEFT"/>
-+ so : void*<BR ALIGN="LEFT"/>
++ error : bool<BR ALIGN="LEFT"/>
+- so : void*<BR ALIGN="LEFT"/>
+- entryPoint : int(*)(PMsg_p, PMsg_p)<BR ALIGN="LEFT"/>
+- initialise : int(*)()<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + SuperHolder(string)<BR ALIGN="LEFT"/>
@@ -156,8 +159,8 @@ a given Mothership.
 + dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
-Holds a supervisor device<BR ALIGN="TEXT"/>
-for a given application.<BR ALIGN="TEXT"/>
+Holds a supervisor device for a<BR ALIGN="TEXT"/>
+given application.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
     InstrumentationWriter[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
