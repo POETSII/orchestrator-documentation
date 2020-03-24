@@ -150,8 +150,8 @@ a given Mothership.
 + path : string<BR ALIGN="LEFT"/>
 + error : bool<BR ALIGN="LEFT"/>
 - so : void*<BR ALIGN="LEFT"/>
-- entryPoint : int(*)(PMsg_p, PMsg_p)<BR ALIGN="LEFT"/>
-- initialise : int(*)()<BR ALIGN="LEFT"/>
++ entryPoint : int(*)(PMsg_p, PMsg_p)<BR ALIGN="LEFT"/>
++ initialise : int(*)()<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + SuperHolder(string)<BR ALIGN="LEFT"/>
