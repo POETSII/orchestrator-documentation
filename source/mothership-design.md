@@ -296,12 +296,10 @@ combinations are dropped.
 |                 |                       | hence the method) is identified   |
 |                 |                       | from `packet`.                    |
 +-----------------+-----------------------+-----------------------------------+
-| `BEND`, `SUPR`  | 0. `std::vector<`     | Calls a method from a loaded      |
-|                 |    `P_Pkt_t> packets` | supervisor, via the               |
-|                 |                       | `MPIApplicationQueue`. The        |
-|                 |                       | supervisor is identified by       |
-|                 |                       | querying `NameBase` using the     |
-|                 |                       | address in `packet`.              |
+| `BEND`, `SUPR`  | 0. `std::string `     | Calls a method from a loaded      |
+|                 |    `appName`          | supervisor, via the               |
+|                 | 1. `std::vector<`     | `MPIApplicationQueue`.            |
+|                 |    `P_Pkt_t> packets` |                                   |
 +-----------------+-----------------------+-----------------------------------+
 | `PKTS`          | 0. `std::vector<`     | Queues a series of packets into   |
 |                 |    `P_Pkt_t> packets` | the backend.                      |
