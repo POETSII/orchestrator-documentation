@@ -224,38 +224,38 @@ combinations are dropped.
 |                 |                       | down the Mothership process as    |
 |                 |                       | *quickly* as possible.            |
 +-----------------+-----------------------+-----------------------------------+
-| `APP`,  `SPEC`  | 1. `std::string`      | Defines that an application on    |
+| `APP`,  `SPEC`  | 0. `std::string`      | Defines that an application on    |
 |                 |    `appName`          | the receiving Mothership process  |
-|                 | 2. `uint32_t`         | must have received `distCount`    |
+|                 | 1. `uint32_t`         | must have received `distCount`    |
 |                 |    `distCount`        | unique distribution (`APP`,       |
 |                 |                       | `DIST` and `APP`, `SUPD`)         |
 |                 |                       | messages in order to be fully     |
 |                 |                       | defined.                          |
 +-----------------+-----------------------+-----------------------------------+
-| `APP`,  `DIST`  | 1. `std::string`      | Defines the properties for a      |
+| `APP`,  `DIST`  | 0. `std::string`      | Defines the properties for a      |
 |                 |    `appName`          | given core for a given            |
-|                 | 2. `std::string`      | application on this Mothership    |
+|                 | 1. `std::string`      | application on this Mothership    |
 |                 |    `codePath`         | process.                          |
-|                 | 3. `std::string`      |                                   |
+|                 | 2. `std::string`      |                                   |
 |                 |    `dataPath`         |                                   |
-|                 | 4. `uint32_t`         |                                   |
+|                 | 3. `uint32_t`         |                                   |
 |                 |    `coreAddr`         |                                   |
-|                 | 5. `std::vector<`     |                                   |
+|                 | 4. `std::vector<`     |                                   |
 |                 |    `uint32_t>`        |                                   |
 |                 |    `threadsExpected`  |                                   |
 +-----------------+-----------------------+-----------------------------------+
-| `APP`,  `SUPD`  | 1. `std::string`      | Defines the properties for the    |
+| `APP`,  `SUPD`  | 0. `std::string`      | Defines the properties for the    |
 |                 |    `appName`          | supervisor for a given            |
-|                 | 2. `std::string`      | application on this Mothership.   |
+|                 | 1. `std::string`      | application on this Mothership.   |
 |                 |    `soPath`           |                                   |
 +-----------------+-----------------------+-----------------------------------+
-| `CMND`,  `RECL` | 1. `std::string`      | Removes information for an        |
+| `CMND`,  `RECL` | 0. `std::string`      | Removes information for an        |
 |                 |    `appName`          | application, by name, from the    |
 |                 |                       | Mothership. Does nothing on a     |
 |                 |                       | running application (it must be   |
 |                 |                       | stopped first).                   |
 +-----------------+-----------------------+-----------------------------------+
-| `CMND`, `INIT`  | 1. `std::string`      | Takes a fully-defined             |
+| `CMND`, `INIT`  | 0. `std::string`      | Takes a fully-defined             |
 |                 |    `appName`          | application (with state           |
 |                 |                       | `DEFINED`), loads its code and    |
 |                 |                       | data binaries onto the            |
@@ -268,7 +268,7 @@ combinations are dropped.
 |                 |                       | this message is acted on when it  |
 |                 |                       | reaches that state.               |
 +-----------------+-----------------------+-----------------------------------+
-| `CMND`, `RUN`   | 1. `std::string`      | Takes an application held at the  |
+| `CMND`, `RUN`   | 0. `std::string`      | Takes an application held at the  |
 |                 |    `appName`          | softswitch barrier (with state    |
 |                 |                       | `READY`, and "starts" it by       |
 |                 |                       | sending a barrier-breaking        |
@@ -280,7 +280,7 @@ combinations are dropped.
 |                 |                       | acted on when it reaches that     |
 |                 |                       | state.                            |
 +-----------------+-----------------------+-----------------------------------+
-| `CMND`, `STOP`  | 1. `std::string`      | Takes a running application (with |
+| `CMND`, `STOP`  | 0. `std::string`      | Takes a running application (with |
 |                 |    `appName`          | state `RUNNING`) and sends a stop |
 |                 |                       | packet (`P_CNC_STOP`) to all      |
 |                 |                       | normal devices owned by that task |
@@ -291,22 +291,22 @@ combinations are dropped.
 |                 |                       | before it starts will not stop it |
 |                 |                       | from starting).                   |
 +-----------------+-----------------------+-----------------------------------+
-| `BEND`, `CNC`   | 1. `std::vector<`     | Calls a C&C method, via the       |
+| `BEND`, `CNC`   | 0. `std::vector<`     | Calls a C&C method, via the       |
 |                 |    `P_Pkt_t> packets` | `MPICncQueue`. The opcode (and    |
 |                 |                       | hence the method) is identified   |
 |                 |                       | from `packet`.                    |
 +-----------------+-----------------------+-----------------------------------+
-| `BEND`, `SUPR`  | 1. `std::vector<`     | Calls a method from a loaded      |
+| `BEND`, `SUPR`  | 0. `std::vector<`     | Calls a method from a loaded      |
 |                 |    `P_Pkt_t> packets` | supervisor, via the               |
 |                 |                       | `MPIApplicationQueue`. The        |
 |                 |                       | supervisor is identified by       |
 |                 |                       | querying `NameBase` using the     |
 |                 |                       | address in `packet`.              |
 +-----------------+-----------------------+-----------------------------------+
-| `PKTS`          | 1. `std::vector<`     | Queues a series of packets into   |
+| `PKTS`          | 0. `std::vector<`     | Queues a series of packets into   |
 |                 |    `P_Pkt_t> packets` | the backend.                      |
 +-----------------+-----------------------+-----------------------------------+
-| `DUMP`          | 1. `std::string path` | Dumps Mothership process state    |
+| `DUMP`          | 0. `std::string path` | Dumps Mothership process state    |
 |                 |                       | to a file at `path`.              |
 +-----------------+-----------------------+-----------------------------------+
 
@@ -326,19 +326,19 @@ done, and are useful for debugging.
 |                 |                       | connect to the backend compute    |
 |                 |                       | fabric.                           |
 +-----------------+-----------------------+-----------------------------------+
-| `MSHP`, `ACK`,  | 1. `std::string`      | Notifies the Root process that    |
+| `MSHP`, `ACK`,  | 0. `std::string`      | Notifies the Root process that    |
 | `DEFD`          |    `appName`          | the application has been fully    |
 |                 |                       | defined.                          |
 +-----------------+-----------------------+-----------------------------------+
-| `MSHP`, `ACK`,  | 1. `std::string`      | Notifies the Root process that    |
+| `MSHP`, `ACK`,  | 0. `std::string`      | Notifies the Root process that    |
 | `LOAD`          |    `appName`          | the application has been fully    |
 |                 |                       | loaded.                           |
 +-----------------+-----------------------+-----------------------------------+
-| `MSHP`, `ACK`,  | 1. `std::string`      | Notifies the Root process that    |
+| `MSHP`, `ACK`,  | 0. `std::string`      | Notifies the Root process that    |
 | `RUN`           |    `appName`          | the application has started       |
 |                 |                       | running.                          |
 +-----------------+-----------------------+-----------------------------------+
-| `MSHP`, `ACK`,  | 1. `std::string`      | Notifies the Root process that    |
+| `MSHP`, `ACK`,  | 0. `std::string`      | Notifies the Root process that    |
 | `STOP`          |    `appName`          | the application has been fully    |
 |                 |                       | stopped.                          |
 +-----------------+-----------------------+-----------------------------------+
