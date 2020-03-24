@@ -206,7 +206,6 @@ threads.<BR ALIGN="TEXT"/>
 <TR><TD ALIGN="LEFT">
 + Mothership(int, char*, string, string)<BR ALIGN="LEFT"/>
 + dump(ofstream*) : void<BR ALIGN="LEFT"/>
-+ task_from_swaddr(uint32_t) : string<BR ALIGN="LEFT"/>
 + queue_mpi_message(PMsg_p, unsigned) : void<BR ALIGN="LEFT"/>
 - load_backend() : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
 - setup_mpi_hooks() : void<BR ALIGN="LEFT"/>
