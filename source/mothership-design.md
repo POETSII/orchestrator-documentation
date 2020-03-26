@@ -188,7 +188,8 @@ mutexes):
    that they exist `messages`. Does nothing if `messages` is empty.
 
  - The four above methods are also defined for the `MPIApplicationQueue` queue
-   (using `PMsg_p` messages), for `BackendOutputQueue` and `BackendInputQueue`
+   (using `PMsg_p` messages), for `BackendOutputQueue` (using
+   `std::pair<uint32_t, P_Pkt_t>` addressed packets), for `BackendInputQueue`
    (using `P_Pkt_t` packets), and for `DebugInputQueue` (using `P_Debug_Pkt_t`
    debug packets, see the Debugging section).
 
@@ -301,8 +302,10 @@ combinations are dropped.
 |                 | 1. `std::vector<`     | `MPIApplicationQueue`.            |
 |                 |    `P_Pkt_t> packets` |                                   |
 +-----------------+-----------------------+-----------------------------------+
-| `PKTS`          | 0. `std::vector<`     | Queues a series of packets into   |
-|                 |    `P_Pkt_t> packets` | the backend.                      |
+| `PKTS`          | 0. `std::vector<`     | Queues a series of destination-   |
+|                 |    `std::pair<`       | hardware-address and packet pairs |
+|                 |    `uint32_t,`        | into the backend.                 |
+|                 |    `P_Pkt_t> packets` |                                   |
 +-----------------+-----------------------+-----------------------------------+
 | `DUMP`          | 0. `std::string path` | Dumps Mothership process state    |
 |                 |                       | to a file at `path`.              |
@@ -696,7 +699,7 @@ To follow along, use Figure 2 and the Command and Control section.
 
 ### Example 3a: A Supervisor sends a packet to the compute fabric
   3. The `MPIApplicationResolver` creates the packet and pushes it to the
-     `BackendOutputQueue`.
+     `BackendOutputQueue`, along with its destination as part of the pair.
 
   4. The `BackendOutputBroker` reads from the `BackendOutputQueue`, and pushes
      the packet into the compute backend.
