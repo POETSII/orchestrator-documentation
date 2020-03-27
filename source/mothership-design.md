@@ -229,8 +229,8 @@ combinations are dropped.
 |                 |    `appName`          | the receiving Mothership process  |
 |                 | 1. `uint32_t`         | must have received `distCount`    |
 |                 |    `distCount`        | unique distribution (`APP`,       |
-|                 |                       | `DIST` and `APP`, `SUPD`)         |
-|                 |                       | messages in order to be fully     |
+|                 | 2. `uint8_t`          | `DIST` and `APP`, `SUPD`)         |
+|                 |    `appNumber`        | messages in order to be fully     |
 |                 |                       | defined.                          |
 +-----------------+-----------------------+-----------------------------------+
 | `APP`,  `DIST`  | 0. `std::string`      | Defines the properties for a      |

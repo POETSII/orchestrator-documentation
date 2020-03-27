@@ -76,6 +76,7 @@ BROKEN<BR ALIGN="LEFT"/>
 + appInfos : map&lt;string, AppInfo&gt;<BR ALIGN="LEFT"/>
 + coreToApp : map&lt;uint32_t, string&gt;<BR ALIGN="LEFT"/>
 + threadToCoreAddr : map&lt;uint32_t, uint32_t&gt;<BR ALIGN="LEFT"/>
++ numberToApp : map&lt;uint8_t, string&gt;<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + check_create_app(string, uint32_t) : AppInfo*<BR ALIGN="LEFT"/>
