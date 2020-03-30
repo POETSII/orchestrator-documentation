@@ -755,4 +755,7 @@ where each stage represents a reviewable unit (probably by GMB):
     application deployment messages (`APP`, `*`) to identify the most efficient
     solution.
 
- 4. Implementation of the supervisor API (and other features cut in step 1).
+ 4. Implementation of the supervisor API.
+
+ 5. True multibox support, including an explicit Box->Mothership map in Root,
+    and HostLink considerations.
