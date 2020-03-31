@@ -202,7 +202,7 @@ threads.<BR ALIGN="TEXT"/>
 <TR><TD>Mothership</TD></TR>
 <TR><TD ALIGN="LEFT">
 + appdb : AppDB<BR ALIGN="LEFT"/>
-+ backend : HostLink<BR ALIGN="LEFT"/>
++ backend : HostLink*<BR ALIGN="LEFT"/>
 + instrumentation : InstrumentationWriter <BR ALIGN="LEFT"/>
 + superdb : SuperDB<BR ALIGN="LEFT"/>
 + threading : ThreadComms<BR ALIGN="LEFT"/>
