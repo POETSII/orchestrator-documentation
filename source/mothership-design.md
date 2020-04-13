@@ -401,7 +401,8 @@ Notes:
 
     - `P_CNC_STOP`, sent by (`CMND`, `STOP`))
 
-    - `P_CNC_INSTR` to request instrumentation information from a softswitch.
+    - `P_CNC_INSTR` to request instrumentation information from a softswitch
+      (though this is not currently used).
 
  - A rogue application can shut down the Mothership via a `P_CNC_KILL`
    packet.
@@ -617,6 +618,15 @@ that is common to certain applications:
 Note that this API does not define methods for termination detection. It could
 do (using a Softswitch-based heartbeats mechanism), but it might be best to let
 sleeping dragons lie for now.
+
+# Logging
+Normal devices in applications can send log messages to the Mothership by using
+the `handler_log` method described in the Softswitch documentation. This
+manifests as a series of log packets (with a `P_CNC_LOG` opcode) sent from the
+logging device to the Mothership, where multiple packets are sent for each log
+message. The `LogPacketManager` stores these packets until a complete message
+is formed, at which point the message is `Post`-ed and forgotten. Packets are
+stored on a per-compute-thread basis.
 
 # Debugging
 In addition to the acknowledgement messages that the Mothership generates while
