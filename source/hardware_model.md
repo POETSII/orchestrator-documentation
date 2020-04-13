@@ -1214,10 +1214,11 @@ Members:
    all threads that can be run by this core. Threads are indexed by the thread
    component ($C_{\mathrm{THREAD}}$) of their hardware address.
 
- - `Bin* dataBinary`: Holds a data binary (to be)/deployed to this core.
+ - `std::string dataBinary`: Holds the path to the data binary (to be)/deployed
+   to this core.
 
- - `Bin* instructionBinary`: Holds an instruction binary (to be)/deployed to
-   this core.
+ - `std::string instructionBinary`: Holds the path to the instruction binary
+   (to be)/deployed to this core.
 
  - `unsigned int dataMemory`: Amount of memory available for a data binary.
 
@@ -1234,16 +1235,12 @@ Members:
 Methods:
 
  - `P_core::P_core(std::string name)`: Core constructor, sets the `NameBase`
-   name using the input argument `name`. Also dynamically initialises
-   `dataBinary` and `instructionBinary` with empty `Bin` objects.
+   name using the input argument `name`.
 
  - `P_core::~P_core()`: Core destructor, see `P_core::clear()`.
 
  - `void P_core::clear()`: Deletes all `P_thread` objects pointed to by
-   `P_threadm`, clears `P_threadm`, and calls `P_core::clear_binaries`.
-
- - `void P_core::clear_binaries()`: Deletes the dynamically-allocated binaries
-   in an idempotent manner.
+   `P_threadm`, and clears `P_threadm`.
 
  - `void P_core::contain(AddressComponent addressComponent, P_thread* thread)`:
    If the thread `thread` is not owned by another core, this method adds
@@ -1257,7 +1254,8 @@ Methods:
  - `void P_core::on_being_contained_hook(P_mailbox* container)`: Sets the
    parent of this core to the mailbox containing it.
 
-An example dump (`P_core::Dump()`) of a core with no binary data follows.
+An example dump (`P_core::Dump()`) of a core with no binaries assigned to it
+follows.
 
 ```
 P_core O_.Simple [1 box].Box000000.Board000000.Mailbox000000.Core000000 +++++++
