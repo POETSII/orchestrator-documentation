@@ -663,7 +663,10 @@ thread, describing the performance. `InstrumentationWriter` has no `dump`
 method, because it writes data to a file on receipt of a packet anyway.
 
 This topic is explained further, from the perspective of the Softswitch, in the
-Softswitch documentation.
+Softswitch documentation. Eventually, instrumentation will be handled by the
+Monitor process, which will collect instrumentation data and generate
+visualisations in real-time; the Mothership process will continue to act as a
+broker between the compute backend and the Orchestrator in this regard.
 
 # Appendix A: Message/Packet Handling Examples
 To follow along, use Figure 2 and the Command and Control section.
