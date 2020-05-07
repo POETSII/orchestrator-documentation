@@ -1,11 +1,13 @@
 % The Mothership and Supervisor Interfacing
 
 # Overview
-This document describes the mothership, which is the Orchestrator process that
+This document describes the Mothership, which is the Orchestrator process that
 facilitates communication between the compute backend (normally Tinsel) on its
-box, and the rest of the Orchestrator via MPI. It also describes interfacing
-with Supervisor devices, which operate within the Mothership process. The
-desirable features of the Mothership process are:
+box, and the rest of the Orchestrator via MPI. The Mothership bridges the
+event-computing paradigm on the backend, with conventional compute in the
+Orchestrator. It also describes interfacing with Supervisor devices, which
+operate within the Mothership process. The desirable features of the Mothership
+process are:
 
  - To house supervisor devices: Supervisor logic must be loaded at application
    run-time, and the Mothership process must be robust to invalid Supervisor
