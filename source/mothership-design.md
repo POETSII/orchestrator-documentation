@@ -591,8 +591,8 @@ that is common to certain applications:
 
  - `std::string Super::get_safe_directory()`: Returns the absolute path of a
    directory on the system that was guaranteed safe to write to as of when the
-   application was compiled. If you fill up the disk or change the permissions,
-   it's on you.
+   application was compiled by the Orchestrator. If you fill up the disk or
+   change the permissions, it's on you.
 
  - `void Super::end()`: Stops the application, by sending a (`CMND`, `STOP`)
    message to the Mothership process (The Supervisor is running on the
