@@ -583,7 +583,9 @@ Mothership, as well as external devices elsewhere. They are:
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
    application name. For an incoming packet, the appropriate supervisor is
-   identified from the task component of the software address.
+   identified from the task component of the software address. If the task
+   component does not correspond to a loaded task, the Mothership `Post`-s an
+   error message, and drops the packet.
 
 ## Supervisor API
 The following API is available to application-writers to support functionality
