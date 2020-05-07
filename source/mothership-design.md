@@ -202,7 +202,7 @@ mutexes):
 # Command and Control
 The Mothership process exists on the front of two streams of data traffic - the
 MPI network connecting the Mothership to the rest of the Orchestrator, and the
-compute backend network (typically Tinsel)
+compute backend network (typically Tinsel).
 
 ## MPI Command and Control
 The operator controls Mothership processes through the console in the Root
