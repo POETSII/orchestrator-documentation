@@ -211,7 +211,10 @@ various C&C jobs, including application manipulation. Table 1 denotes subkeys
 of messages that Mothership processes act upon (not including default handlers
 introduced by `CommonBase`). Messages are received by the `MPIInputBroker`
 consumer, which inherits from `CommonBase`. Messages with invalid key
-combinations are dropped.
+combinations are dropped. Note that messages with `CMND` in their key
+permutation stage a state transition from one application state to another (see
+the Applications section); that transition is staged even if the Mothership has
+no other information about the application yet.
 
 +-----------------+-----------------------+-----------------------------------+
 | Key Permutation | Arguments             | Function                          |
