@@ -485,7 +485,9 @@ information. `AppInfo` is a class with these fields:
 
  - `uint32_t distCountCurrent`: Current number of distribution messages
    processed for this application. When this is equal to `distCountExpected`
-   (and `distCountExpected` is nonzero), the application is fully defined.
+   (and `distCountExpected` is nonzero), the application is fully defined. If
+   `distCountCurrent` exceeds `distCountExpected` when incremented, the
+   application state is set to `BROKEN`, and an error message is `Post`-ed.
 
  - `std::map<uint32_t, CoreInfo> coreInfos`: Information about the cores known
    about, and their loading state. The key is the hardware address of the

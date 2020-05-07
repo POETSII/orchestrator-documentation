@@ -93,16 +93,17 @@ a given Mothership.
 <TR><TD>AppInfo</TD></TR>
 <TR><TD ALIGN="LEFT">
 + distCountExpected : uint32_t<BR ALIGN="LEFT"/>
-+ distCountCurrent : uint32_t<BR ALIGN="LEFT"/>
 + name : string<BR ALIGN="LEFT"/>
 + state : AppState<BR ALIGN="LEFT"/>
 + coreInfos : map&lt;uint32_t, CoreInfo&gt;<BR ALIGN="LEFT"/>
 + coresLoaded : set&lt;uint32_t&gt;<BR ALIGN="LEFT"/>
+- distCountCurrent : uint32_t<BR ALIGN="LEFT"/>
 - pendingCommands : uint8_t<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + check_update_defined_state() : bool<BR ALIGN="LEFT"/>
 + get_state_colloquial() : string<BR ALIGN="LEFT"/>
++ increment_dist_count_current() : bool<BR ALIGN="LEFT"/>
 + should_we_continue() : bool<BR ALIGN="LEFT"/>
 + should_we_recall() : bool<BR ALIGN="LEFT"/>
 + dump(ofstream*) : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
