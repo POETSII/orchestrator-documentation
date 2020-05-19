@@ -391,8 +391,8 @@ in-source) are routed to the supervisor as (`BEND`, `SUPR`) messages:
    the application is transitioned from `STOPPING` to `STOPPED`, and the
    supervisor is unloaded.
 
- - `P_CNC_KILL`: A packet that, when received, shuts down the Mothership
-   process as *gracefully* as possible (similar to the `EXIT` message).
+ - `P_CNC_KILL`: A packet that, when received, stops the application associated
+   with the packet (similar to the `CMND`, `STOP` message).
 
 Notes:
 
@@ -409,11 +409,11 @@ Notes:
     - `P_CNC_INSTR` to request instrumentation information from a softswitch
       (though this is not currently used).
 
- - A rogue application can shut down the Mothership via a `P_CNC_KILL`
-   packet.
+ - A rogue application can shut down arbitrary applications by using
+   `P_CNC_STOP` packets with different task IDs.
 
  - Applications can stop themselves in two ways - either a normal device sends
-   a `P_CNC_STOP` packet to the Mothership, or the supervisor calls the `void
+   a `P_CNC_KILL` packet to the Mothership, or the supervisor calls the `void
    Super::end()` API method (documented in the Supervisor API section).
 
  - There is no `P_CNC_INIT`. This opcode was used in the barrier-breaking
