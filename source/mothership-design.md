@@ -110,11 +110,11 @@ threads with fast spinners. The threads are:
  - `MPIApplicationResolver`: As above, but for the `MPIApplicationQueue`
    queue. This is a slow spinner. These messages will either be:
 
-   - Converted into packets for the compute fabric, and placed in the
-     `BackendOutputQueue` queue.
+    - Converted into packets for the compute fabric, and placed in the
+      `BackendOutputQueue` queue.
 
-   - Used to call a supervisor method (which may in turn produce more
-     traffic).
+    - Used to call a supervisor method (which may in turn produce more
+      traffic).
 
  - `BackendOutputBroker`: Responsible for draining the `BackendOutputQueue`
    queue by sending packets into the compute fabric. This is a slow spinner,
@@ -160,11 +160,11 @@ The following communication constructs are accessible to all threads, via the
    race conditions between push and pop operations. Queues that are only
    read/written by one thread have no mutexes. The mutexes are:
 
-     - `pthread_mutex_t mutex_MPI_cnc_queue` locks `MPICncQueue`.
+    - `pthread_mutex_t mutex_MPI_cnc_queue` locks `MPICncQueue`.
 
-     - `pthread_mutex_t mutex_MPI_app_queue` locks `MPIApplicationQueue`.
+    - `pthread_mutex_t mutex_MPI_app_queue` locks `MPIApplicationQueue`.
 
-     - `pthread_mutex_t mutex_backend_output_queue` locks `BackendOutputQueue`.
+    - `pthread_mutex_t mutex_backend_output_queue` locks `BackendOutputQueue`.
 
 The above variables are private, and can be accessed by the following getters
 and setters in `Mothership::ThreadComms` (which manipulate the queues and
@@ -434,47 +434,48 @@ information. `AppInfo` is a class with these fields:
      C&C messages consumed by `MPICncResolver` drive application states. These
      states are enumerated by `AppState` as:
 
-   - `UNDERDEFINED`: The application has been partly sent to the Mothership
-     process, but some cores have not been defined, or their binaries refer to
-     files that could not be found on the filesystem.
+    - `UNDERDEFINED`: The application has been partly sent to the Mothership
+      process, but some cores have not been defined, or their binaries refer to
+      files that could not be found on the filesystem.
 
-   - `DEFINED`: The application (`APP`, `SPEC`), its cores and binaries (`APP`,
-     `DIST`), and its supervisor (`APP`, `SUPD`) have been completely defined
-     on this Mothership, but nothing has been loaded onto hardware yet.
+    - `DEFINED`: The application (`APP`, `SPEC`), its cores and binaries
+      (`APP`, `DIST`), and its supervisor (`APP`, `SUPD`) have been completely
+      defined on this Mothership, but nothing has been loaded onto hardware
+      yet.
 
-   - `LOADING`: As with `DEFINED`, but the loading process (`CMND`, `INIT`) has
-     begun.
+    - `LOADING`: As with `DEFINED`, but the loading process (`CMND`, `INIT`)
+      has begun.
 
-   - `READY`: All cores and supervisors are ready to start for this
-     application.
+    - `READY`: All cores and supervisors are ready to start for this
+      application.
 
-   - `RUNNING`: As with `READY`, and the running process (`CMND`, `RUN`) has
-     begun.
+    - `RUNNING`: As with `READY`, and the running process (`CMND`, `RUN`) has
+      begun.
 
-   - `STOPPING`: The application is running, but the stopping process (`CMND`,
-     `STOP`) has begun.
+    - `STOPPING`: The application is running, but the stopping process (`CMND`,
+      `STOP`) has begun.
 
-   - `STOPPED`: The application was running, but has been stopped
+    - `STOPPED`: The application was running, but has been stopped
 
-   - `BROKEN`: Something went wrong, and the issue has been reported. The
-     application is not stopped or otherwise "cleaned up" (for now).
+    - `BROKEN`: Something went wrong, and the issue has been reported. The
+      application is not stopped or otherwise "cleaned up" (for now).
 
  - `uint8_t pendingCommands`: Bit-vector storing pending commands from other
    processes (Root). This is private - accessed and set using these methods:
 
-   - `void stage_init()`: Setter for the `INIT` command.
+    - `void stage_init()`: Setter for the `INIT` command.
 
-   - `void stage_run()`: Setter for the `RUN` command.
+    - `void stage_run()`: Setter for the `RUN` command.
 
-   - `void stage_stop()`: Setter for the `STOP` command.
+    - `void stage_stop()`: Setter for the `STOP` command.
 
-   - `void stage_recl()`: Setter for the `RECL` command.
+    - `void stage_recl()`: Setter for the `RECL` command.
 
-   - `bool should_we_continue()`: Given the current values of `state` and
-     `pendingCommands`, returns `true` if the application is to "advance to the
-     next state", and `false` otherwise.
+    - `bool should_we_continue()`: Given the current values of `state` and
+      `pendingCommands`, returns `true` if the application is to "advance to
+      the next state", and `false` otherwise.
 
-   - `bool should_we_recall()`: As above, but for recalling.
+    - `bool should_we_recall()`: As above, but for recalling.
 
  - `uint32_t distCountExpected`: Expected number of distribution messages for
    this application. Note that if an application is created by a distribution
@@ -493,17 +494,17 @@ information. `AppInfo` is a class with these fields:
    about, and their loading state. The key is the hardware address of the
    core. CoreInfo is a structure with these fields:
 
-   - `std::string codePath`: Path to the instruction binary for this core.
+    - `std::string codePath`: Path to the instruction binary for this core.
 
-   - `std::string dataPath`: Path to the data binary for this core.
+    - `std::string dataPath`: Path to the data binary for this core.
 
-   - `std::set<uint32_t> threadsExpected`: Addresses of backend threads
-     expected to report back for this core.
+    - `std::set<uint32_t> threadsExpected`: Addresses of backend threads
+      expected to report back for this core.
 
-   - `std::set<uint32_t> threadsCurrent`: Addresses of backend threads that
-     have reported back after loading the core. Used to transition from the
-     `LOADING` state to the `READY` state. Also used for the opposite purpose,
-     transitioning from `STOPPING` to `STOPPED`.
+    - `std::set<uint32_t> threadsCurrent`: Addresses of backend threads that
+      have reported back after loading the core. Used to transition from the
+      `LOADING` state to the `READY` state. Also used for the opposite purpose,
+      transitioning from `STOPPING` to `STOPPED`.
 
  - `std::set<uint32_t> coresLoaded`: Holds addresses for each core that have
    been completely loaded (i.e. all threads have reported back), and not
@@ -570,15 +571,15 @@ Mothership, as well as external devices elsewhere. They are:
    will cause the Mothership to report and set the application state to
    `BROKEN`):
 
-     - `std::string path`: Where the supervisor was loaded from.
+    - `std::string path`: Where the supervisor was loaded from.
 
-     - `void* so`: The dynamically-loaded supervisor (using `dlopen`), which
-       populates the function pointer members.
+    - `void* so`: The dynamically-loaded supervisor (using `dlopen`), which
+      populates the function pointer members.
 
-     - `int (*initialise)()`: Called when the application is started.
+    - `int (*initialise)()`: Called when the application is started.
 
-     - `int (*entryPoint)(PMsg_p, PMsg_p)`: The entry point for all supervisor
-       calls while the application is running.
+    - `int (*entryPoint)(PMsg_p, PMsg_p)`: The entry point for all supervisor
+      calls while the application is running.
 
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
