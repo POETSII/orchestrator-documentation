@@ -68,7 +68,7 @@ NB: Terminology in this document:
 
 Figure 1 shows the class structure diagram for the proposed Mothership design.
 
-![Mothership class structure diagram](images/mothership_data_structure.pdf)
+![Mothership class structure diagram](images/mothership_data_structure.png)
 
 # Threads and Queues: Producer-Consumer
 To support these features, a Producer-Consumer approach is used by the
@@ -146,7 +146,7 @@ looping threads (spawned by `main`) where the fast/slow annotations denote the
 behaviour of the spinner, black-filled boxes represent queues, black arrows
 represent the producer-consumer relationship, red arrows represent MPI message
 flow, and blue arrows represent backend packet flow. Logging not shown (all
-threads can `Post` over MPI)](images/mothership_producer_consumer.pdf)
+threads can `Post` over MPI)](images/mothership_producer_consumer.png)
 
 ## Communication and Semaphores
 The following communication constructs are accessible to all threads, via the

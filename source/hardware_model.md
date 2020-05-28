@@ -25,7 +25,7 @@ where each green box is a hardware construct, represented in the Orchestrator
 by a class:
 
 ![A simplified schematic of the hardware model used in the Orchestrator. Edges
-indicate containment.](images/engine_structure_simple.pdf)
+indicate containment.](images/engine_structure_simple.png)
 
  - The "Engine" (`P_engine`) is the primary interface for the hardware model,
    and encapsulates its components in a hierarchy. One Engine is owned by
@@ -141,7 +141,7 @@ it is "adjacent to". Pins connect boards together over special edges
 (`P_link`s, black edges). Board connection in this way may be arbitrary; the
 graph does not need to be Manhattan, and can contain cycles (but not
 loops). This description extends to the graph of mailboxes
-`P_board::G`.](images/generic_graph.pdf)
+`P_board::G`.](images/generic_graph.png)
 
 # Iteration
 As an Orchestrator developer, it is often useful to iterate over different
@@ -341,7 +341,7 @@ addressing capabilities. The `HardwareAddressFormat` is effectively a "master
 copy" that applies over the items in the engine. Green boxes are classes
 representing items in the hardware model. Red boxes are classes supporting
 addressing behaviours. Blue boxes are sets of members.
-](images/addressing_structure.pdf)
+](images/addressing_structure.png)
 
 [^whyformat]: Because a system can have many threads, cores, mailboxes, boards,
     and boxes, `HardwareAddress` is designed to have as low a data footprint as
@@ -410,7 +410,7 @@ model (Engine, `OrchBase->pE`) through topology commands. Certain commands
 objects, which are used to define the Engine. None of these command-transient
 objects persist after the command has completed. Other commands (`/dump`,
 `/clear`) interact directly with the Engine in some
-way.](images/interaction_diagram.pdf)
+way.](images/interaction_diagram.png)
 
 # Future Work
 The hardware model is designed to be adaptable to potential changes in the
@@ -463,14 +463,14 @@ boards may be arranged differently), and is not how the Orchestrator models
 traffic. The bridge board facilitates this communication, and can be accounted
 for during placement, as devices on `B20` and `B21` will have a lower
 supervisor communication cost than the other compute
-boards.](images/bridge_board.pdf)
+boards.](images/bridge_board.png)
 
 ![Schematic showing how packets traverse both the mailbox (circles with "M")
 and board graphs. This is how the POETS Engine currently operates, and is not
 how the Orchestrator models traffic. In order for a packet to travel from one
 of the marked mailboxes to the other (red circles), it must leave the board
 through a multiplexed SFP+ connection. This connection carries the packet onto
-a specific mailbox on the other board.](images/mailbox_board_interaction.pdf)
+a specific mailbox on the other board.](images/mailbox_board_interaction.png)
 
 # Appendix A: Source definitions
 This Appendix describes the methods and members of each class defined as part

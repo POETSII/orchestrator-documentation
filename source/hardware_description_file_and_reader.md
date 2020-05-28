@@ -14,7 +14,7 @@ triggered by `task /load`.
 ![Hardware model interaction diagram. The operator loads a file using `topology
 \load`. Dialect 1 files provision a Dialect1Deployer, which create and populate
  an Engine. Dialect 3 files are used to provision an Engine
-directly. Dialect 2 files are not supported.](images/interaction_diagram.pdf)
+directly. Dialect 2 files are not supported.](images/interaction_diagram.png)
 
 # The Orchestrator's Hardware File Reader
 The `HardwareFileReader` class reads hardware description files, and creates
@@ -121,7 +121,7 @@ dependencies. Boxes denote methods in `HardwareFileReader` prefixed with `d3_`,
 where an edge to another box indicates that the method in the first box calls
 the method in the second. Yellow boxes denote methods that examine subtrees of
 the parse graph. Validation methods are not shown (for
-simplicity).](images/d3_call_graph.pdf)
+simplicity).](images/d3_call_graph.png)
 
 # Input File Format (0.4.0)
 This section defines the file format used by the Orchestrator to define its
@@ -561,7 +561,7 @@ to visualisation tools.
 ![Weighted graph of boards described by the dialect 2 example, where each board
 (red) is contained in a box (blue). All boxes and all boards are of the same
 "type" (see the Dialect 3 Section for information on
-types).](images/dialect_2.pdf)
+types).](images/dialect_2.png)
 
 Appendix A contains a complete dialect 2 example file representing Coleridge.
 
@@ -746,7 +746,7 @@ Notes:
 
 ![Weighted graph of boards described by the dialect 3 example, where each board
 is contained in a box. The colour of each item denotes its
-type.](images/dialect_3.pdf)
+type.](images/dialect_3.png)
 
 Appendix A contains a complete dialect 3 example file representing Coleridge.
 
