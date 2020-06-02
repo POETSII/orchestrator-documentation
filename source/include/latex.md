@@ -6,4 +6,5 @@ header-includes:
   - \usepackage{fullpage}
   - \usepackage{fvextra}
   - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{xleftmargin=.5cm,breaklines,commandchars=\\\{\}}
+  - \interfootnotelinepenalty=10000
 ---
