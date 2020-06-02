@@ -60,7 +60,7 @@ section outlines those structures. A map of the proposed structure is shown in
 Figure 1.
 
 ![Data structure diagram, showing how placement may be conducted in the
-Orchestrator](images/placement_design_data_structure.pdf)
+Orchestrator](images/placement_design_data_structure.png)
 
 ## Placer
 The `Placer` encapsulates placement behaviour in the Orchestrator. The
