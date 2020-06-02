@@ -1,0 +1,378 @@
+digraph G {
+    fontname="Inconsolata";
+    fontsize=11;
+    margin=0;
+    nodesep=0.3;
+    rankdir="UD";
+    ranksep=0.2;
+
+    /* Class definitions (as graph nodes) */
+    node[color="#005500",
+         fillcolor="#DBFFDE:#A8FF8F",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0,
+         shape="rect",
+         style="filled"];
+
+    SBase[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>SBase</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Device/address lookup<BR ALIGN="TEXT"/>
+for externals.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    HostLink[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>HostLink (backend)</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Backend packet<BR ALIGN="TEXT"/>
+interface.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    CommonBase[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>CommonBase (MPI-end)</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ CommonBase(int, char*, string, string)<BR ALIGN="LEFT"/>
++ Post(int, vector&lt;string&gt;) : bool<BR ALIGN="LEFT"/>
+! MPISpinner() : void<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+MPI message interface.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    AppState[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>AppState (enumeration)</TD></TR>
+<TR><TD ALIGN="LEFT">
+UNDERDEFINED<BR ALIGN="LEFT"/>
+DEFINED<BR ALIGN="LEFT"/>
+LOADING<BR ALIGN="LEFT"/>
+READY<BR ALIGN="LEFT"/>
+RUNNING<BR ALIGN="LEFT"/>
+STOPPING<BR ALIGN="LEFT"/>
+STOPPED<BR ALIGN="LEFT"/>
+BROKEN<BR ALIGN="LEFT"/>
+</TD></TR></TABLE>>];
+
+    AppDB[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>AppDB</TD></TR>
+<TR><TD ALIGN="LEFT">
++ appInfos : map&lt;string, AppInfo&gt;<BR ALIGN="LEFT"/>
++ coreToApp : map&lt;uint32_t, string&gt;<BR ALIGN="LEFT"/>
++ threadToCoreAddr : map&lt;uint32_t, uint32_t&gt;<BR ALIGN="LEFT"/>
++ numberToApp : map&lt;uint8_t, string&gt;<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ check_create_app(string, uint32_t) : AppInfo*<BR ALIGN="LEFT"/>
++ check_defined_app(string) : bool<BR ALIGN="LEFT"/>
++ recall_app(AppInfo*) : void<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds the state of applications for<BR ALIGN="TEXT"/>
+a given Mothership.
+</TD></TR></TABLE>>];
+
+    AppInfo[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>AppInfo</TD></TR>
+<TR><TD ALIGN="LEFT">
++ distCountExpected : uint32_t<BR ALIGN="LEFT"/>
++ name : string<BR ALIGN="LEFT"/>
++ state : AppState<BR ALIGN="LEFT"/>
++ coreInfos : map&lt;uint32_t, CoreInfo&gt;<BR ALIGN="LEFT"/>
++ coresLoaded : set&lt;uint32_t&gt;<BR ALIGN="LEFT"/>
+- distCountCurrent : uint32_t<BR ALIGN="LEFT"/>
+- pendingCommands : uint8_t<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ check_update_defined_state() : bool<BR ALIGN="LEFT"/>
++ get_state_colloquial() : string<BR ALIGN="LEFT"/>
++ increment_dist_count_current() : bool<BR ALIGN="LEFT"/>
++ should_we_continue() : bool<BR ALIGN="LEFT"/>
++ should_we_recall() : bool<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
+For each command (init, run, stop, recl):<BR ALIGN="LEFT"/>
++ stage_init() : void<BR ALIGN="LEFT"/>
++ is_init_staged() : bool<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds information and state on an<BR ALIGN="TEXT"/>
+application from the perspective<BR ALIGN="TEXT"/>
+of one Mothership object.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    CoreInfo[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>CoreInfo</TD></TR>
+<TR><TD ALIGN="LEFT">
++ codePath : string<BR ALIGN="LEFT"/>
++ dataPath : string<BR ALIGN="LEFT"/>
++ threadsExpected : set&lt;uint32_t&gt;<BR ALIGN="LEFT"/>
++ threadsCurrent : set&lt;uint32_t&gt;<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+None
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds information and loading<BR ALIGN="TEXT"/>
+state on a core.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    SuperDB[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>SuperDB</TD></TR>
+<TR><TD ALIGN="LEFT">
++ supervisors : map&lt;std::string, SuperHolder*&gt;<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ call_supervisor(string, PMsg_p*, PMsg_p*) : int<BR ALIGN="LEFT"/>
++ initialise_supervisor(string) : int<BR ALIGN="LEFT"/>
++ load_supervisor(string, string, string*) : bool<BR ALIGN="LEFT"/>
++ unload_supervisor(string) : bool<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds the state of supervisors for<BR ALIGN="TEXT"/>
+a given Mothership.
+</TD></TR></TABLE>>];
+
+    SuperHolder[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>SuperHolder</TD></TR>
+<TR><TD ALIGN="LEFT">
++ path : string<BR ALIGN="LEFT"/>
++ error : bool<BR ALIGN="LEFT"/>
++ entryPoint : int(*)(PMsg_p, PMsg_p)<BR ALIGN="LEFT"/>
++ initialise : int(*)()<BR ALIGN="LEFT"/>
+- so : void*<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ SuperHolder(string)<BR ALIGN="LEFT"/>
++ ~SuperHolder()<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds a supervisor device for a<BR ALIGN="TEXT"/>
+given application.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    InstrumentationWriter[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>InstrumentationWriter</TD></TR>
+<TR><TD ALIGN="LEFT">
++ cumulativeData : map&lt;uint32_t,<BR ALIGN="LEFT"/>
+    ThreadInstrumentationDatum&gt;<BR ALIGN="LEFT"/>
++ outDirectory : string<BR ALIGN="LEFT"/>
+- fileFailureTriggered : bool<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ InstrumentationWriter(string)<BR ALIGN="LEFT"/>
++ consume_instrumentation_packet(P_Pkt_t*) : bool<BR ALIGN="LEFT"/>
+- setup_directory() : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Processes instrumentation data from the compute<BR ALIGN="TEXT"/>
+fabric, and writes them to files.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    ThreadInstrumentationDatum[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>ThreadInstrumentationDatum</TD></TR>
+<TR><TD ALIGN="LEFT">
++ totalTime : double<BR ALIGN="LEFT"/>
++ txCount : uint64_t<BR ALIGN="LEFT"/>
++ rxCount : uint64_t<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+None
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds cumulative<BR ALIGN="TEXT"/>
+instrumentation data for<BR ALIGN="TEXT"/>
+a thread.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Mothership[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Mothership</TD></TR>
+<TR><TD ALIGN="LEFT">
++ appdb : AppDB<BR ALIGN="LEFT"/>
++ backend : HostLink*<BR ALIGN="LEFT"/>
++ instrumentation : InstrumentationWriter<BR ALIGN="LEFT"/>
++ logging : LogPacketManager<BR ALIGN="LEFT"/>
++ superdb : SuperDB<BR ALIGN="LEFT"/>
++ threading : ThreadComms<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ Mothership(int, char*, string, string)<BR ALIGN="LEFT"/>
++ dump(ofstream*) : void<BR ALIGN="LEFT"/>
++ go() : void<BR ALIGN="LEFT"/>
++ mpi_spin() : void<BR ALIGN="LEFT"/>
++ debug_post(int, unsigned, ...) : bool<BR ALIGN="LEFT"/>
++ queue_mpi_message(PMsg_p, unsigned) : void<BR ALIGN="LEFT"/>
+- load_backend() : void<BR ALIGN="LEFT"/>
+- setup_mpi_hooks() : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
+Application transition methods:<BR ALIGN="LEFT"/>
++ initialise_application(AppInfo*) : void<BR ALIGN="LEFT"/>
+... (for each transition)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
+MPI message handlers (called from MPI-resolving<BR ALIGN="LEFT"/>
+threads):<BR ALIGN="LEFT"/>
+- handle_exit(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
++ handle_app_spec(PMsg_p*, unsigned) : unsigned<BR ALIGN="LEFT"/>
+... (for each input message permutation)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
+Packet handlers (called from packet-resolving<BR ALIGN="LEFT"/>
+threads):<BR ALIGN="LEFT"/>
++ handle_pkt_instr(P_Pkt_t*)<BR ALIGN="LEFT"/>
+... (for each input packet opcode)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds the state of the Mothership process.
+</TD></TR></TABLE>>];
+
+    ThreadComms[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>ThreadComms</TD></TR>
+<TR><TD ALIGN="LEFT">
+- mothership : Mothership*<BR ALIGN="LEFT"/>
+- quit : bool<BR ALIGN="LEFT"/>
+- mutex_MPI_cnc_queue : pthread_mutex_t<BR ALIGN="LEFT"/>
+- MPICncResolver : pthread_t<BR ALIGN="LEFT"/>
+...<BR ALIGN="LEFT"/>
+<!--
+- mutex_MPI_app_queue : pthread_mutex_t<BR ALIGN="LEFT"/>
+- MPIApplicationResolver : pthread_t<BR ALIGN="LEFT"/>
+- mutex_backend_output_queue : pthread_mutex_t<BR ALIGN="LEFT"/>
+- BackendOutputBroker : pthread_t<BR ALIGN="LEFT"/>
+- MPIInputBroker : pthread_t<BR ALIGN="LEFT"/>
+- BackendInputBroker : pthread_t<BR ALIGN="LEFT"/>
+- DebugInputBroker : pthread_t<BR ALIGN="LEFT"/>
+-->
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ ThreadComms(Mothership*)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
+Methods to moderate quitting:<BR ALIGN="LEFT"/>
++ set_quit() : void<BR ALIGN="LEFT"/>
++ is_it_time_to_go() : bool<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
+Queue and mutex manipulation: <BR ALIGN="LEFT"/>
++ pop_MPI_cnc_queue(PMsg_p*) : bool<BR ALIGN="LEFT"/>
++ pop_MPI_cnc_queue(vector&lt;PMsg_p&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_MPI_cnc_queue(PMsg_p) : void<BR ALIGN="LEFT"/>
++ push_MPI_cnc_queue(vector&lt;PMsg_p&gt;*) : void<BR ALIGN="LEFT"/>
+... (for each queue)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
+<!--
++ pop_MPI_app_queue(PMsg_p*) : bool<BR ALIGN="LEFT"/>
++ pop_MPI_app_queue(vector&lt;PMsg_p*&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_MPI_app_queue(PMsg_p) : void<BR ALIGN="LEFT"/>
++ push_MPI_app_queue(vector&lt;PMsg_p*&gt;*) : void<BR ALIGN="LEFT"/>
++ pop_backend_out_queue(P_Pkt_t*) : bool<BR ALIGN="LEFT"/>
++ pop_backend_out_queue(vector&lt;P_Pkt_t*&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_backend_out_queue(P_Pkt_t) : void<BR ALIGN="LEFT"/>
++ push_backend_out_queue(vector&lt;P_Pkt_t*&gt;*) : void<BR ALIGN="LEFT"/>
++ pop_backend_in_queue(P_Pkt_t*) : bool<BR ALIGN="LEFT"/>
++ pop_backend_in_queue(vector&lt;P_Pkt_t*&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_backend_in_queue(P_Pkt_t) : void<BR ALIGN="LEFT"/>
++ push_backend_in_queue(vector&lt;P_Pkt_t*&gt;*) : void<BR ALIGN="LEFT"/>
++ pop_debug_in_queue(P_Debug_Pkt_t*) : bool<BR ALIGN="LEFT"/>
++ pop_debug_in_queue(vector&lt;P_Debug_Pkt_t*&gt;*) : bool<BR ALIGN="LEFT"/>
++ push_debug_in_queue(P_Debug_Pkt_t) : void<BR ALIGN="LEFT"/>
++ push_debug_in_queue(vector&lt;P_Debug_Pkt_t*&gt;*) : void<BR ALIGN="LEFT"/>
+-->
+Starting threads and waiting: <BR ALIGN="LEFT"/>
++ go() : void<BR ALIGN="LEFT"/>
+- start_MPI_cnc_resolver() : void<BR ALIGN="LEFT"/>
+- mpi_cnc_resolver(Mothership*) : void*<BR ALIGN="LEFT"/>
+... (for each thread)<BR ALIGN="LEFT"/>
+<!--
+- start_MPI_input_broker() : void<BR ALIGN="LEFT"/>
+- mpi_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
+- start_MPI_app_resolver() : void<BR ALIGN="LEFT"/>
+- mpi_app_resolver(Mothership*) : void*<BR ALIGN="LEFT"/>
+- start_backend_output_broker() : void<BR ALIGN="LEFT"/>
+- backend_output_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
+- start_backend_input_broker() : void<BR ALIGN="LEFT"/>
+- backend_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
+- start_debug_input_broker() : void<BR ALIGN="LEFT"/>
+- debug_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
+-->
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Manages communication between Mothership threads,<BR ALIGN="TEXT"/>
+abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    LogPacketManager[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>LogPacketManager</TD></TR>
+<TR><TD ALIGN="LEFT">
++ data : map&lt;uint32_t, ThreadLogDatum&gt;<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ consume_log_packet(P_Pkt_t*,<BR ALIGN="LEFT"/>
+                     string*) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds intermediate logging data from<BR ALIGN="TEXT"/>
+compute threads.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    ThreadLogDatum[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>ThreadLogDatum</TD></TR>
+<TR><TD ALIGN="LEFT">
++ packetCountReceived : unsigned<BR ALIGN="LEFT"/>
++ packetCountExpected : unsigned<BR ALIGN="LEFT"/>
++ payloads : P_Log_Pkt_Pyld_t[]<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+None
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds cumulative<BR ALIGN="TEXT"/>
+logging data for<BR ALIGN="TEXT"/>
+a thread.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    /* Relationship definitions (as graph edges) */
+    edge[color="#000000",
+         fontname="Inconsolata",
+         fontsize=11];
+
+    /* One-to-one containment. */
+    {edge[arrowhead="vee"];
+        AppInfo -> AppState[label=" AppInfo.state"];
+        HostLink -> Mothership[label=" Mothership.backend", dir="back"];
+        Mothership -> ThreadComms[label=" Mothership.\nthreading"];
+        Mothership -> AppDB[label=" Mothership.appdb"];
+        Mothership -> SuperDB[label=" Mothership.superdb"];
+        Mothership -> InstrumentationWriter[label=" Mothership.\ninstrumentation"];
+        Mothership -> LogPacketManager[label=" Mothership.logging"];
+    }
+
+    /* One-to-many containment. */
+    {edge[arrowhead="diamond"];
+        SuperDB -> SuperHolder[label=" SuperDB.\nsupervisors"];
+        AppDB -> AppInfo[label=" AppDB.appInfos"];
+        AppInfo -> CoreInfo[label=" AppInfo.\ncoreInfos"];
+        InstrumentationWriter -> ThreadInstrumentationDatum[label=" InstrumentationWriter.\ncumulativeData"];
+        LogPacketManager -> ThreadLogDatum[label=" LogPacketManager.data"];
+    }
+
+    /* Inheritance */
+    {edge[arrowhead="onormal", label=" (inherits from)"];
+        SBase -> Mothership[dir="back"];
+        CommonBase -> Mothership[dir="back"];
+    }
+
+    /* Rank hackery */
+    {rank="same";
+        ThreadComms -> Mothership [style="invis"];
+        rankdir="LR";
+    }
+}
