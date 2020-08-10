@@ -1232,6 +1232,8 @@ Members:
  - `float costThreadThread`: Indicates the cost of communicating between
    threads run on this core.
 
+ - `P_core* pair`: Points to the other core in this core pair, if any.
+
 Methods:
 
  - `P_core::P_core(std::string name)`: Core constructor, sets the `NameBase`
