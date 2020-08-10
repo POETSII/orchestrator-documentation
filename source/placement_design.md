@@ -1,5 +1,36 @@
 % Design of the Orchestrator Placement System (2019-09-24)
 
+# Orchestrator State (2020-08-10)
+This document presents the design of the placement system, though the present
+implementation of the Orchestrator does not exactly meet these
+features[^dateThough]. What follows is a comprehensive list of differences
+between the implemented placement system, and the design in this document:
+
+[^dateThough]: As of the date in the title of this section.
+
+ - The application graph (`GraphI_t`) and the classes it contains (`DevI_t` and
+   `MsgT_t`) have not been implemented in the Orchestrator. The Orchestrator
+   placement implementation uses the old application graph structure, using
+   `D_graph`, `P_device`, and `P_message` instead.
+
+ - Application-level and hardware-level constraints are not supported, aside
+   from a hardcoded limit on the maximum number of devices that can be placed
+   on each thread (currently defined using the `MAX_DEVICES_PER_THREAD_DEFAULT`
+   preprocessor directive in `MaxDevicesPerThread.h`). The `placement
+   /constraint` operator command is not defined. The Orchestrator has no
+   mechanism for consuming constraint files.
+
+ - The documentation does not introduce the smart-random (`placement \rand`)
+   placement algorithm, or the loading of placement configurations (`placement
+   \load`). These operator commands are presently unsupported.
+
+ - The simulated annealing implementation (accessible via `placement \sa=TASK`)
+   and the smart-random implementation (accessible via `placement \rand=TASK`)
+   place devices as advertised, but applications compiled and run using
+   placements from those algorithms are not guaranteed to complete.
+
+ - The simulated annealing implementation does not perform swap selection.
+
 # Placement Overview and Design Requirements
 This document defines the design of the placement system in the
 Orchestrator. The "placement problem" has been well explored in the literature,
@@ -81,7 +112,7 @@ std::map<DevI_t*, P_thread*> Placer::deviceToThread
 These maps are the primary output of placement, describe the placement of all
 applications in the Orchestrator, and are read by the binary builder to
 establish the relationship between the application and the hardware. This is
-contrary to the current design of the Orchestrator, where `P_thread` objects
+contrary to the previous design of the Orchestrator, where `P_thread` objects
 have a vector within which corresponding `DevI_t*` values are stored, and each
 `DevI_t` holds the corresponding `P_thread`. Advantages of the two-map approach
 over the previous approach are:
