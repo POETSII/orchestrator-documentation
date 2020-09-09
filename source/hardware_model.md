@@ -1274,6 +1274,7 @@ NameBase dump-------------------------------
 
 No data binary assigned to this core.
 No instruction binary assigned to this core.
+No pair associated with this core.
 Threads in this core ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         <a recursive dump of all threads in this core goes here>
 Threads in this core ----------------------------------------------------------
