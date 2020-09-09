@@ -131,7 +131,7 @@ three dialects, which define the POETS Engine on different levels of
 granularity. When the Orchestrator dumps a machine-readable output of its model
 of the POETS Engine as part of the discovery process (once it is implemented),
 that dump will be given in the most precise dialect version (dialect 3). This
-Appendix defines attributes that are common to all dialects in the Common
+section defines attributes that are common to all dialects in the Common
 Attributes Section, then defines:
 
 [^uifdocs]: The UIF documentation can be found in the Orchestrator repository,
@@ -285,7 +285,7 @@ Here, the address again defined as a binary word, where the first (LSB) four
 bits define the thread address, the next two bits define the core address, the
 next six bits define the mailbox address (two in each of the three dimensions),
 and the next eight bits define the board address (four in each of the two
-dimensions)resulting in a $4+2+(2\times3)+(4\times2)+2=22$ bit word.
+dimensions) resulting in a $4+2+(2\times3)+(4\times2)+2=22$ bit word.
 
 ## Dialect 1 (Homogeneous)
 This dialect allows the writer to elegantly define the components of the POETS
