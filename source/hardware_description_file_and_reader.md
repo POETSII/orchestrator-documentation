@@ -746,6 +746,20 @@ Notes:
 
  - Values can be defined in the `default_types` section in any order.
 
+Also note an additional field in mailbox sections:
+
+```
+[mailbox(SomeMailboxType)]
+...
++pair_cores="true"
+```
+
+The `pair_cores` field in `mailbox` sections is mandatory, and must have either
+a `"true"` or `"false"` value, indicating whether or not neighbouring cores
+share instruction memory in this engine. For most non-Tinsel architectures this
+should be `"false"`. Note that if this is `"true"`, the value in the `cores`
+field for this mailbox section must be even.
+
 ![Weighted graph of boards described by the dialect 3 example, where each board
 is contained in a box. The colour of each item denotes its
 type.](images/dialect_3.png)
@@ -1005,6 +1019,7 @@ Box(addr(0),boards(B0,B1,B2,B3,B4,B5),hostname(coleridge))
 +cores=4
 +mailbox_core_cost=*  // <!> Missing
 +core_core_cost=*  // <!> Missing
++pair_cores="true"
 
 [core]
 +threads=16
