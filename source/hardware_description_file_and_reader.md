@@ -215,9 +215,10 @@ Points to note:
    - `file`: The handle of the file in the filesystem[^fileMismatchWarning].
 
  - The `[header]` section may be opened with a description,
-   e.g. `[header(Hafez)]` (where the description here is `Hafez`), as long
-   as the description satisfies the regular expression `[a-zA-Z0-9]{2,32}`, and
-   that only one header section is defined in a given file.
+   e.g. `[header(Hafez)]` (where the description here is `Hafez`), as long as
+   the description satisfies the regular expression
+   `[a-zA-Z][a-zA-Z0-9]{1,31}`, and that only one header section is defined in
+   a given file.
 
 [^fileMismatchWarning]: The design intent being that the Orchestrator will warn
 the operator if this field match the name of the file passed in.
@@ -550,8 +551,8 @@ to visualisation tools.
    used in the general case, where `X` is the level of the contained items.
 
  - Boxes, boards, and mailboxes can have any name as long as they match the
-   regular expression `[a-zA-Z0-9]{2,32}`, and are unique within the item that
-   contains them.
+   regular expression `[a-zA-Z][a-zA-Z0-9]{1,31}`, and are unique within the
+   item that contains them.
 
  - As with dialect 1, multidimensional addresses are supported. Example box
    declaration: `(0,0):Io(addr(00,01),boards(B0,B1))`.
@@ -665,11 +666,12 @@ Notes:
    properties of boards of this type.
 
  - The boxes (and boards and mailboxes) and their types can have any name as
-   long as they match the regular expression `[a-zA-Z0-9]{2,32}`, and are
-   unique on a given level of the hierarchy. Types do not have to begin with
-   `TYPE` (it's done here more to emphasise the point). Unlike with dialect 2,
-   the extra level of heterogeneity provided by dialect 3 allows these names
-   and types to be defined by unique identifiers derived from hardware.
+   long as they match the regular expression `[a-zA-Z][a-zA-Z0-9]{1,31}`, and
+   are unique on a given level of the hierarchy. Types do not have to begin
+   with `TYPE` (it's done here more to emphasise the point). Unlike with
+   dialect 2, the extra level of heterogeneity provided by dialect 3 allows
+   these names and types to be defined by unique identifiers derived from
+   hardware.
 
 Types can also be defined as defaults. The following two blocks are synonyms of
 the previous dialect 3 example given in this section using default type
