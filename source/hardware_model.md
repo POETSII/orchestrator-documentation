@@ -314,7 +314,7 @@ Orchestrator's representation. These components map as follows:
 | $C_{\mathrm{THREAD}}$                         | $T_{\mathrm{THREAD}}$                            |
 +-----------------------------------------------+--------------------------------------------------+
 
-Each component $C$ has a fixed width $W$ for the lifetime of the Orchestrator
+Each component $C$ has a fixed width $W$ for the lifetime of the engine
 (e.g. $W_{\mathrm{MAILBOX}}$), and is buffered by zeroes so that each component
 does not overrun into any other component. By way of example, the source name
 of component $C_{\mathrm{BOX}}$ is `HardwareAddress::boxComponent`, and the
