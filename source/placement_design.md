@@ -13,21 +13,18 @@ between the implemented placement system, and the design in this document:
    placement implementation uses the old application graph structure, using
    `D_graph`, `P_device`, and `P_message` instead.
 
- - Application-level and hardware-level constraints are not supported, aside
-   from a hardcoded limit on the maximum number of devices that can be placed
-   on each thread (currently defined using the `MAX_DEVICES_PER_THREAD_DEFAULT`
-   preprocessor directive in `MaxDevicesPerThread.h`). The `placement
-   /constraint` operator command is not defined. The Orchestrator has no
-   mechanism for consuming constraint files.
+ - The Orchestrator has no mechanism for consuming constraint files. The
+   `placement /constraint` operator command is the only mechanism for
+   introducing constraints at run-time.
 
- - The documentation does not introduce the smart-random (`placement \rand`)
-   placement algorithm, or the loading of placement configurations (`placement
-   \load`). These operator commands are presently unsupported.
+ - The documentation does not introduce the loading of placement configurations
+   (`placement \load`). This operator commands is presently unsupported.
 
  - The simulated annealing implementation (accessible via `placement \sa=TASK`)
    and the smart-random implementation (accessible via `placement \rand=TASK`)
    place devices as advertised, but applications compiled and run using
-   placements from those algorithms are not guaranteed to complete.
+   placements from those algorithms are not guaranteed to complete (pending
+   issue #157, which concerns a softswitch fix)
 
  - The simulated annealing implementation does not perform swap selection.
 
@@ -229,6 +226,8 @@ Possible constraints include (this is by no means an exhaustive list):
  - Set the cost between all connected devices to not exceed a certain value
    (distances are relative, but might be useful...).
 
+Appendix D contains the list of supported constraints.
+
 ## Algorithms
 Algorithms represent "placement methods", like bucket filling, or simulated
 annealing. Algorithms control the placement of devices in a given application
@@ -270,9 +269,21 @@ extended with a `float weight` member to accommodate this[^hypocrisy].
     (fitness delta) and an edge (fitness total), which `pdigraph` allows us to
     do pretty quickly (remember, it's maps all the way down...).
 
+Appendix E contains the list of supported algorithms.
+
 # How the Operator Interacts with the Placement System
-Here's a speculative list of commands for how the Orchestrator operator would
-interact with the placement system:
+By way of quick example, to place an application named `APPLICATION` the
+hardware model using the placement system, limiting it to placing no more than
+14 devices on a thread, and to dump placement information afterwards, command
+in the POETS shell:
+
+```
+POETS> placement /constraint = "MaxDevicesPerThread", 14
+POETS> placement /bucket = "APPLICATION"
+POETS> placement /dump = "APPLICATION"
+```
+
+Operator commands:
 
  - `placement /ALGORITHM = APPLICATIONNAME`: Performs the `ALGORITHM` algorithm
    to place the application named `APPLICATIONNAME` onto the hardware
@@ -291,10 +302,14 @@ interact with the placement system:
    satisfied. If there were no errors, writes to the operator confirming the
    completion of placement, along with the time taken.
 
-   `ALGORITHM` could be "bucket", "sa" or something else that's implemented
-   [^algorithmName]
+   Appendix E contains the list of supported algorithms. `ALGORITHM` could be
+   "bucket", "sa" or something else that's implemented [^algorithmName]
 
 [^algorithmName]: Just don't call your algorithm "dump", or "place" (please).
+
+ - `link /link = APPLICATIONNAME`: Performs bucket-filling on an
+   application. Included for backwards-compatibility and may be removed in
+   future.
 
  - `placement /dump = APPLICATIONNAME`: Dumps placement information for the
    application named `APPLICATIONNAME`, specifically:
@@ -341,8 +356,9 @@ interact with the placement system:
  - `placement /reset`: Completely clears placement information and constraints,
    and unlinks the hardware stack from all devices.
 
- - `placement /constraint = TYPE(ARGS, ...)`: Add a system-wide constraint to
-   the placer, with a set of arguments.
+ - `placement /constraint = TYPE,ARGS`: Add a hard system-wide constraint to
+   the placer, with a set of arguments. Appendix D contains the list of
+   supported constraints.
 
  - `placement /constraint = PATH`: Loads a system-wide constraint configuration
    file (using `Placer:load_constraint_file(std::string)`).
@@ -808,3 +824,38 @@ move operations (described as moving a device from one of the contained sets to
 another), given that there's an "empty space" to move to (adhering to the
 size-bound restriction of the contained sets). Introduce the swap operation to
 resolve the "empty space" case, which completes the proof.
+
+# Appendix D: Comprehensive List of Constraints
+Constraints can are introduced at runtime using the `placement /constraint =
+TYPE,ARGS` operator command. The available constraint `TYPE`s are:
+
+ - `MaxDevicesPerThread`: This constraint takes exactly one unsigned argument,
+   defining an upper limit on the number of devices that the placer will place
+   on any thread in the engine. If this is not explicitly constrained, a
+   hard-coded default is defined by the preprocessor in the
+   `MAX_DEVICES_PER_THREAD_DEFAULT` label.
+
+ - `MaxThreadsPerCore`: This constraint takes exactly one unsigned argument,
+   defining an upper limit on the number of threads that the placer will place
+   devices on within any core in the engine. If this is not constrained, the
+   entire hardware model will be used for placement (barring regions where
+   other applications have been placed).
+
+# Appendix E: Comprehensive List of Algorithms
+Algorithms are run on a loaded task using the `placement /ALGORITHM =
+APPLICATIONNAME` operator command. All algorithms are aware of all constraints
+(hopefully). Algorithms will not place devices on cores that already have
+devices from other applications placed upon them. The available `ALGORITHM`s
+are:
+
+ - `bucket`: A bucket-filling placement, where the threads in the hardware
+   model are filled in sequence. This placement mechanism is device-type aware.
+
+ - `gc`: A gradientless climber implementation. Identical to `sa`, but with no
+   disorder (so only superior solutions are accepted).
+
+ - `rand`: A smart-random placement, which is constraint aware, and is aware of
+   the placement of other applications. Places devices randomly across the
+   engine.
+
+ - `sa`: The simulated annealing implementation described in section 5.
