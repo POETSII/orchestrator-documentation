@@ -123,7 +123,7 @@ the method in the second. Yellow boxes denote methods that examine subtrees of
 the parse graph. Validation methods are not shown (for
 simplicity).](images/d3_call_graph.png)
 
-# Input File Format (0.4.0)
+# Input File Format (0.5.0)
 This section defines the file format used by the Orchestrator to define its
 internal model of the POETS Engine. The input files satisfy the general
 "Universal Interface Format" (UIF) file format[^uifdocs]. The format supports
@@ -131,7 +131,7 @@ three dialects, which define the POETS Engine on different levels of
 granularity. When the Orchestrator dumps a machine-readable output of its model
 of the POETS Engine as part of the discovery process (once it is implemented),
 that dump will be given in the most precise dialect version (dialect 3). This
-Appendix defines attributes that are common to all dialects in the Common
+section defines attributes that are common to all dialects in the Common
 Attributes Section, then defines:
 
 [^uifdocs]: The UIF documentation can be found in the Orchestrator repository,
@@ -181,8 +181,8 @@ appear in any order, but must be unique within a file. All files must contain a
 [header]  // This is a header section (with an inline comment).
 +author="Mark Vousden"
 +dialect=1
-+datetime=20181008130324  // YYYYMMDDhhmmss
-+version="0.4.0"
++datetime=20200909162500  // YYYYMMDDhhmmss
++version="0.5.0"
 +file="my_first_example.uif"
 ```
 
@@ -215,9 +215,10 @@ Points to note:
    - `file`: The handle of the file in the filesystem[^fileMismatchWarning].
 
  - The `[header]` section may be opened with a description,
-   e.g. `[header(Hafez)]` (where the description here is `Hafez`), as long
-   as the description satisfies the regular expression `[a-zA-Z0-9]{2,32}`, and
-   that only one header section is defined in a given file.
+   e.g. `[header(Hafez)]` (where the description here is `Hafez`), as long as
+   the description satisfies the regular expression
+   `[a-zA-Z][a-zA-Z0-9]{1,31}`, and that only one header section is defined in
+   a given file.
 
 [^fileMismatchWarning]: The design intent being that the Orchestrator will warn
 the operator if this field match the name of the file passed in.
@@ -284,7 +285,7 @@ Here, the address again defined as a binary word, where the first (LSB) four
 bits define the thread address, the next two bits define the core address, the
 next six bits define the mailbox address (two in each of the three dimensions),
 and the next eight bits define the board address (four in each of the two
-dimensions)resulting in a $4+2+(2\times3)+(4\times2)+2=22$ bit word.
+dimensions) resulting in a $4+2+(2\times3)+(4\times2)+2=22$ bit word.
 
 ## Dialect 1 (Homogeneous)
 This dialect allows the writer to elegantly define the components of the POETS
@@ -306,8 +307,8 @@ A defining example follows:
 [header]
 +author="Mark Vousden"
 +dialect=1
-+datetime=20181008130324
-+version="0.4.0"
++datetime=20200909162500
++version="0.5.0"
 
 [packet_address_format]
 +mailbox=(4,4)
@@ -550,8 +551,8 @@ to visualisation tools.
    used in the general case, where `X` is the level of the contained items.
 
  - Boxes, boards, and mailboxes can have any name as long as they match the
-   regular expression `[a-zA-Z0-9]{2,32}`, and are unique within the item that
-   contains them.
+   regular expression `[a-zA-Z][a-zA-Z0-9]{1,31}`, and are unique within the
+   item that contains them.
 
  - As with dialect 1, multidimensional addresses are supported. Example box
    declaration: `(0,0):Io(addr(00,01),boards(B0,B1))`.
@@ -665,11 +666,12 @@ Notes:
    properties of boards of this type.
 
  - The boxes (and boards and mailboxes) and their types can have any name as
-   long as they match the regular expression `[a-zA-Z0-9]{2,32}`, and are
-   unique on a given level of the hierarchy. Types do not have to begin with
-   `TYPE` (it's done here more to emphasise the point). Unlike with dialect 2,
-   the extra level of heterogeneity provided by dialect 3 allows these names
-   and types to be defined by unique identifiers derived from hardware.
+   long as they match the regular expression `[a-zA-Z][a-zA-Z0-9]{1,31}`, and
+   are unique on a given level of the hierarchy. Types do not have to begin
+   with `TYPE` (it's done here more to emphasise the point). Unlike with
+   dialect 2, the extra level of heterogeneity provided by dialect 3 allows
+   these names and types to be defined by unique identifiers derived from
+   hardware.
 
 Types can also be defined as defaults. The following two blocks are synonyms of
 the previous dialect 3 example given in this section using default type
@@ -744,6 +746,20 @@ Notes:
 
  - Values can be defined in the `default_types` section in any order.
 
+Also note an additional field in mailbox sections:
+
+```
+[mailbox(SomeMailboxType)]
+...
++pair_cores="true"
+```
+
+The `pair_cores` field in `mailbox` sections is mandatory, and must have either
+a `"true"` or `"false"` value, indicating whether or not neighbouring cores
+share instruction memory in this engine. For most non-Tinsel architectures this
+should be `"false"`. Note that if this is `"true"`, the value in the `cores`
+field for this mailbox section must be even.
+
 ![Weighted graph of boards described by the dialect 3 example, where each board
 is contained in a box. The colour of each item denotes its
 type.](images/dialect_3.png)
@@ -764,8 +780,8 @@ is not expected to accurately represent Coleridge in any future state.
 [header(Coleridge)]
 +author="Mark Vousden"
 +dialect=1
-+datetime=20190715115101
-+version="0.4.0"
++datetime=20200909162500
++version="0.5.0"
 +file="dialect_1"
 
 [packet_address_format]
@@ -813,8 +829,8 @@ is not expected to accurately represent Coleridge in any future state.
 [header(Coleridge)]
 +author="Mark Vousden"
 +dialect=2
-+datetime=20190715115101
-+version="0.4.0"
++datetime=20200909162500
++version="0.5.0"
 +file="dialect_2"
 
 [packet_address_format]
@@ -915,8 +931,8 @@ Box(addr(0),boards(B0,B1,B2,B3,B4,B5),hostname(coleridge))
 [header(Coleridge)]
 +author="Mark Vousden"
 +dialect=3
-+datetime=20190715115101
-+version="0.4.0"
++datetime=20200909162500
++version="0.5.0"
 +file="dialect_3"
 
 [packet_address_format]
@@ -1003,6 +1019,7 @@ Box(addr(0),boards(B0,B1,B2,B3,B4,B5),hostname(coleridge))
 +cores=4
 +mailbox_core_cost=*  // <!> Missing
 +core_core_cost=*  // <!> Missing
++pair_cores="true"
 
 [core]
 +threads=16

@@ -314,7 +314,7 @@ Orchestrator's representation. These components map as follows:
 | $C_{\mathrm{THREAD}}$                         | $T_{\mathrm{THREAD}}$                            |
 +-----------------------------------------------+--------------------------------------------------+
 
-Each component $C$ has a fixed width $W$ for the lifetime of the Orchestrator
+Each component $C$ has a fixed width $W$ for the lifetime of the engine
 (e.g. $W_{\mathrm{MAILBOX}}$), and is buffered by zeroes so that each component
 does not overrun into any other component. By way of example, the source name
 of component $C_{\mathrm{BOX}}$ is `HardwareAddress::boxComponent`, and the
@@ -1232,6 +1232,8 @@ Members:
  - `float costThreadThread`: Indicates the cost of communicating between
    threads run on this core.
 
+ - `P_core* pair`: Points to the other core in this core pair, if any.
+
 Methods:
 
  - `P_core::P_core(std::string name)`: Core constructor, sets the `NameBase`
@@ -1272,6 +1274,7 @@ NameBase dump-------------------------------
 
 No data binary assigned to this core.
 No instruction binary assigned to this core.
+No pair associated with this core.
 Threads in this core ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         <a recursive dump of all threads in this core goes here>
 Threads in this core ----------------------------------------------------------
