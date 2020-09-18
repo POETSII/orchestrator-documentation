@@ -2,14 +2,14 @@ version: 2
 jobs:
   build:
     docker:
-      - image: jagregory/pandoc
+      - image: pandoc/latex
     steps:
       - checkout
 
       # The docker image does not correctly install the fvextra latex
       # package. We pull fvextra.sty from the maintainer so we can use in the
       # build process.
-      - run: "git clone https://github.com/gpoore/fvextra.git; cp fvextra/fvextra/fvextra.sty ./"
+      # - run: "git clone https://github.com/gpoore/fvextra.git; cp fvextra/fvextra/fvextra.sty ./"
 
       # Docker image is missing graphviz, which we need to use to build
       # images. The update may fail due to out-of-date PPAs and other things we
