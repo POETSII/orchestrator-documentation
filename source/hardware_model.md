@@ -25,7 +25,7 @@ where each green box is a hardware construct, represented in the Orchestrator
 by a class:
 
 ![A simplified schematic of the hardware model used in the Orchestrator. Edges
-indicate containment.](images/engine_structure_simple.pdf)
+indicate containment.](images/engine_structure_simple.png)
 
  - The "Engine" (`P_engine`) is the primary interface for the hardware model,
    and encapsulates its components in a hierarchy. One Engine is owned by
@@ -141,7 +141,7 @@ it is "adjacent to". Pins connect boards together over special edges
 (`P_link`s, black edges). Board connection in this way may be arbitrary; the
 graph does not need to be Manhattan, and can contain cycles (but not
 loops). This description extends to the graph of mailboxes
-`P_board::G`.](images/generic_graph.pdf)
+`P_board::G`.](images/generic_graph.png)
 
 # Iteration
 As an Orchestrator developer, it is often useful to iterate over different
@@ -314,7 +314,7 @@ Orchestrator's representation. These components map as follows:
 | $C_{\mathrm{THREAD}}$                         | $T_{\mathrm{THREAD}}$                            |
 +-----------------------------------------------+--------------------------------------------------+
 
-Each component $C$ has a fixed width $W$ for the lifetime of the Orchestrator
+Each component $C$ has a fixed width $W$ for the lifetime of the engine
 (e.g. $W_{\mathrm{MAILBOX}}$), and is buffered by zeroes so that each component
 does not overrun into any other component. By way of example, the source name
 of component $C_{\mathrm{BOX}}$ is `HardwareAddress::boxComponent`, and the
@@ -341,7 +341,7 @@ addressing capabilities. The `HardwareAddressFormat` is effectively a "master
 copy" that applies over the items in the engine. Green boxes are classes
 representing items in the hardware model. Red boxes are classes supporting
 addressing behaviours. Blue boxes are sets of members.
-](images/addressing_structure.pdf)
+](images/addressing_structure.png)
 
 [^whyformat]: Because a system can have many threads, cores, mailboxes, boards,
     and boxes, `HardwareAddress` is designed to have as low a data footprint as
@@ -410,7 +410,7 @@ model (Engine, `OrchBase->pE`) through topology commands. Certain commands
 objects, which are used to define the Engine. None of these command-transient
 objects persist after the command has completed. Other commands (`/dump`,
 `/clear`) interact directly with the Engine in some
-way.](images/interaction_diagram.pdf)
+way.](images/interaction_diagram.png)
 
 # Future Work
 The hardware model is designed to be adaptable to potential changes in the
@@ -463,14 +463,14 @@ boards may be arranged differently), and is not how the Orchestrator models
 traffic. The bridge board facilitates this communication, and can be accounted
 for during placement, as devices on `B20` and `B21` will have a lower
 supervisor communication cost than the other compute
-boards.](images/bridge_board.pdf)
+boards.](images/bridge_board.png)
 
 ![Schematic showing how packets traverse both the mailbox (circles with "M")
 and board graphs. This is how the POETS Engine currently operates, and is not
 how the Orchestrator models traffic. In order for a packet to travel from one
 of the marked mailboxes to the other (red circles), it must leave the board
 through a multiplexed SFP+ connection. This connection carries the packet onto
-a specific mailbox on the other board.](images/mailbox_board_interaction.pdf)
+a specific mailbox on the other board.](images/mailbox_board_interaction.png)
 
 # Appendix A: Source definitions
 This Appendix describes the methods and members of each class defined as part
@@ -1214,10 +1214,11 @@ Members:
    all threads that can be run by this core. Threads are indexed by the thread
    component ($C_{\mathrm{THREAD}}$) of their hardware address.
 
- - `Bin* dataBinary`: Holds a data binary (to be)/deployed to this core.
+ - `std::string dataBinary`: Holds the path to the data binary (to be)/deployed
+   to this core.
 
- - `Bin* instructionBinary`: Holds an instruction binary (to be)/deployed to
-   this core.
+ - `std::string instructionBinary`: Holds the path to the instruction binary
+   (to be)/deployed to this core.
 
  - `unsigned int dataMemory`: Amount of memory available for a data binary.
 
@@ -1231,19 +1232,17 @@ Members:
  - `float costThreadThread`: Indicates the cost of communicating between
    threads run on this core.
 
+ - `P_core* pair`: Points to the other core in this core pair, if any.
+
 Methods:
 
  - `P_core::P_core(std::string name)`: Core constructor, sets the `NameBase`
-   name using the input argument `name`. Also dynamically initialises
-   `dataBinary` and `instructionBinary` with empty `Bin` objects.
+   name using the input argument `name`.
 
  - `P_core::~P_core()`: Core destructor, see `P_core::clear()`.
 
  - `void P_core::clear()`: Deletes all `P_thread` objects pointed to by
-   `P_threadm`, clears `P_threadm`, and calls `P_core::clear_binaries`.
-
- - `void P_core::clear_binaries()`: Deletes the dynamically-allocated binaries
-   in an idempotent manner.
+   `P_threadm`, and clears `P_threadm`.
 
  - `void P_core::contain(AddressComponent addressComponent, P_thread* thread)`:
    If the thread `thread` is not owned by another core, this method adds
@@ -1257,7 +1256,8 @@ Methods:
  - `void P_core::on_being_contained_hook(P_mailbox* container)`: Sets the
    parent of this core to the mailbox containing it.
 
-An example dump (`P_core::Dump()`) of a core with no binary data follows.
+An example dump (`P_core::Dump()`) of a core with no binaries assigned to it
+follows.
 
 ```
 P_core O_.Simple [1 box].Box000000.Board000000.Mailbox000000.Core000000 +++++++
@@ -1274,6 +1274,7 @@ NameBase dump-------------------------------
 
 No data binary assigned to this core.
 No instruction binary assigned to this core.
+No pair associated with this core.
 Threads in this core ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         <a recursive dump of all threads in this core goes here>
 Threads in this core ----------------------------------------------------------

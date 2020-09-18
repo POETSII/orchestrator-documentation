@@ -1,0 +1,87 @@
+digraph G {
+
+    fontname="Inconsolata";
+    fontsize=12;
+    margin=0;
+    ranksep=0.35;
+
+    // Threads
+    node[color="#000000",
+         fillcolor="#ffffff:#eeeeee",
+         fontcolor="#111111",
+         fontname="Inconsolata",
+         fontsize=12,
+         gradientangle=270,
+         height=0,
+         margin=0.05;
+         penwidth=1;
+         shape="rect",
+         style="filled",
+         width=0];
+
+    MPIInputBroker[label="MPIInputBroker\n(fast)"];
+    MPICncResolver[label="MPICncResolver\n(slow)"];
+    MPIApplicationResolver[label="MPIApplicationResolver\n(slow)"];
+    BackendOutputBroker[label="BackendOutputBroker\n(slow)"];
+    BackendInputBroker[label="BackendInputBroker\n(fast)"];
+    DebugInputBroker[label="DebugInputBroker\n(slow)"];
+
+    // Queues
+    node[color="#000000",
+         fillcolor="#000000:#111111",
+         fontcolor="#eeeeee"];
+
+    MPIApplicationQueue;
+    MPICncQueue;
+    BackendOutputQueue;
+    BackendInputQueue;
+    DebugInputQueue;
+
+    // Communication Buses
+    node[color="#FFFFFF",
+         fillcolor="#FFFFFF"];
+
+    MPI [fontcolor="#BB0000"];
+    Backend [label="Compute Backend", fontcolor="#0000BB"];
+
+    // Producer-consumer relationship
+    edge[color="#000000",
+         fontname="Inconsolata",
+         fontsize=12;
+         penwidth=1];
+
+    MPIInputBroker -> MPIApplicationQueue;
+    MPIInputBroker -> MPICncQueue [label="Mothership command\nand control"];
+    MPICncQueue -> MPICncResolver;
+    MPIApplicationQueue -> MPIApplicationResolver;
+    MPIApplicationResolver -> BackendOutputQueue
+        [label=" For normal\ndevices"];
+    BackendOutputQueue -> BackendOutputBroker;
+    BackendInputBroker -> BackendInputQueue;
+    BackendInputBroker -> MPICncQueue;
+    BackendInputQueue -> BackendInputBroker;
+    DebugInputBroker -> DebugInputQueue;
+    DebugInputQueue -> DebugInputBroker;
+
+    // MPI
+    edge[color="#BB0000",
+         fontcolor="#BB0000"];
+
+    MPI -> MPIInputBroker [label=" From anywhere"];
+    MPIApplicationResolver -> MPI [label=" From\nsupervisors"];
+    //MPICncResolver -> MPI;
+    BackendInputBroker -> MPI [label=" For externals\nand supervisors"];
+    //DebugInputBroker -> MPI;
+
+    // Backend
+    edge[color="#0000BB",
+         fontcolor="#0000BB"];
+
+    Backend -> BackendInputBroker [label=" From normal\ndevices"];
+    Backend -> DebugInputBroker;
+    BackendOutputBroker -> Backend;
+
+    // Movement
+    { rank=min; MPI; }
+    { rank=max; Backend; }
+}

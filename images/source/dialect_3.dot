@@ -66,7 +66,6 @@ graph G {
     // Formatting
     node[shape="point", width=0.005, color="#550000", style="filled"];
     EuropaB0 -- Invis;
-    Invis -- Invis2;
 
     // Inter-box links
     IoB0 -- IoB1 [label=" 5"];
@@ -76,7 +75,7 @@ graph G {
     // Cross-box links
     IoB0 -- EuropaB0 [label="20", constraint=false];
     IoB1 -- GanymedeB0 [label=" 20"];
-    Invis2 -- CallistoB0 [label=" 20"];
+    Invis -- CallistoB0 [label=" 20"];
     GanymedeB0 -- CallistoB0 [label="20", constraint=false];
     GanymedeB1 -- CallistoB1 [label="20", constraint=false];
 }

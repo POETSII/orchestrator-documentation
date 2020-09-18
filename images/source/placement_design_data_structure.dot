@@ -1,0 +1,338 @@
+digraph G {
+    fontname="Inconsolata";
+    fontsize=11;
+    margin=0;
+    nodesep=0.3;
+    rankdir="UD";
+    ranksep=0.2;
+
+    /* Class definitions (as graph nodes) */
+    node[color="#005500",
+         fillcolor="#DBFFDE:#A8FF8F",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0,
+         shape="rect",
+         style="filled"];
+
+    /* Class definitions (as graph nodes). */
+    OrchBase[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>OrchBase</TD></TR>
+<TR><TD ALIGN="LEFT">
++ pE : P_engine*<BR ALIGN="LEFT"/>
++ P_taskm : map&lt;string, P_task*&gt;<BR ALIGN="LEFT"/>
++ pPlacer : Placer*<BR ALIGN="LEFT"/>
+ ...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+"Base class" of the Orchestrator.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    P_engine[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>P_engine</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Encapsulates the hardware model.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    P_task[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>P_task</TD></TR>
+<TR><TD ALIGN="TEXT">
++ pD : GraphI_t*<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Encapsulates<BR ALIGN="TEXT"/>
+a task.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    GraphI_t[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>GraphI_t (D_graph)</TD></TR>
+<TR><TD ALIGN="TEXT">
++ G : pdigraph&lt;nodeType=DevI_t*,<BR ALIGN="LEFT"/>
+               edgeType=MsgT_t*,<BR ALIGN="LEFT"/>
+               pinType=PinI_t*&gt;<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds the graph<BR ALIGN="TEXT"/>
+of devices.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    P_thread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>P_thread</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Represents a thread in<BR ALIGN="TEXT"/>
+the hardware model.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    DevI_t[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>DevI_t (P_Device)</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Represents a device<BR ALIGN="TEXT"/>
+in a task.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    MsgT_t[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+           <TR><TD>MsgT_t (P_message)</TD></TR>
+<TR><TD ALIGN="TEXT">
++ weight : float<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Represents an edge<BR ALIGN="TEXT"/>
+connecting two<BR ALIGN="TEXT"/>
+devices in a task.<BR ALIGN="TEXT"/><BR ALIGN="TEXT"/>
+The weight is defined<BR ALIGN="TEXT"/>
+by Algorithm:do_it.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    node[color="#000055",
+         fillcolor="#DEDBFF:#8FA8FF"];
+
+    Placer[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Placer</TD></TR>
+<TR><TD ALIGN="LEFT">
++ constraints : list&lt;Constraint*&gt;<BR ALIGN="LEFT"/>
++ deviceToThread : map&lt;DevI_t*,<BR ALIGN="LEFT"/>
+                       P_thread*&gt;<BR ALIGN="LEFT"/>
++ engine : P_engine*<BR ALIGN="LEFT"/>
++ placedTasks : map&lt;P_task*, Algorithm*&gt;<BR ALIGN="LEFT"/>
++ threadToDevices : map&lt;P_thread*,<BR ALIGN="LEFT"/>
+                        list&lt;DevI_t*&gt;&gt;<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ compute_fitness(P_task*) : float<BR ALIGN="LEFT"/>
++ Dump(FILE*) : void<BR ALIGN="LEFT"/>
++ load_constraint_file(string) : void<BR ALIGN="LEFT"/>
++ place(P_task*, string) : float<BR ALIGN="LEFT"/>
++ unplace(P_task*) : void<BR ALIGN="LEFT"/>
+- check_all_devices_mapped(P_task*<BR ALIGN="LEFT"/>
+                           vector&lt;DevI_t*&gt;*) : bool<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Manages placement of tasks into<BR ALIGN="TEXT"/>
+the hardware model.
+</TD></TR></TABLE>>];
+
+    MaxDeviceDistance[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>MaxDeviceDistance:Constraint</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Constrains the maximum distance<BR ALIGN="TEXT"/>
+between two connected devices.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Constraint[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Constraint</TD></TR>
+<TR><TD ALIGN="LEFT">
++ category : const constraintCategory<BR ALIGN="LEFT"/>
++ mandatory: bool<BR ALIGN="LEFT"/>
++ penalty : float<BR ALIGN="LEFT"/>
++ satisfied : bool<BR ALIGN="LEFT"/>
++ task : P_task* (PNULL is valid)<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
++ virtual is_satisfied(Placer*) : bool<BR ALIGN="LEFT"/>
++ virtual is_satisfied_delta(Placer*,<BR ALIGN="LEFT"/>
+                             vector&lt;DevI_t*&gt;) : bool<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Represents a constraint imposed on the place-<BR ALIGN="TEXT"/>
+-ment system (for one task, or for all tasks).<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    placeholder_1[style="invis"];
+    placeholder_2[style="invis"];
+
+    constraintCategory[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>constraintCategory (enum)</TD></TR>
+<TR><TD ALIGN="LEFT">
+MaxDevicePerThread<BR ALIGN="LEFT"/>
+FixDevice<BR ALIGN="LEFT"/>
+ConstrainDeviceDistance<BR ALIGN="LEFT"/>
+And more I've not<BR ALIGN="LEFT"/>
+thought up yet.<BR ALIGN="LEFT"/>
+</TD></TR></TABLE>>];
+
+    MaxDevicesPerThread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>MaxDevicesPerThread:Constraint</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Constrains the maximum number of<BR ALIGN="TEXT"/>
+devices that can be placed on any thread.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Algorithm[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Algorithm</TD></TR>
+<TR><TD ALIGN="LEFT">
++ placer : Placer*<BR ALIGN="LEFT"/>
++ result : Result<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ Algorithm(Placer*)<BR ALIGN="LEFT"/>
++ virtual do_it(P_task*) : float<BR ALIGN="LEFT"/>
++ virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Represents the execution<BR ALIGN="TEXT"/>
+of a placement algorithm.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Result[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Result (struct)</TD></TR>
+<TR><TD ALIGN="LEFT">
++ maxDevicesPerThread : unsigned<BR ALIGN="LEFT"/>
++ maxEdgeCost : float<BR ALIGN="LEFT"/>
++ score : float<BR ALIGN="LEFT"/>
++ when : string<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+The results of a placement algorithm execution.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    SimulatedAnnealing[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>SimulatedAnnealing:Algorithm</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Does simulated annealing.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    BucketFilling[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>BucketFilling:Algorithm</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Does bucket filling.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    /* Relationship definitions (as graph edges) */
+    edge[color="#000000",
+         fontname="Inconsolata",
+         fontsize=11];
+
+    /* Containment. */
+    {edge[arrowhead="vee"];
+        OrchBase -> Placer[label=" OrchBase->pPlacer"];
+        Constraint -> constraintCategory[label=" Constraint.category"];
+        Algorithm -> Result[label=" Algorithm.result"];
+        OrchBase -> P_engine[label=" OrchBase->pE"];
+        P_task -> GraphI_t[label=" P_task->pD"];
+        Placer -> P_engine[label=" Placer->engine"];
+        Algorithm -> Placer[label=" Algorithm->placer"];
+    }
+
+    /* Containment across ellipsis nodes. */
+    {node[label="...", margin=0, color="#FFFFFF", fillcolor="#FFFFFF"];
+        ellipsis_1;
+    }
+
+    {edge[arrowhead="none"];
+        P_engine -> ellipsis_1;
+    }
+
+    {edge[arrowhead="diamond"];
+        ellipsis_1 -> P_thread;
+    }
+
+    /* One-to-many relationships in a separate block. */
+    {edge[arrowhead="diamond"];
+        OrchBase -> P_task[label=" OrchBase.P_taskm"];
+        Placer -> Constraint[label=" Placer.constraints"];
+        Placer -> Algorithm[label=" Placer.placedTasks"];
+        GraphI_t -> DevI_t[label=" GraphI_t.G\n (node)"];
+        GraphI_t -> MsgT_t[label=" GraphI_t.G\n (edge)"];
+
+        /* Placement! */
+        {edge[color="#AA0000", style="dashed"];
+        Placer -> P_thread[label=" Placer.threadToDevices\n Placer.deviceToThread\n (Algorithm.do_it)",
+                           constraint=false];
+        Placer -> DevI_t[label=" Placer.threadToDevices\n Placer.deviceToThread\n (Algorithm.do_it)",
+                           constraint=false];
+        }
+    }
+
+    /* Inheritance */
+    {edge[arrowhead="onormal", label=" (inherits)"];
+        //BucketFilling -> Algorithm;
+        Algorithm -> BucketFilling[arrowtail="onormal", dir="back"];
+        SimulatedAnnealing -> Algorithm;
+        MaxDevicesPerThread -> Constraint;
+        MaxDeviceDistance -> Constraint;
+    }
+
+    /* Rank hackery */
+    {rank="same";
+        P_engine -> P_task [style="invis"];
+        rankdir="LR";
+    }
+
+    {rank="same";
+        P_thread -> Placer -> DevI_t -> MsgT_t [style="invis"];
+        rankdir="LR";
+    }
+
+
+    {rank="same";
+        MaxDeviceDistance -> Constraint -> placeholder_1 -> Algorithm ->
+            BucketFilling [style="invis"];
+        rankdir="LR";
+    }
+
+    {edge[style="invis"];
+        BucketFilling -> SimulatedAnnealing;
+        MaxDeviceDistance -> MaxDevicesPerThread;
+        Placer -> placeholder_1;
+        placeholder_1 -> placeholder_2;
+    }
+}

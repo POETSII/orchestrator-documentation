@@ -38,24 +38,33 @@ define pandoc_build
 endef
 
 # Build a graph image using your dot builder of choice. Use only in a rule
-# definition. Takes no arguments.
+# definition. Note that this generates a non-vector image. MS word can't
+# understand pdf images in docx at half past four on a Sunday, gs font
+# configuration is poorly integrated in most Linuxes so epstopdf produces
+# warnings on every platform I've tried. So we're using PNGs. Nobody is happy
+# to make everybody happy, I suppose.
+#
+# Takes no arguments.
 define dot_build
 	@$(PRINT) "[....] Building \"$@\"..."
 	@$(MD) "$(GRAPH_TARGETS_DIR)"
-	@$(GRAPH_BUILDER) -Tpdf "$^" -o "$@"
+	@$(GRAPH_BUILDER) -Tpng -Gdpi=300 "$^" -o "$@"
 	@$(PRINT) "\r[DONE] Building \"$@\".\n"
 endef
 
 # Define images to build.
-ALL_IMAGE_TARGETS := $(GRAPH_TARGETS_DIR)/addressing_structure.pdf \
-                     $(GRAPH_TARGETS_DIR)/bridge_board.pdf \
-                     $(GRAPH_TARGETS_DIR)/d3_call_graph.pdf \
-                     $(GRAPH_TARGETS_DIR)/dialect_2.pdf \
-                     $(GRAPH_TARGETS_DIR)/dialect_3.pdf \
-                     $(GRAPH_TARGETS_DIR)/engine_structure_simple.pdf \
-                     $(GRAPH_TARGETS_DIR)/generic_graph.pdf \
-                     $(GRAPH_TARGETS_DIR)/interaction_diagram.pdf \
-                     $(GRAPH_TARGETS_DIR)/mailbox_board_interaction.pdf
+ALL_IMAGE_TARGETS := $(GRAPH_TARGETS_DIR)/addressing_structure.png \
+                     $(GRAPH_TARGETS_DIR)/bridge_board.png \
+                     $(GRAPH_TARGETS_DIR)/d3_call_graph.png \
+                     $(GRAPH_TARGETS_DIR)/dialect_2.png \
+                     $(GRAPH_TARGETS_DIR)/dialect_3.png \
+                     $(GRAPH_TARGETS_DIR)/engine_structure_simple.png \
+                     $(GRAPH_TARGETS_DIR)/generic_graph.png \
+                     $(GRAPH_TARGETS_DIR)/interaction_diagram.png \
+                     $(GRAPH_TARGETS_DIR)/mailbox_board_interaction.png \
+                     $(GRAPH_TARGETS_DIR)/mothership_data_structure.png \
+                     $(GRAPH_TARGETS_DIR)/mothership_producer_consumer.png \
+                     $(GRAPH_TARGETS_DIR)/placement_design_data_structure.png
 .NOT_INTERMEDIATE: $(ALL_IMAGE_TARGETS)
 
 # Define targets and backmatter dependencies. Backmatter dependencies are stuck
@@ -88,8 +97,8 @@ $(TEXT_TARGETS_DIR)/%.pdf: $(TEXT_SOURCES_DIR)/%.md $(PDF_BACKMATTER) \
 $(TEXT_TARGETS_DIR)/%.docx: $(TEXT_SOURCES_DIR)/%.md $(ALL_IMAGE_TARGETS)
 	$(call pandoc_build)
 
-# Builds one PDF from one dot (graph) file.
-$(GRAPH_TARGETS_DIR)/%.pdf: $(GRAPH_SOURCES_DIR)/%.dot
+# Builds one PNG from one dot (graph) file.
+$(GRAPH_TARGETS_DIR)/%.png: $(GRAPH_SOURCES_DIR)/%.dot
 	$(call dot_build)
 
 .PHONY: all clean docx pdf

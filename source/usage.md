@@ -179,19 +179,19 @@ which will print something like:
 
 ~~~ {.bash}
 Processes for comm 0
-Rank 00,            Root:OrchBase:CommonBase, created 10:28:19 Jan 25 2019
-Rank 01,                LogServer:CommonBase, created 10:28:19 Jan 25 2019
-Rank 02,                     RTCL:CommonBase, created 10:28:19 Jan 25 2019
-Rank 03,                    TMoth:CommonBase, created 10:28:19 Jan 25 2019
+Rank 00,            Root:OrchBase:CommonBase, created 10:28:19 Apr 16 2020
+Rank 01,                LogServer:CommonBase, created 10:28:19 Apr 16 2020
+Rank 02,                     RTCL:CommonBase, created 10:28:19 Apr 16 2020
+Rank 03,               Mothership:CommonBase, created 10:28:19 Apr 16 2020
 
 POETS> 16:06:32.31:  23(I) system /show
 POETS> 16:06:32.31:  29(I) The Orchestrator has 4 MPI processes on comm 0
 POETS> 16:06:32.31:  30(I) Process fielding has console I/O
 ~~~
 
-In this case, the Root, RTCL, LogServer, and TMoth (Mothership) components of
-the Orchestrator have been started. Note that all components of the
-Orchestrator exist on the same MPI communicator.
+In this case, the Root, RTCL, LogServer, and Mothership components of the
+Orchestrator have been started. Note that all components of the Orchestrator
+exist on the same MPI communicator.
 
 ### Loading a task (XML)
 
@@ -390,7 +390,6 @@ which causes the Orchestrator to print:
 
 ~~~ {.bash}
 POETS> task /deploy = "plate_3x3"
-Sending a distribution message to mothership with 2 cores
 ~~~
 
 Once executed, this command provisions the cores with the binaries. To execute
@@ -400,17 +399,10 @@ the binaries on the cores, and to start the supervisor, command:
 task /init = "plate_3x3"
 ~~~
 
-which causes the Orchestrator to print:
-
-~~~ {.bash}
-POETS> task /init = "plate_3x3"
-Starting Application Supervisor for application plate_3x3
-16:00:59.81: 540(I) Application Supervisor being started on Mothership 3
-~~~
-
 Control is returned to the user once this initialisation command is sent,
-though there is no acknowledgement when all of the cores have initialised. The
-cores now wait behind a barrier for the operator to start the job. Commanding:
+though there is no acknowledgement when all of the cores have
+initialised. Assuming that the cores now wait behind a barrier for the operator
+to start the job. Commanding:
 
 ~~~ {.bash}
 task /run = "plate_3x3"
