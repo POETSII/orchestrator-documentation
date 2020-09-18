@@ -5,7 +5,7 @@ jobs:
       - image: pandoc/latex
     steps:
       - checkout
-      - run: "apk add graphviz make texlive texmf-dist-latexextra"
+      - run: "apk add graphviz make texlive-full"
 
       # Build our documents.
       - run: make all
