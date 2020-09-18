@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: pandoc/latex
+      - image: pandoc/core
     steps:
       - checkout
       - run: "apk add graphviz make texlive-full"
