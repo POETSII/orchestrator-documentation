@@ -612,6 +612,12 @@ that is common to certain applications:
    the payload into a `P_Pkt_t`, and sends it using a (`BEND`, `SUPR`) message
    to all supervisors running for this application, except this one.
 
+ - `std::vector<std::string> Super::expose_device_map(const
+   std::vector<DeviceAddress>`: Some method that exposes the name of a device
+   (or set thereof) given a full address. Of particular use when outputting the
+   name of a device, from Supervisor handler, is desired. External devices
+   should still query NameServer to get this information.
+
  - Some method to set an RTCL "wake up call". Such a method could accept a
    paylod that is stored in the Mothership (as opposed to sent over the
    network), which is read when RTCL issues the "wake up call". What's the
