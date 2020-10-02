@@ -301,10 +301,10 @@ tlink /app = "plate_heat::plate3x3"
 
 where:
 
- - The text before the `::` in the parameter string denotes the application
+ - The text before the "`::`" in the parameter string denotes the application
    name (defined by the `appname` attribute in the `Graphs` element)
 
- - The text after the `::` element in the parameter string denotes the graph
+ - The text after the "`::`" element in the parameter string denotes the graph
    instance name (defined by the `id` attribute in the `GraphInstance`
    element).
 
@@ -337,61 +337,56 @@ sequence. This syntax is accepted for all commands where an application graph
 instance is accepted as a parameter. We adopt this last notation going forward
 in this guide (for brevity's sake).
 
-### Mapping Application Graph Instances to Hardware (placement))
+### Mapping Application Graph Instances to Hardware (Placement))
 
-With both a task graph (loaded application), and a hardware graph (POETS engine
-topology), the Orchestrator can map the former onto the latter. Command:
-
-~~~ {.bash}
-link /link = "plate_3x3"
-~~~
-
-where the name of your task (in our case, `plate_3x3`) can be obtained from
-`task /show` in the `Task` column. The Orchestrator prints:
+With a typelinked application graph instance (from XML), and a hardware graph
+(loaded automatically, in this case), the Orchestrator can map the former onto
+the latter. Command:
 
 ~~~ {.bash}
-POETS>link /link = "plate_3x3"
-XLinking device O_.plate_3x3.plate_3x3_graph.c_0_1 with id 0 to thread O_.Set1.Bx0096.Bo0097.Co0098.Th0101
-XLinking device O_.plate_3x3.plate_3x3_graph.c_0_2 with id 1 to thread O_.Set1.Bx0096.Bo0097.Co0098.Th0101
-...
-XLinking device O_.plate_3x3.plate_3x3_graph.c_2_2 with id 1 to thread O_.Set1.Bx0096.Bo0097.Co0136.Th0139
-POETS> 09:32:39.98:  23(I) link /link = "plate_3x3"
+place /bucket = *
 ~~~
 
-Each device defined in the task graph is one-to-one mapped to a thread in the
-POETS engine. Note that threads are identified in a hierarchical manner for
-debugging purposes; one can interpret `O_.Set1.Bx0096.Bo0097.Co0098.Th0101` as
-"The thread with UUID '0101' on the core with UUID '0098' on the FPGA board
-with ID '0097' in the POETS box with ID '0096' as described by the 'Set1'
-topology". Different topologies may use different naming conventions, but this
-output will always be hierarchical. For diagnostic information, this mapping,
-and its inverse, can be dumped by commanding `link /dump = "file"`.
+The Orchestrator prints:
+
+~~~ {.bash}
+POETS> 14:45:14.77: 309(I) Attempting to place graph instance 'plate_3x3' using the 'buck' method...
+POETS> 14:45:14.77: 302(I) Graph instance 'plate_3x3' placed successfully.
+~~~
+
+This command invokes the bucket-filling algorithm in the placement system. Each
+device defined in the application graph instance is one-to-many mapped to a
+thread in the POETS engine. For information about the placement performed,
+command:
+
+~~~ {.bash}
+place /dump = *
+~~~
+
+Which writes a series of files to `Output/Placement` (under default
+configuration). For more information on how to interpret these dumps, and for a
+comprehensive explanation of placement algorithms, consult the placement
+documentation.
 
 ### Building binaries for devices and supervisors (compilation)
 
-The task definition is comprised of the task graph (how devices are connected
-to each other, and how they communicate), and the device logic (the C fragments
-that define what each device does). Given the hardware mapping from the linking
-step, the Orchestrator can now produce binary files to execute on the cores of
-the POETS engine, and binary files to act as supervisor devices. To build these
-binaries in an idempotent manner, command:
+The application definition is comprised of the application graph instance (how
+devices are connected to each other, and how they communicate), and the device
+logic (the C fragments that define what each device does). Given the hardware
+mapping from the placement step, the Orchestrator can now produce binary files
+to execute on the cores of the POETS engine, and binary files to act as
+supervisor devices. To build these binaries in an idempotent manner, command:
 
 ~~~ {.bash}
-task /build = "plate_3x3"
+build /app = *
 ~~~
 
-This creates a directory structure at `task /path`. The code fragments defined
-in the task XML are assembled here, and are compiled using the RISCV compiler
-in the POETS Engine. Compilation may produce warnings or errors, which will be
-printed to stdout while the command is being executed; these should not be
-ignored in normal operation. Assuming no warnings or errors are printed, the
-Orchestrator prints:
+This creates a directory structure in the `build` path defined in the
+Orchestrator configuration. The code fragments defined in the task XML are
+assembled here, and are compiled using the RISCV compiler in the POETS
+Engine. Compilation may produce warnings or errors, which... <!>
 
-~~~ {.bash}
-POETS> task /build = "plate_3x3"
-POETS> 12:03:31.70:  23(I) task /build = "plate_3x3"
-POETS> 12:03:31.70: 801(D) P_builder::Add(name=plate_3x3,file=/path_to orchestrator_repository/application_staging/xml/plate_3x3.xml)
-~~~
+What does the Orchestrator print? <!>
 
 ### Loading binaries into devices for execution, and running the application
 
@@ -400,37 +395,29 @@ application can be run. Firstly, stage each binary onto its appropriate core by
 commanding:
 
 ~~~ {.bash}
-task /deploy = "plate_3x3"
-~~~
-
-which causes the Orchestrator to print:
-
-~~~ {.bash}
-POETS> task /deploy = "plate_3x3"
+build /deploy = *
 ~~~
 
 Once executed, this command provisions the cores with the binaries. To execute
 the binaries on the cores, and to start the supervisor, command:
 
 ~~~ {.bash}
-task /init = "plate_3x3"
+build /init = *
 ~~~
 
-Control is returned to the user once this initialisation command is sent,
-though there is no acknowledgement when all of the cores have
-initialised. Assuming that the cores now wait behind a barrier for the operator
-to start the job. Commanding:
+To start the application immediately when all cores report they are ready,
+commanding:
 
 ~~~ {.bash}
-task /run = "plate_3x3"
+build /run = "plate_3x3"
 ~~~
 
 will start the application once the cores have been initialised; the
-application will not start before the cores have been initialised. While they
+application will not start before all cores have been initialised. While they
 are running, jobs can be stopped by commanding:
 
 ~~~ {.bash}
-task /stop = "plate_3x3"
+build /stop = "plate_3x3"
 ~~~
 
 ## Interactive Usage Summary
@@ -443,45 +430,28 @@ most tasks of interest.
 # Usage (Batch)
 
 You can pass a UTF-8-encoded script file to the orchestrator for batch
-execution. For instance, the interactive usage example could have been run by
-commanding (without stop!):
+execution. For instance, the essential steps of the prior interactive usage
+example could have been run by commanding (in the shell):
 
 ~~~ {.bash}
-./orchestrate.sh -f /absolute/path/to/batch/script
+./orchestrate.sh -b /absolute/path/to/batch/script
 ~~~
 
 Where the file `/absolute/path/to/batch/script` contains:
 
 ~~~ {.bash}
-system /show
-task /path = "/path_to_orchestrator_repository/application_staging/xml"
-task /load = "plate_3x3.xml"
-task /show
-topology /set1
-topology /dump = "./my_topology_dump"
-link /link = "plate_3x3"
-task /build = "plate_3x3"
-task /deploy = "plate_3x3"
-task /init = "plate_3x3"
-task /run = "plate_3x3"
+load /app = +"plate_3x3.xml"
+tlink /app = *
+place /bucket = *
+build /app = *
+build /deploy = *
+build /init = *
+build /run = *
 ~~~
 
 Note that you will need to exit the Orchestrator once your job has finished, by
-commanding `exit` (this cannot be scripted, and would likely result in
-premature termination of your job).
-
-For reference, here's a more concise script that Mark uses to run his jobs,
-which does less printing and dumping:
-
-~~~ {.bash}
-task /path = "/home/mv1g18/repos/orchestrator/application_staging/xml"
-task /load = "plate_3x3.xml"
-link /link = "plate_3x3"
-task /build = "plate_3x3"
-task /deploy = "plate_3x3"
-task /init = "plate_3x3"
-task /run = "plate_3x3"
-~~~
+commanding `exit` (this cannot be scripted, as it would result in premature
+termination of your job).
 
 # Further Reading
 
