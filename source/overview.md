@@ -23,12 +23,12 @@ This document does not explain:
 ## Motivating the Orchestrator
 
 Figure 1 (left) shows the POETS stack; POETS consists of major three layers,
-one of which is the Orchestrator. Here are the other two:
+one of which is the Orchestrator. The other layers are:
 
  - Application Layer: The application is domain-specific problem (with
    context), which is to be solved on the POETS Engine. The role of the
    Application Layer is provide an interface for the user to translate their
-   problem into a task, which is a contextless graph of connected
+   problem into an application, which is a contextless graph of connected
    devices. These devices are units of compute that can send signals to other
    devices in the graph to solve a problem.
 
@@ -38,7 +38,7 @@ one of which is the Orchestrator. Here are the other two:
    FPGA boards, and an x86 machine used to control them (termed a
    "Mothership"). Hostlink exists as an API for the Engine.
 
-With only these two layers, POETS still requires a way to map the task
+With only these two layers, POETS still requires a way to map the application
 (Application Layer) onto the hardware (Engine Layer). POETS also lacks any way
 for the user to start, stop, observe, get results from, or otherwise generally
 interact with the Engine during operation. Enter the Orchestrator!
@@ -49,15 +49,15 @@ The Orchestrator is a middleware that interfaces between the Application Layer
 and the Engine Layer, and between the user and the Engine Layer. The core
 responsibilities of the Orchestrator are:
 
- - To load and manage tasks passed in from the application layer.
+ - To load and manage applications passed in from the application layer.
 
  - To identify the Engine it is operating on.
 
- - To efficiently map the task (from the application layer) onto the Engine.
+ - To efficiently map the application onto the Engine.
 
- - To deploy and "undeploy" tasks onto the Engine.
+ - To deploy and "undeploy" applications onto the Engine.
 
- - To allow the user to start and stop tasks running on the Engine.
+ - To allow the user to start and stop applications running on the Engine.
 
  - To allow the user to view the current state of the Engine.
 
@@ -79,7 +79,8 @@ with those layers to achieve its objectives}
 
 The Orchestrator consists of disparate components, which are logically arranged
 to achieve the objectives of the Orchestrator as a whole, while maintaining a
-sensible degree of modularity. These components are as follows:
+sensible degree of modularity. Components essential to the running of
+applications include:
 
  - "Root": While the Orchestrator is comprised of a series of modular
    components, the "Root" uses these components to achieve the features of the
@@ -92,8 +93,8 @@ sensible degree of modularity. These components are as follows:
      connected). This is either achieved through prior knowledge, or through a
      dynamic hardware-discovery mechanism.
 
-   - Can, on command, map a task onto the internal model of the Engine in an
-     efficient manner (placement).
+   - Can, on command, map an application onto the internal model of the Engine
+     in an efficient manner (placement).
 
    - Can, on command, build binaries to be executed on the cores of the Engine,
      and to stage them for execution on those cores.
@@ -101,6 +102,14 @@ sensible degree of modularity. These components are as follows:
  - "LogServer": The LogServer component records logging messages sent to it
    from other components, either for post-mortem purposes, or for elementary
    real-time system observation.
+
+ - "Mothership": The Orchestrator plays host to a number of mothership
+   processes, which must operate on the various boxes of the Engine. The
+   Mothership process is primarily responsible for managing communications
+   between the Orchestrator processes (MPI), and the hardware (packets), and
+   for loading and unloading of binaries passed to it from the Root process.
+
+Other components include:
 
  - "RTCL": The "Real-Time Clock" component manages an internal clock. A unit of
    functionality of this clock is to support a rudimentary "delay" command,
@@ -130,12 +139,6 @@ sensible degree of modularity. These components are as follows:
    for other components to execute. The User Output component handles messages
    from components to be displayed in the application frontend.
 
- - "Mothership": The Orchestrator plays host to a number of mothership
-   processes, which must operate on the various boxes of the Engine. The
-   Mothership process is primarily responsible for managing communications
-   between the Orchestrator processes (MPI), and the hardware (packets), and
-   for loading and unloading of binaries passed to it from the Root process.
-
 All of these components exist as separate processes in the same MPI
 (Message-Passing Interface,
 [https://www.mpi-forum.org/docs/](https://www.mpi-forum.org/docs/)) universe,
@@ -144,43 +147,34 @@ fully-functioning Orchestrator must have exactly one running instance of each
 of these component processes. All components of the Orchestrator make use of
 the communications broker "CommonBase" (see the implementation documentation).
 
-## The Supervisor
+## Supervisor Devices
 
-The Supervisor^[Note that "Supervisor" in the context of POETS is not related
-to supervisors in the context of UNIX-likes; the concepts are completely
-different.] (3.3) is one further component of the Orchestrator, but is unique
-in that it must execute on a POETS box, as part of the Mothership. The
-Supervisor is uniquely positioned at interface between the message-based (MPI)
-communication of the Orchestrator, and the packet-based communication of the
-Engine. Due to this positioning, the primary purpose of the Supervisor is to
-broker communication over this interface. This purpose enables the Supervisor
-to conduct its responsibilities, which are:
+Supervisor devices^[Note that "Supervisor" in the context of POETS is not
+related to supervisors in the context of UNIX-likes; the concepts are
+completely different.] are a further component of the Orchestrator, but are
+unique in that they execute as part of a deployed application, on a POETS box,
+as part of the Mothership. Each application has one Supervisor device per POETS
+box it is deployed to. Supervisors are uniquely positioned at interface
+between the message-based (MPI) communication of the Orchestrator, and the
+packet-based communication of the Engine. The supervisor can:
 
- - Input targetted data into the Engine (on the POETS box the Supervisor is
-   running on).
+ - Collect data from an application running on the Engine (specifically, the
+   POETS box that the Supervisor is running on).
 
- - Collect data from the Engine (on the POETS box the Supervisor is running on)
-   requested by another component of the Orchestrator, or the user.
+ - Process that data at run time.
 
-Note that an Orchestrator can contain multiple Supervisors in Engines with
-multiple POETS boxes.
-
-### Supervisor-Device Duality
+ - Input data into the Engine, either fed in externally or from processing.
 
 While a Supervisor is a component of the Orchestrator (reachable by messages
-from the Orchestrator), a Supervisor is also a device in the Engine (reachable
-by packets from the Engine). Unlike other devices:
+from the Orchestrator), a Supervisor is also a participant in an application
+(reachable by packets from the Engine). Supervisors act as a "local" point of
+contact for devices in the Engine, facilitating:
 
- - Supervisors cannot be explicitly defined in a task graph (Application
-   Layer), as they are "added" to the graph while the Orchestrator processes
-   it.
+ - Data exfiltration (logging).
 
- - On the task graph, Supervisors are always connected to all devices that are
-   mapped inside the box it is supervising, by one input edge and one output
-   edge.
+ - "Centralised" termination detection.
 
-As a device, Supervisors can be provisioned with application-specific packet
-handlers.
+ - Interaction between an application and the host operating system (!).
 
 # Key Points
 
@@ -199,7 +193,7 @@ handlers.
 
 # Further Reading
 
+ - Orchestrator Usage (in this repository).
+
  - The implementation documentation (big Word document). Seriously, do read
    this.
-
- - Orchestrator Usage (in this repository).
