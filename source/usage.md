@@ -3,8 +3,7 @@
 # Overview
 
 This document acts as a walkthrough for getting the Orchestrator running on
-POETS hardware, running on (mostly) POSIX-complient operating
-systems. Prerequisite reading:
+POETS hardware. Prerequisite reading:
 
  - Orchestrator Overview (in this repository)
 
@@ -22,6 +21,8 @@ document does not:
  - Explain what components of the Orchestrator that each command communicates
    with.
 
+ - Provide an exhaustive list of commands.
+
 Since the Orchestrator is under development, it is probable that these commands
 and their output may change. While the development team will make best efforts
 to update this documentation, it is inevitable that some idiosyncrasies are not
@@ -31,32 +32,29 @@ not match, please inform an Orchestrator developer.
 # Setup
 
 Given that you have an account on a POETS machine, you will first need to build
-the Orchestrator. The only supported way to use the Orchestrator is to build it
-from its sources. To set up the Orchestrator, perform the following actions on
-the POETS machine from your user account:
+the Orchestrator. The only way to use the Orchestrator is to build it from its
+sources. To set up the Orchestrator, perform the following actions on the POETS
+machine from your user account:
 
- - **Obtain the sources:** Clone the Orchestrator Git repository, at
-   https://github.com/poetsii/Orchestrator, and check out the `development`
+ - To obtain the sources, clone the Orchestrator Git repository, at
+   https://github.com/poetsii/Orchestrator, and check out the "development"
    branch.
 
- - **Setup environment:** In the file `Build/gcc/Makefile.dependencies` in the
-   Orchestrator repository, confirm that the directory pointed to by the
+ - In the file `Build/gcc/Makefile.dependencies` in the Orchestrator
+   repository, confirm that the directory pointed to by the
    `ORCHESTRATOR_DEPENDENCIES_DIR` variable exists. If it does not, complain to
    an Orchestrator developer, and:
 
-   - **Install dependencies:**
-     (https://github.com/poetsii/orchestrator-dependencies/releases) navigate
-     to the Orchestrator Dependencies repository, download the latest tarball
-     from the releases list, extract it (`tar -zxf <TARBALL>`), and modify the
-     `ORCHESTRATOR_DEPENDENCIES_DIR` variable in
-     `Build/gcc/Makefile.dependencies` to point to its root directory. If you
-     want to help your fellow users and you're on a POETS box, you can extract
-     it to `/local/orchestrator-dependencies/`.
+   - Obtain the latest Orchestrator dependencies tarball from
+     https://github.com/poetsii/orchestrator-dependencies/releases, extract it,
+     and modify the `ORCHESTRATOR_DEPENDENCIES_DIR` variable in
+     `Build/gcc/Makefile.dependencies` to point to the root directory of it. If
+     you want to help your fellow users and you're on a POETS box, you can
+     extract it to `/local/orchestrator-dependencies/`.
 
- - **Build the Orchestrator:** From the `Build/gcc` directory in the
-   Orchestrator repository, command `make all` to build the Orchestrator. You
-   may also wish to build in parallel, using the `-j N` flag ("N" build slaves
-   will be used).
+ - From the `Build/gcc` directory in the Orchestrator repository, command `make
+   all` to build the Orchestrator. You may also wish to build in parallel,
+   using the `-j N` flag ("N" build slaves will be used).
 
 The build process creates a series of disparate executables in the `bin`
 directory in the Orchestrator repository. If this process fails, or raises
@@ -70,14 +68,23 @@ POETS hardware.
 ## Execution
 
 Once built, change directory into the root directory of the Orchestrator
-repository. The script `orchestrate.sh` is created by the build process
-outlined in the previous section. To run it, command:
+repository, and command:
 
 ~~~ {.bash}
-./orchestrate.sh
+./orchestrate.sh  #This script is created during the build process
 ~~~
 
-Once executed, the Orchestrator waits at the Orchestrator operator prompt:
+Once executed, the Orchestrator waits at:
+
+~~~ {.bash}
+Attach debugger to Root process 0 (0).....
+~~~
+
+which pauses execution of the Orchestrator, and invites you to connect a
+debugging process, using your debugger of choice, to the process you created in
+the execution step. Whether or not you attach a debugger, enter a newline
+character into your shell to continue execution. You will then reach the
+Orchestrator operator prompt:
 
 ~~~ {.bash}
 POETS>
@@ -94,18 +101,18 @@ then hit any key to end the Orchestrator process. Note that this will
 effectively disown any jobs running on the Engine, so you will be unable to
 reconnect to any jobs started in this way.
 
-When starting the Orchestrator, you may also encounter a pair of messages
-similar to:
+You may also encounter a message similar to:
 
 ~~~ {.bash}
-POETS> 11:50:38.02:  20(I) The microlog for the command 'load /engine = "/local/orchestrator-common/hdf.uif"' will be written to '../Output/Microlog/Microlog_2020-10-02T11-50-38p0.plog'.
-POETS> 11:50:38.02: 140(I) Topology loaded from file ||/local/orchestrator-common/hdf.uif||.
+POETS> 11:16:30.04: 140(I) Topology loaded from file ||/local/orchestrator-common/hdf.uif||.
+POETS>
 ~~~
 
 in which case, the developer that has set up this machine has installed a
-default topology file, which you can later override if desired.
+default topology file, which you can later overwrite if desired (for more
+information about this default, see the launcher documentation).
 
-If your session terminates with:
+If your session terminates with
 
 ~~~ {.bash}
 Failed to acquire HostLink lock: Resource temporarily unavailable
@@ -113,21 +120,105 @@ Failed to acquire HostLink lock: Resource temporarily unavailable
 
 then the Mothership process was unable to connect to the API that allows it to
 control the Engine, so the Orchestrator has aborted. This error is raised when
-another Mothership process[^hl] is already running on
-this box; only one Mothership process can run on a box in the Engine at a
-time. Until that process ends, you will not be able to use the
-Orchestrator. This error may also be raised when the disk runs out of space,
-which you can check by commanding `df -h`.
+another Mothership process is already running on this box; only one Mothership
+process can run on a box in the Engine at a time. Until that process ends, you
+will not be able to use the Orchestrator. This error may also be raised when
+the disk runs out of space, which you can check by commanding `df -h`.
 
-[^hl]: or another HostLink process
-
-While your session is running, if you include the LogServer component, a log
-file `POETS.log` will be written in the `Output` directory containing details
-of the Orchestrator session.
+While your session is running, if you include the Logserver component, a log
+file will be written in the `bin` directory containing details of the
+Orchestrator session.
 
 ## Help
 
-Command `./orchestrate.sh --help`.
+Command `./orchestrate.sh --help` (obviously).
+
+## Commands, Logging, and I/O
+
+Orchestrator operator commands take the form "`Command /Clause =
+OperatorParameter`". Multiple parameters can be passed to a given clause
+(`Command /Clause = Operator0Parameter0, Operator1Parameter1`), and multiple
+clauses can be bassed to a given command (`Command /Clause0 = Parameter0
+/Clause1 = Parameter1`).
+
+As an example, command the following at the `POETS>` prompt:
+
+~~~ {.bash}
+test /echo = "Hello world"
+~~~
+
+The `test` command with the `echo` clause writes its parameters back to the
+operator. The command causes the Orchestrator to print something like:
+
+~~~ {.bash}
+POETS> 13:11:17.37:  23(I) test /echo = "Hello world"
+POETS> 13:11:17.37:  20(I) The microlog for the command 'test /echo = "Hello world"' will be written to '../Output/Microlog/Microlog_2020-10-02T13-11-17p0.plog'.
+POETS> 13:11:17.37:   1(I) Hello world
+~~~
+
+This output from the Orchestrator is created by the LogServer, and is written
+both to your prompt (on `stdout`) and to a log file at `Output/POETS.log`. Each
+line corresponds to a different logging entry. Using the first line of the
+above as an example:
+
+ - `13:11:17.37` is a timestamp (obviously)
+
+ - `23(I)` is the ID of the message, corresponding to entries in
+   `Config/OrchestratorMessages.ocfg` (not user-facing).
+
+ - `test /echo = "Hello world"` is the text of the log message.
+
+Each command issued to the Orchestrator prompt prints a "`23`" message,
+effectively echoing the command back to you. Each command also has a microlog
+associated with it - each command writes to a different file as shown by the
+"`20`" message, though not all commands populate their microlog. Finally, the
+"`1`" message is from the `test /echo` command (echoing your argument back to
+you). The execution of "`test /echo`" also writes content to the microlog in
+the file shown by the "`20`" message:
+
+~~~ {.bash}
+==================================================================================
+02/10/2020 13:09:20.42 file ../Output/Microlog/Microlog_2020-10-02T13-09-20p0.plog
+command [test /echo = "Hello world"]
+from console
+==================================================================================
+
+Hello world
+~~~
+
+To demonstrate how multiple clauses and parameters typically interact, command
+(forgive my syntax highlighting, I'm only human):
+
+~~~ {.bash}
+test /echo = "Hello","world" /echo = "Rise to vote sir" /echo = "test /echo = 'what,','why,','how?'"
+~~~
+
+which displays:
+
+~~~ {.bash}
+POETS> 13:46:48.82:  23(I) test /echo = "Hello","world" /echo = "Rise to vote sir" /echo = "test /echo = 'what,','why,','how?'"
+POETS> 13:46:48.82:  20(I) The microlog for the command 'test /echo = "Hello","world" /echo = "Rise to vote sir" /echo = "test /echo = 'what,','why,','how?'"' will be written to '../Output/Microlog/Microlog_2020-10-02T13-46-48p0.plog'.
+POETS> 13:46:48.82:   1(I) Hello world
+POETS> 13:46:48.82:   1(I) Rise to vote sir
+POETS> 13:46:48.82:   1(I) test /echo = 'what,','why,','how?'
+~~~
+
+and prints to the microlog:
+
+~~~ {.bash}
+======================================================================================
+02/10/2020 13:46:48.82 file ../Output/Microlog/Microlog_2020-10-02T13-46-48p0.plog
+command [test /echo = "Hello","world" /echo = "Rise to vote sir" /echo = "test /echo = 'what,','why,','how?'"]
+from console
+======================================================================================
+
+Hello world
+Rise to vote sir
+test /echo = 'what,','why,','how?'
+~~~
+
+Note that each clause "invokes" the command once (there are three "`1`"
+messages), with each parameter passed to it.
 
 ## An Exemplary Orchestrator Session
 
@@ -136,32 +227,26 @@ the flow of heat across a plate. This requires you to:
 
  - Have built the Orchestrator successfully on a POETS machine.
 
- - Obtain an XML description of the heated plate example (from
-   https://github.com/poetsii/Orchestrator_examples), in `plate_heat`. For this
-   demonstration, we will be using the premade 3x3 example. Place the XML file
-   in the `application_staging/xml` directory in the Orchestrator repository on
-   the POETS machine.
+ - Obtain an XML description of the heated plate example from the Git
+   repository of examples, at https://github.com/poetsii/Orchestrator_examples,
+   in `plate_heat`. For this demonstration, we will be using the premade 3x3
+   example. Place the XML file in the `application_staging/xml` directory in
+   the Orchestrator repository on the POETS machine.
 
- - Use the default Orchestrator configuration file in
-   `Config/Orchestrator.ocfg`, which is created packaged with the source.
-
-This session will, in order:
+This session will, in order (using a single POETS box):
 
  1. Verify that all components of the Orchestrator have been loaded in the
     current session.
 
- 2. Load an application (XML).
+ 2. Load an application (XML), and generate an application graph instance.
 
- 3. Inform the Orchestrator of the topology of the POETS engine (i.e. how many
-    boxes/boards/threads/cores, and how they are connected).
+ 3. Map the devices in the application graph instance to the hardware graph
+    using the Orchestrator (placement).
 
- 4. Map the devices in the application graph to the hardware graph using the
-    Orchestrator (linking).
+ 4. Generate binary files, from the sources defined in the XML, which will run
+    on the RISCV cores of the POETS engine and as a Supervisor device.
 
- 5. Generate binary files, from the sources defined in the XML, which will run
-    on the RISCV cores of the POETS engine.
-
- 6. How to load these binary files onto their respective cores, and to start an
+ 5. How to load these binary files onto their respective cores, and to start an
     application once the binary files have been loaded.
 
 ### Verifying all Orchestrator Components are Loaded
@@ -178,149 +263,84 @@ which will print something like:
 
 ~~~ {.bash}
 Orchestrator processes
-Rank 00,            Root:OrchBase:CommonBase, created 10:28:19 Oct  2 2020
-Rank 01,                LogServer:CommonBase, created 10:28:19 Oct  2 2020
-Rank 02,                     RTCL:CommonBase, created 10:28:19 Oct  2 2020
-Rank 03,               Mothership:CommonBase, created 10:28:19 Oct  2 2020
-
-POETS> 16:06:32.31:  23(I) system /show
-POETS> 16:06:32.31:  29(I) The Orchestrator has 4 MPI processes on comm 0
-POETS> 16:06:32.31:  30(I) Process ayres has console I/O
+Rank 00,            Root:OrchBase:CommonBase, created 10:28:19 Apr 16 2020
+Rank 01,                LogServer:CommonBase, created 10:28:19 Apr 16 2020
+Rank 02,                     RTCL:CommonBase, created 10:28:19 Apr 16 2020
+Rank 03,               Mothership:CommonBase, created 10:28:19 Apr 16 2020
 ~~~
 
 In this case, the Root, RTCL, LogServer, and Mothership components of the
 Orchestrator have been started. Note that all components of the Orchestrator
 exist on the same MPI communicator.
 
-### Loading an application (XML)
+### Loading an Application, and Type-Linking (XML)
 
-In order to run applications on POETS using the Orchestrator, an application
-file (XML) must first be loaded. At the `POETS>` prompt, command:
-
-~~~ {.bash}
-task /path = "/path_to_orchestrator_repository/application_staging/xml"
-~~~
-
-This command sets the path to load application XMLs from^[You can command this
-multiple times per Orchestrator-session, and the path will change each
-time]. In this case, set this to the `application_staging/xml` directory in
-your copy of the Orchestrator repository. The Orchestrator should respond, and
-you should see (with your path):
+To load an application file (XML), command (at the `POETS>` prompt):
 
 ~~~ {.bash}
-POETS>task /path = "/path_to_orchestrator_repository/application_staging/xml"
-POETS> 08:49:01.44:  23(I) task /path = "/path_to_orchestrator_repository/application_staging/xml"
-POETS> 08:49:01.44: 102(I) Task graph default file path is || ||
-POETS> 08:49:01.44: 103(I) New path is ||/path_to_orchestrator_repository/application_staging/xml||
+load /app = +"plate_3x3.xml"
 ~~~
 
-This output from the Orchestrator is created by the LogServer, and is written
-both to your prompt (on stdout), and to a log file in your current working
-directory. This output simply:
-
- - Logs the command you have typed.
-
- - Shows the previous file path.
-
- - Shows the new path.
-
-Now the path has been set, you can load the application graph into the
-Orchestrator by commanding:
+The `+` operator informs the Orchestrator to look in the configured directory
+(`application_staging/xml` in the default configuration) for the application
+file. The Orchestrator should respond with something like:
 
 ~~~ {.bash}
-task /load = "plate_3x3.xml"
+POETS> 14:06:47.57: 235(I) Application file ../application_staging/xml/plate_3x3.xml loading...
+POETS> 14:06:47.57:  65(I) Application file ../application_staging/xml/plate_3x3.xml loaded in 7565 ms.
 ~~~
 
-which will print:
+Application files consist of (zero or more) application graph types
+(`GraphType` element in the XML), and (zero or more) application graph
+instances (`GraphInstance` element in the XML). When the file is loaded, graph
+types and graph instances are not linked.
+
+Once your application file is loaded, type-link your graph instance to your
+graph type by commanding:
 
 ~~~ {.bash}
-POETS>task /load = "plate_3x3.xml"
-POETS> 08:49:18.01:  23(I) task /load = "plate_3x3.xml"
+tlink /app = "plate_heat::plate3x3"
 ~~~
 
-You can then verify that your application is loaded correctly by commanding:
+where:
+
+ - The text before the `::` in the parameter string denotes the application
+   name (defined by the `appname` attribute in the `Graphs` element)
+
+ - The text after the `::` element in the parameter string denotes the graph
+   instance name (defined by the `id` attribute in the `GraphInstance`
+   element).
+
+Any typelinking errors are written to the microlog generated by the command.
+
+#### Aside: Application graph instances as parameters
+
+In the above example, we commanded
 
 ~~~ {.bash}
-task /show
+tlink /app = "plate_heat::plate3x3"
 ~~~
 
-which shows all loaded applications, and some information about them. This
-command will print something like:
+which uniquely type-links the `plate3x3` graph instance loaded from the
+`plate_heat` application. Alternatively, we could have commanded:
 
 ~~~ {.bash}
-POETS>task /show
-
-Orchestrator has 1 tasks loaded:
-
-    |Task       |Supervisor |Linked   |Devices  |Channels |Declare    |PoL? | PoL type   |Parameters
-    +-----------+-----------+---------+---------+---------+-----------+-----+ -----------+------------+----....
-  0 | plate_3x3 |plate_3x3_supervisorNode_inst |      no |      10 |      38| plate_heat |User |           |/path_to_orchestrator_repository/application_staging/xml/plate_3x3.xml  |
-    +-----------+-----------+---------+---------+---------+-----------+-----+ -----------+------------+----....
-Default display filepath ||/path_to_orchestrator_repository/application_staging/xml||
-
-POETS> 08:57:18.53:  23(I) task /show
+tlink /app = "plate_heat"
 ~~~
 
-This output is a table (which is difficult to typeset). This output shows that:
-
- - The Orchestrator has parsed the XML, so the application has been loaded.
-
- - Applications have names (in this case, the name is `plate_3x3`, as shown in
-   the `Task` column.
-
- - The Orchestrator knows whether or not an application has been linked (a
-   linked application is an application that the Orchestrator has successfully
-   mapped onto a model of the hardware).
-
- - The Orchestrator knows how many nodes and edges the application graph has.
-
-As a user, you should verify that the information displayed by `task /show` is
-correct for your applicationtask. Last minute verification is valuable! Now
-that you have successfully loaded your application, you can run it on the
-hardware.
-
-### Defining hardware topology in the Orchestrator
-
-In order to run an application on the POETS engine, the Orchestrator needs to
-know the topology of the hardware the application is to run on. If you received
-the "Topology loaded" message from the execution section previously, then the
-Orchestrator already has a loaded topology, and you need not do anything
-more. However, for the purposes of this example, we will overwrite the loaded
-topology.
-
-For a one-box system, command:
+which links all graph instances loaded from the `plate_heat` application in
+sequence. More generally, we could have commanded:
 
 ~~~ {.bash}
-topology /set1
+tlink /app = *
 ~~~
 
-The Orchestrator should respond simply with (may also include a "Clearing"
-message if a topology was previously loaded):
+which links all graph instances loaded from all application files in
+sequence. This syntax is accepted for all commands where an application graph
+instance is accepted as a parameter. We adopt this last notation going forward
+in this guide (for brevity's sake).
 
-~~~ {.bash}
-POETS>topology /set1
-POETS> 09:24:05.29:  23(I) topology /set1
-POETS> 09:24:05.29: 138(I) Creating topology ||Set1||
-~~~
-
-If you are suspicious of the loaded topology, command:
-
-~~~ {.bash}
-topology /dump = "./my_topology_dump"
-~~~
-
-This creates the file `./my_topology_dump`, and dumps a description of the
-topology to that file. The Orchestrator prints:
-
-~~~ {.bash}
-POETS>topology /dump = "./my_topology_dump"
-POETS> 09:24:59.63:  23(I) topology /dump = "./my_topology_dump"
-~~~
-
-The file contains a hierarchical description of the topology, and is mostly
-useful for debugging suspicious behaviour.
-
-### Mapping the devices in the task graph to the hardware graph (linking)
+### Mapping Application Graph Instances to Hardware (placement))
 
 With both a task graph (loaded application), and a hardware graph (POETS engine
 topology), the Orchestrator can map the former onto the latter. Command:
