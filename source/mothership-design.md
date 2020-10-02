@@ -410,7 +410,7 @@ Notes:
       (though this is not currently used).
 
  - A rogue application can shut down arbitrary applications by using
-   `P_CNC_STOP` packets with different task IDs.
+   `P_CNC_STOP` packets with different application IDs.
 
  - Applications can stop themselves in two ways - either a normal device sends
    a `P_CNC_KILL` packet to the Mothership, or the supervisor calls the `void
@@ -549,8 +549,8 @@ detection" by `DebugInputBroker` (see the Debugging section).
 [^last]: This state is only set when the final message is received (see the
     Command and Control section for more information on `APP` messages).
 
-[^none]: "None" here means that `AppDB` and `SBase` do not know about the task,
-    and do not hold any information on it.
+[^none]: "None" here means that `AppDB` and `SBase` do not know about the
+    application, and do not hold any information on it.
 
 # Supervisors
 Supervisors are devices in an application that exist on the Mothership, and can
@@ -585,8 +585,8 @@ Mothership, as well as external devices elsewhere. They are:
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
    application name. For an incoming packet, the appropriate supervisor is
    identified from the task component of the software address. If the task
-   component does not correspond to a loaded task, the Mothership `Post`-s an
-   error message, and drops the packet.
+   component does not correspond to a loaded application, the Mothership
+   `Post`-s an error message, and drops the packet.
 
 ## Supervisor API
 The following API is available to application-writers to support functionality
@@ -646,13 +646,13 @@ stored on a per-compute-thread basis.
 
 # Debugging
 In addition to the acknowledgement messages that the Mothership generates while
-transitioning tasks between states, and the `DUMP` message, it is useful to
-have more fine-grained debugging control over running applications. The Tinsel
-backend provides a debugging interface over its UART backchannel, which can be
-exploited to exfiltrate acknowledgement and debugging information from normal
-devices in the backend. The `DebugInputBroker` acts on packets received by the
-Mothership by `Post`-ing a formatted message to the Logserver, including the
-packet payload and its origin. Debug packets sent in this way are stored as
+transitioning applications between states, and the `DUMP` message, it is useful
+to have more fine-grained debugging control over running applications. The
+Tinsel backend provides a debugging interface over its UART backchannel, which
+can be exploited to exfiltrate acknowledgement and debugging information from
+normal devices in the backend. The `DebugInputBroker` acts on packets received
+by the Mothership by `Post`-ing a formatted message to the Logserver, including
+the packet payload and its origin. Debug packets sent in this way are stored as
 `std::pair<uint32_t, uint8_t>` objects, where the first element of the pair
 represents the hardware address source (decoded using `HostLink::toAddr`), and
 the second element of the pair represents the byte payload. This class is
@@ -664,7 +664,7 @@ Mothership, which are repackaged and forwarded onto the LogServer.
 
 # Instrumentation
 Along with logging, it is useful to understand how the compute backend is
-performing during a given task, to help with optimisation and problem
+performing during a given application, to help with optimisation and problem
 diagnosis. The Mothership object holds an `InstrumentationWriter` instance,
 which consumes instrumentation data sent from the compute backend, and produces
 a set of CSV files at `$HOME/.orchestrator/instrumentation`, one per compute
@@ -748,8 +748,8 @@ ways:
    the same), and acknowledgement messages are sent back from the Mothership
    process to the Root process.
 
- - The data structures for holding task and supervisor information do not use
-   the hardware model, and are constructed from different pieces of
+ - The data structures for holding application and supervisor information do
+   not use the hardware model, and are constructed from different pieces of
    information.
 
  - Quitting and cleanup operates independently of backend traffic. The proposed

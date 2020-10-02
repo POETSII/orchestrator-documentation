@@ -58,7 +58,7 @@ machine from your user account:
  - **Build the Orchestrator:** From the `Build/gcc` directory in the
    Orchestrator repository, command `make all` to build the Orchestrator. You
    may also wish to build in parallel, using the `-j N` flag ("N" build slaves
-   will be used).
+   will be used). A `debug` build is also supported.
 
 The build process creates a series of disparate executables in the `bin`
 directory in the Orchestrator repository. If this process fails, or raises
@@ -67,7 +67,7 @@ fix these instructions, or fix the mistake in the build process. Once you have
 successfully completed the build, you are ready to use the Orchestrator on
 POETS hardware.
 
-# Usage (Interactive)
+# Interactive Usage
 
 ## Execution
 
@@ -427,7 +427,7 @@ session for running an application on the POETS engine. The example session
 demonstrates rudimentary Orchestrator operation, and is sufficient to execute
 most tasks of interest.
 
-# Usage (Batch)
+# Batch Usage
 
 You can pass a UTF-8-encoded script file to the orchestrator for batch
 execution. For instance, the essential steps of the prior interactive usage
@@ -458,5 +458,180 @@ termination of your job).
  - The launcher documentation, which explains the different switches for
    `orchestrate.sh`, and how it works and what it does.
 
+ - Appendix A and the Placement documentation for more commands.
+
  - The implementation documentation (big word document). Seriously, do read
    this.
+
+# Appendix A: Command List
+
+What follows is a list of the most useful operator commands supported by the
+present working version of the Orchestrator. Other commands exist, though are
+either internally used by other systems (`*`, `return`), or are for testing
+(basically everything in `system`). For the comprehensive list of commands
+(present and future), consult the implementation document (big Word document).
+
+## Build (`build`)
+
+ - `build /app`: Given a placed application graph instance (or multiple),
+   produces instruction and data binaries to be loaded onto the POETS Engine,
+   and produces a binary representation of the application supervisor.
+
+ - `build /deploy`: Given a built application graph instance (or multiple),
+   deploys its binaries to Motherships. This command informs the Mothership of
+   the existence of an application.
+
+ - `build /initialise`: Given a placed application graph instance (or
+   multiple), informs all Motherships that host the application that its
+   binaries are to be pushed to each core in the POETS Engine, and the
+   Supervisor device for the application is to be started, once deployment
+   (from `build /deploy`) is complete.
+
+ - `build /run`: Given a placed application graph instance (or multiple),
+   informs all Motherships that host the application that it is to be started
+   once it is fully initialised (from `build /initialise`). An application is
+   fully initialised when all cores report they are ready to begin, and once
+   the supervisor device has started.
+
+ - `build /stop`: Given a placed application graph instance (or multiple),
+   informs all Motherships that host the application that it is to be stopped,
+   once started (from `build /run`). If the application is already running, it
+   is stopped immediately. Stopping an application also stops any supervisor
+   devices for that application.
+
+ - `build /recl`: Given a placed application graph instance (or multiple),
+   informs all Motherships that host the application to forget about it
+   completely, unless it is running (it will need to be stopped first).
+
+## Call (`call`)
+
+Call commands interact with the batch subsystem.
+
+ - `call /echo`: If the first parameter is `on`, commands executed from the
+   batch subsystem are echoed to the operator. If `off`, they are not.
+
+ - `call /file`: Given an absolute path to a batch file, queues each command in
+   that batch file in turn. If the parameter is prefixed with the "`+`"
+   operator, the path is used relative to the configured batch file loading
+   directory.
+
+## Dump (`dump`)
+
+Provides various developer-facing diagnostic information.
+
+ - `dump /apps`: Dumps information about loaded applications to the file passed
+   as parameter. If no parameter is passed, the dump is written to standard
+   output instead.
+
+ - `dump /engine`: Dumps information about the POETS Engine (hardware model) to
+   the file passed as parameter. If no parameter is passed, the dump is written
+   to standard output instead.
+
+ - `dump /placer`: Dumps information about the placement subsystem pertaining
+   to all placed tasks to the configured placement output directory.
+
+## Exit (`exit`)
+
+Exits the Orchestrator. Cannot be used (meaningfully) inside a batch file.
+
+## Load (`load`)
+
+Load commands inject information into the Orchestrator from files.
+
+ - `load /app`: Given the path to an application file (XML) as a parameter,
+   loads that application file into the Orchestrator. If the parameter is
+   prefixed with the "`+`" operator, the path is used relative to the
+   configured application loading directory.
+
+ - `load /engine`: Given the path to a hardware description file as a
+   parameter, loads that file into the Orchestrator as the model of the Engine,
+   clobbering any existing model. If the parameter is prefixed with the "`+`"
+   operator, the path is used relative to the configured hardware model loading
+   directory. Alternatively, the special strings "`1_box_prototype`" or
+   "`2_box_prototype`" can be passed as parameters to load baked-in default
+   configurations for testing purposes.
+
+## Path (`path`)
+
+Path commands override the default configured paths (defined in
+`Config/Orchestrator.ocfg`). Each of these commands (except `clear`, `log`, and
+`reset`) accepts a single path to a directory (with a trailing slash) as an
+argument, and these paths are relative to the `bin` directory.
+
+ - `path /apps`: Sets default path to load applications from.
+
+ - `path /batch`: Sets default path to load batch files from.
+
+ - `path /clear`: Clears all pathing information.
+
+ - `path /engine`: Sets default path to load hardware description files from.
+
+ - `path /log`: Given a path to a file, sets the default path to log to.
+
+ - `path /place`: Sets default path to store placement information to.
+
+ - `path /reset`: Resets pathing information from configuration.
+
+ - `path /stage`: Sets default path to store compiled binaries to.
+
+ - `path /ulog`: Sets default path to store micrologs to.
+
+ - `path /mshp`: Sets default path to store Mothership deployment files to.
+
+## Place (`place`)
+
+Place commands operate on the placement subsystem of the Orchestrator. See the
+placement documentation for a comprehensive list of commands.
+
+## Return (`return`)
+
+The return command skips the rest of the commands from the calling file. Is a
+no-operation unless called form a batch file.
+
+## Show (`show`)
+
+Expose various pieces of information about the Orchestrator in microlog files.
+
+ - `show /apps`: Writes information about loaded applications to microlog.
+
+ - `show /batch`: Writes information about the batch subsystem to microlog.
+
+ - `show /engine`: Writes information about the POETS Engine (hardware model)
+   to microlog.
+
+ - `show /parser`: Writes information about the XML parser to microlog.
+
+ - `show /path`: Writes pathing information to microlog.
+
+ - `show /system`: Writes (detailed) information about running MPI processes to
+   microlog.
+
+## System (`system`)
+
+Lower-level system commands.
+
+ - `system /time`: Logs the date and time.
+
+ - `system /show`: Displays a terse list of running MPI processes.
+
+## Test (`test`)
+
+For information.
+
+ - `test /echo`: Logs and micrologs a message passed as one or more parameters.
+
+## TLink (`tlink`)
+
+ - `tlink /app`: Given a loaded application graph instance (or multiple),
+   type-links them. Type-linking a graph instance (loaded from XML) defines the
+   types of devices, edges, pins, and the graph instance itself from a graph
+   type (also loaded from XML).
+
+## Unload (`unload`)
+
+ - `unload /app`: Given a loaded application graph instance, or a loaded
+   application, (or `*`, denoting all applications), removes information about
+   that item/those items from the Orchestrator. Clears placement information
+   and composer information.
+
+ - `unload /engine`: Clears the hardware model and all placement information.
