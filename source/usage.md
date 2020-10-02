@@ -3,7 +3,8 @@
 # Overview
 
 This document acts as a walkthrough for getting the Orchestrator running on
-POETS hardware. Prerequisite reading:
+POETS hardware, running on (mostly) POSIX-compliant operating
+systems. Prerequisite reading:
 
  - Orchestrator Overview (in this repository)
 
@@ -36,25 +37,28 @@ the Orchestrator. The only way to use the Orchestrator is to build it from its
 sources. To set up the Orchestrator, perform the following actions on the POETS
 machine from your user account:
 
- - To obtain the sources, clone the Orchestrator Git repository, at
-   https://github.com/poetsii/Orchestrator, and check out the "development"
+ - **Obtain the sources:** Clone the Orchestrator Git repository, at
+   https://github.com/poetsii/Orchestrator, and check out the `development`
    branch.
 
- - In the file `Build/gcc/Makefile.dependencies` in the Orchestrator
-   repository, confirm that the directory pointed to by the
+ - **Setup environment:** In the file `Build/gcc/Makefile.dependencies` in the
+   Orchestrator repository, confirm that the directory pointed to by the
    `ORCHESTRATOR_DEPENDENCIES_DIR` variable exists. If it does not, complain to
    an Orchestrator developer, and:
 
-   - Obtain the latest Orchestrator dependencies tarball from
-     https://github.com/poetsii/orchestrator-dependencies/releases, extract it,
-     and modify the `ORCHESTRATOR_DEPENDENCIES_DIR` variable in
-     `Build/gcc/Makefile.dependencies` to point to the root directory of it. If
-     you want to help your fellow users and you're on a POETS box, you can
-     extract it to `/local/orchestrator-dependencies/`.
+   - **Install dependencies:**
+     (https://github.com/poetsii/orchestrator-dependencies/releases) navigate
+     to the Orchestrator Dependencies repository, download the latest tarball
+     from the releases list, extract it (`tar -zxf <TARBALL>`), and modify the
+     `ORCHESTRATOR_DEPENDENCIES_DIR` variable in
+     `Build/gcc/Makefile.dependencies` to point to its root directory. If you
+     want to help your fellow users and you're on a POETS box, you can extract
+     it to `/local/orchestrator-dependencies/`.
 
- - From the `Build/gcc` directory in the Orchestrator repository, command `make
-   all` to build the Orchestrator. You may also wish to build in parallel,
-   using the `-j N` flag ("N" build slaves will be used).
+ - **Build the Orchestrator:** From the `Build/gcc` directory in the
+   Orchestrator repository, command `make all` to build the Orchestrator. You
+   may also wish to build in parallel, using the `-j N` flag ("N" build slaves
+   will be used).
 
 The build process creates a series of disparate executables in the `bin`
 directory in the Orchestrator repository. If this process fails, or raises
@@ -68,23 +72,14 @@ POETS hardware.
 ## Execution
 
 Once built, change directory into the root directory of the Orchestrator
-repository, and command:
+repository. The script `orchestrate.sh` is created by the build process
+invoked in the previous section. To run the Orchestrator, command:
 
 ~~~ {.bash}
-./orchestrate.sh  #This script is created during the build process
+./orchestrate.sh
 ~~~
 
-Once executed, the Orchestrator waits at:
-
-~~~ {.bash}
-Attach debugger to Root process 0 (0).....
-~~~
-
-which pauses execution of the Orchestrator, and invites you to connect a
-debugging process, using your debugger of choice, to the process you created in
-the execution step. Whether or not you attach a debugger, enter a newline
-character into your shell to continue execution. You will then reach the
-Orchestrator operator prompt:
+Once executed, the Orchestrator waits at the Orchestrator operator prompt:
 
 ~~~ {.bash}
 POETS>
@@ -101,29 +96,31 @@ then hit any key to end the Orchestrator process. Note that this will
 effectively disown any jobs running on the Engine, so you will be unable to
 reconnect to any jobs started in this way.
 
-You may also encounter a message similar to:
+When starting the Orchestrator, you may also encounter a pair of messages
+similar to:
 
 ~~~ {.bash}
-POETS> 11:16:30.04: 140(I) Topology loaded from file ||/local/orchestrator-common/hdf.uif||.
-POETS>
+POETS> 11:50:38.02:  20(I) The microlog for the command 'load /engine = "/local/orchestrator-common/hdf.uif"' will be written to '../Output/Microlog/Microlog_2020-10-02T11-50-38p0.plog'.
+POETS> 11:50:38.02: 140(I) Topology loaded from file ||/local/orchestrator-common/hdf.uif||.
 ~~~
 
 in which case, the developer that has set up this machine has installed a
-default topology file, which you can later overwrite if desired (for more
-information about this default, see the launcher documentation).
+default topology file, which you can later override if desired.
 
-If your session terminates with
+If your session terminates with:
 
 ~~~ {.bash}
 Failed to acquire HostLink lock: Resource temporarily unavailable
 ~~~
 
 then the Mothership process was unable to connect to the API that allows it to
-control the Engine, so the Orchestrator has aborted. This error is raised when
-another Mothership process is already running on this box; only one Mothership
-process can run on a box in the Engine at a time. Until that process ends, you
-will not be able to use the Orchestrator. This error may also be raised when
-the disk runs out of space, which you can check by commanding `df -h`.
+another Mothership process[^hl] is already running on this box; only one
+Mothership process can run on a box in the Engine at a time. Until that process
+ends, you will not be able to use the Orchestrator. This error may also be
+raised when the disk runs out of space, which you can check by commanding `df
+-h`.
+
+[^hl]: or another HostLink process
 
 While your session is running, if you include the Logserver component, a log
 file will be written in the `bin` directory containing details of the
@@ -131,7 +128,7 @@ Orchestrator session.
 
 ## Help
 
-Command `./orchestrate.sh --help` (obviously).
+Command `./orchestrate.sh --help`.
 
 ## Commands, Logging, and I/O
 
@@ -227,11 +224,11 @@ the flow of heat across a plate. This requires you to:
 
  - Have built the Orchestrator successfully on a POETS machine.
 
- - Obtain an XML description of the heated plate example from the Git
-   repository of examples, at https://github.com/poetsii/Orchestrator_examples,
-   in `plate_heat`. For this demonstration, we will be using the premade 3x3
-   example. Place the XML file in the `application_staging/xml` directory in
-   the Orchestrator repository on the POETS machine.
+ - Obtain an XML description of the heated plate example (from
+   https://github.com/poetsii/Orchestrator_examples), in `plate_heat`. For this
+   demonstration, we will be using the premade 3x3 example. Place the XML file
+   in the `application_staging/xml` directory in the Orchestrator repository on
+   the POETS machine.
 
 This session will, in order (using a single POETS box):
 
