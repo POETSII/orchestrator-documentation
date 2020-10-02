@@ -3,7 +3,8 @@
 # Overview
 
 This document acts as a walkthrough for getting the Orchestrator running on
-POETS hardware. Prerequisite reading:
+POETS hardware, running on (mostly) POSIX-complient operating
+systems. Prerequisite reading:
 
  - Orchestrator Overview (in this repository)
 
@@ -21,8 +22,6 @@ document does not:
  - Explain what components of the Orchestrator that each command communicates
    with.
 
- - Provide an exhaustive list of commands.
-
 Since the Orchestrator is under development, it is probable that these commands
 and their output may change. While the development team will make best efforts
 to update this documentation, it is inevitable that some idiosyncrasies are not
@@ -32,29 +31,32 @@ not match, please inform an Orchestrator developer.
 # Setup
 
 Given that you have an account on a POETS machine, you will first need to build
-the Orchestrator. The only way to use the Orchestrator is to build it from its
-sources. To set up the Orchestrator, perform the following actions on the POETS
-machine from your user account:
+the Orchestrator. The only supported way to use the Orchestrator is to build it
+from its sources. To set up the Orchestrator, perform the following actions on
+the POETS machine from your user account:
 
- - To obtain the sources, clone the Orchestrator Git repository, at
-   https://github.com/poetsii/Orchestrator, and check out the "development"
+ - **Obtain the sources:** Clone the Orchestrator Git repository, at
+   https://github.com/poetsii/Orchestrator, and check out the `development`
    branch.
 
- - In the file `Build/gcc/Makefile.dependencies` in the Orchestrator
-   repository, confirm that the directory pointed to by the
+ - **Setup environment:** In the file `Build/gcc/Makefile.dependencies` in the
+   Orchestrator repository, confirm that the directory pointed to by the
    `ORCHESTRATOR_DEPENDENCIES_DIR` variable exists. If it does not, complain to
    an Orchestrator developer, and:
 
-   - Obtain the latest Orchestrator dependencies tarball from
-     https://github.com/poetsii/orchestrator-dependencies/releases, extract it,
-     and modify the `ORCHESTRATOR_DEPENDENCIES_DIR` variable in
-     `Build/gcc/Makefile.dependencies` to point to the root directory of it. If
-     you want to help your fellow users and you're on a POETS box, you can
-     extract it to `/local/orchestrator-dependencies/`.
+   - **Install dependencies:**
+     (https://github.com/poetsii/orchestrator-dependencies/releases) navigate
+     to the Orchestrator Dependencies repository, download the latest tarball
+     from the releases list, extract it (`tar -zxf <TARBALL>`), and modify the
+     `ORCHESTRATOR_DEPENDENCIES_DIR` variable in
+     `Build/gcc/Makefile.dependencies` to point to its root directory. If you
+     want to help your fellow users and you're on a POETS box, you can extract
+     it to `/local/orchestrator-dependencies/`.
 
- - From the `Build/gcc` directory in the Orchestrator repository, command `make
-   all` to build the Orchestrator. You may also wish to build in parallel,
-   using the `-j N` flag ("N" build slaves will be used).
+ - **Build the Orchestrator:** From the `Build/gcc` directory in the
+   Orchestrator repository, command `make all` to build the Orchestrator. You
+   may also wish to build in parallel, using the `-j N` flag ("N" build slaves
+   will be used).
 
 The build process creates a series of disparate executables in the `bin`
 directory in the Orchestrator repository. If this process fails, or raises
@@ -68,23 +70,14 @@ POETS hardware.
 ## Execution
 
 Once built, change directory into the root directory of the Orchestrator
-repository, and command:
+repository. The script `orchestrate.sh` is created by the build process
+outlined in the previous section. To run it, command:
 
 ~~~ {.bash}
-./orchestrate.sh  #This script is created during the build process
+./orchestrate.sh
 ~~~
 
-Once executed, the Orchestrator waits at:
-
-~~~ {.bash}
-Attach debugger to Root process 0 (0).....
-~~~
-
-which pauses execution of the Orchestrator, and invites you to connect a
-debugging process, using your debugger of choice, to the process you created in
-the execution step. Whether or not you attach a debugger, enter a newline
-character into your shell to continue execution. You will then reach the
-Orchestrator operator prompt:
+Once executed, the Orchestrator waits at the Orchestrator operator prompt:
 
 ~~~ {.bash}
 POETS>
@@ -101,18 +94,18 @@ then hit any key to end the Orchestrator process. Note that this will
 effectively disown any jobs running on the Engine, so you will be unable to
 reconnect to any jobs started in this way.
 
-You may also encounter a message similar to:
+When starting the Orchestrator, you may also encounter a pair of messages
+similar to:
 
 ~~~ {.bash}
-POETS> 11:16:30.04: 140(I) Topology loaded from file ||/local/orchestrator-common/hdf.uif||.
-POETS>
+POETS> 11:50:38.02:  20(I) The microlog for the command 'load /engine = "/local/orchestrator-common/hdf.uif"' will be written to '../Output/Microlog/Microlog_2020-10-02T11-50-38p0.plog'.
+POETS> 11:50:38.02: 140(I) Topology loaded from file ||/local/orchestrator-common/hdf.uif||.
 ~~~
 
 in which case, the developer that has set up this machine has installed a
-default topology file, which you can later overwrite if desired (for more
-information about this default, see the launcher documentation).
+default topology file, which you can later override if desired.
 
-If your session terminates with
+If your session terminates with:
 
 ~~~ {.bash}
 Failed to acquire HostLink lock: Resource temporarily unavailable
@@ -120,18 +113,21 @@ Failed to acquire HostLink lock: Resource temporarily unavailable
 
 then the Mothership process was unable to connect to the API that allows it to
 control the Engine, so the Orchestrator has aborted. This error is raised when
-another Mothership process is already running on this box; only one Mothership
-process can run on a box in the Engine at a time. Until that process ends, you
-will not be able to use the Orchestrator. This error may also be raised when
-the disk runs out of space, which you can check by commanding `df -h`.
+another Mothership process[^hl] is already running on
+this box; only one Mothership process can run on a box in the Engine at a
+time. Until that process ends, you will not be able to use the
+Orchestrator. This error may also be raised when the disk runs out of space,
+which you can check by commanding `df -h`.
 
-While your session is running, if you include the Logserver component, a log
-file will be written in the `bin` directory containing details of the
-Orchestrator session.
+[^hl]: or another HostLink process
+
+While your session is running, if you include the LogServer component, a log
+file `POETS.log` will be written in the `Output` directory containing details
+of the Orchestrator session.
 
 ## Help
 
-Command `./orchestrate.sh --help` (obviously).
+Command `./orchestrate.sh --help`.
 
 ## An Exemplary Orchestrator Session
 
@@ -140,23 +136,26 @@ the flow of heat across a plate. This requires you to:
 
  - Have built the Orchestrator successfully on a POETS machine.
 
- - Obtain an XML description of the heated plate example from the Git
-   repository of examples, at https://github.com/poetsii/Orchestrator_examples,
-   in `plate_heat`. For this demonstration, we will be using the premade 3x3
-   example. Place the XML file in the `application_staging/xml` directory in
-   the Orchestrator repository on the POETS machine.
+ - Obtain an XML description of the heated plate example (from
+   https://github.com/poetsii/Orchestrator_examples), in `plate_heat`. For this
+   demonstration, we will be using the premade 3x3 example. Place the XML file
+   in the `application_staging/xml` directory in the Orchestrator repository on
+   the POETS machine.
 
-This session will, in order (using Byron):
+ - Use the default Orchestrator configuration file in
+   `Config/Orchestrator.ocfg`, which is created packaged with the source.
+
+This session will, in order:
 
  1. Verify that all components of the Orchestrator have been loaded in the
     current session.
 
- 2. Load a task (XML).
+ 2. Load an application (XML).
 
  3. Inform the Orchestrator of the topology of the POETS engine (i.e. how many
     boxes/boards/threads/cores, and how they are connected).
 
- 4. Map the devices in the task graph to the hardware graph using the
+ 4. Map the devices in the application graph to the hardware graph using the
     Orchestrator (linking).
 
  5. Generate binary files, from the sources defined in the XML, which will run
@@ -178,25 +177,25 @@ system /show
 which will print something like:
 
 ~~~ {.bash}
-Processes for comm 0
-Rank 00,            Root:OrchBase:CommonBase, created 10:28:19 Apr 16 2020
-Rank 01,                LogServer:CommonBase, created 10:28:19 Apr 16 2020
-Rank 02,                     RTCL:CommonBase, created 10:28:19 Apr 16 2020
-Rank 03,               Mothership:CommonBase, created 10:28:19 Apr 16 2020
+Orchestrator processes
+Rank 00,            Root:OrchBase:CommonBase, created 10:28:19 Oct  2 2020
+Rank 01,                LogServer:CommonBase, created 10:28:19 Oct  2 2020
+Rank 02,                     RTCL:CommonBase, created 10:28:19 Oct  2 2020
+Rank 03,               Mothership:CommonBase, created 10:28:19 Oct  2 2020
 
 POETS> 16:06:32.31:  23(I) system /show
 POETS> 16:06:32.31:  29(I) The Orchestrator has 4 MPI processes on comm 0
-POETS> 16:06:32.31:  30(I) Process fielding has console I/O
+POETS> 16:06:32.31:  30(I) Process ayres has console I/O
 ~~~
 
 In this case, the Root, RTCL, LogServer, and Mothership components of the
 Orchestrator have been started. Note that all components of the Orchestrator
 exist on the same MPI communicator.
 
-### Loading a task (XML)
+### Loading an application (XML)
 
-In order to perform compute tasks on POETS using the Orchestrator, a task
-(graph, XML) must first be loaded. At the `POETS>` prompt, command:
+In order to run applications on POETS using the Orchestrator, an application
+file (XML) must first be loaded. At the `POETS>` prompt, command:
 
 ~~~ {.bash}
 task /path = "/path_to_orchestrator_repository/application_staging/xml"
@@ -225,8 +224,8 @@ directory. This output simply:
 
  - Shows the new path.
 
-Now the path has been set, you can load the task graph into the Orchestrator by
-commanding:
+Now the path has been set, you can load the application graph into the
+Orchestrator by commanding:
 
 ~~~ {.bash}
 task /load = "plate_3x3.xml"
@@ -239,14 +238,14 @@ POETS>task /load = "plate_3x3.xml"
 POETS> 08:49:18.01:  23(I) task /load = "plate_3x3.xml"
 ~~~
 
-You can then verify that your task is loaded correctly by commanding:
+You can then verify that your application is loaded correctly by commanding:
 
 ~~~ {.bash}
 task /show
 ~~~
 
-which shows all loaded tasks, and some information about them. This command
-will print something like:
+which shows all loaded applications, and some information about them. This
+command will print something like:
 
 ~~~ {.bash}
 POETS>task /show
@@ -264,20 +263,21 @@ POETS> 08:57:18.53:  23(I) task /show
 
 This output is a table (which is difficult to typeset). This output shows that:
 
- - The Orchestrator has parsed the XML, so the task has been loaded.
+ - The Orchestrator has parsed the XML, so the application has been loaded.
 
- - Tasks have names (in this case, the name is `plate_3x3`, as shown in the
-   `Task` column.
+ - Applications have names (in this case, the name is `plate_3x3`, as shown in
+   the `Task` column.
 
- - The Orchestrator knows whether or not a task has been linked (a linked task
-   is a task that the Orchestrator has successfully mapped onto a model of the
-   hardware).
+ - The Orchestrator knows whether or not an application has been linked (a
+   linked application is an application that the Orchestrator has successfully
+   mapped onto a model of the hardware).
 
- - The Orchestrator knows how many nodes and edges the task graph has.
+ - The Orchestrator knows how many nodes and edges the application graph has.
 
 As a user, you should verify that the information displayed by `task /show` is
-correct for your task. Last minute verification is valuable! Now that you have
-successfully loaded your task, you can run your task on the hardware.
+correct for your applicationtask. Last minute verification is valuable! Now
+that you have successfully loaded your application, you can run it on the
+hardware.
 
 ### Defining hardware topology in the Orchestrator
 
