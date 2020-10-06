@@ -227,8 +227,7 @@ the flow of heat across a plate. This requires you to:
  - Obtain an XML description of the heated plate example (from
    https://github.com/poetsii/Orchestrator_examples), in `plate_heat`. For this
    demonstration, we will be using the premade 3x3 example. Place the XML file
-   in the `application_staging/xml` directory in the Orchestrator repository on
-   the POETS machine.
+   in the root directory in the Orchestrator repository on the POETS machine.
 
 This session will, in order (using a single POETS box):
 
@@ -279,12 +278,12 @@ load /app = +"plate_3x3.xml"
 ~~~
 
 The `+` operator informs the Orchestrator to look in the configured directory
-(`application_staging/xml` in the default configuration) for the application
-file. The Orchestrator should respond with something like:
+(the root directory of the Orchestrator in the default configuration) for the
+application file. The Orchestrator should respond with something like:
 
 ~~~ {.bash}
-POETS> 14:06:47.57: 235(I) Application file ../application_staging/xml/plate_3x3.xml loading...
-POETS> 14:06:47.57:  65(I) Application file ../application_staging/xml/plate_3x3.xml loaded in 7565 ms.
+POETS> 14:06:47.57: 235(I) Application file ../plate_3x3.xml loading...
+POETS> 14:06:47.57:  65(I) Application file ../plate_3x3.xml loaded in 7565 ms.
 ~~~
 
 Application files consist of (zero or more) application graph types
