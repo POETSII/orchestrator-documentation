@@ -377,12 +377,12 @@ to execute on the cores of the POETS engine, and binary files to act as
 supervisor devices. To build these binaries in an idempotent manner, command:
 
 ~~~ {.bash}
-build /app = *
+compose /app = *
 ~~~
 
 This creates a directory structure in the `build` path defined in the
 Orchestrator configuration. The code fragments defined in the task XML are
-assembled here, and are compiled using the RISCV compiler in the POETS
+generated here, and are compiled using the RISCV compiler in the POETS
 Engine. Compilation may produce warnings or errors, which... <!>
 
 What does the Orchestrator print? <!>
@@ -442,7 +442,7 @@ Where the file `/absolute/path/to/batch/script` contains:
 load /app = +"plate_3x3.xml"
 tlink /app = *
 place /bucket = *
-build /app = *
+compose /app = *
 build /deploy = *
 build /init = *
 build /run = *
@@ -471,10 +471,6 @@ either internally used by other systems (`*`, `return`), or are for testing
 (present and future), consult the implementation document (big Word document).
 
 ## Build (`build`)
-
- - `build /app`: Given a placed application graph instance (or multiple),
-   produces instruction and data binaries to be loaded onto the POETS Engine,
-   and produces a binary representation of the application supervisor.
 
  - `build /deploy`: Given a built application graph instance (or multiple),
    deploys its binaries to Motherships. This command informs the Mothership of
@@ -513,6 +509,27 @@ Call commands interact with the batch subsystem.
    that batch file in turn. If the parameter is prefixed with the "`+`"
    operator, the path is used relative to the configured batch file loading
    directory.
+
+## Compose (`compose`)
+
+Compose commands interact with the composer subsystem, which is responsible for
+assembling translation units from parsed source fragments, and compiling those
+translation units using a (external) compiler. Composer output is placed in the
+configured staging directory (`Output/Composer` in the default configuration).
+
+ - `compose /app`: Given a placed application graph instance (or multiple),
+   produces instruction and data binaries to be loaded onto the POETS Engine,
+   and produces a binary representation of the application supervisor. It
+   performs the generation and build steps in sequence.
+
+ - `compose /generate`: Given a placed application graph instance (or
+   multiple), generates translation units (source code) from the loaded XML, to
+   be compiled into application binaries (both for normal devices and
+   supervisor devices).
+
+ - `compose /build`: Given a generated application graph instance (or
+   multiple), builds instruction and data binaries to be loaded onto the POETS
+   Engine, and produces a binary representation of the application supervisor.
 
 ## Dump (`dump`)
 
@@ -571,7 +588,8 @@ argument, and these paths are relative to the `bin` directory.
 
  - `path /reset`: Resets pathing information from configuration.
 
- - `path /stage`: Sets default path to store compiled binaries to.
+ - `path /stage`: Sets default path to store generated source files and
+   compiled binaries to.
 
  - `path /ulog`: Sets default path to store micrologs to.
 
