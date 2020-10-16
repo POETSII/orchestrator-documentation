@@ -142,18 +142,21 @@ specification.
 
 This section outlines how each of the features described in the "Applications
 as Graphs" section manifest as an application file (XML), which is consumed by
-the Orchestrator. Each of the following subsections describes a
-(semantically-acceptable) element of the XML tree, as follows:
+the Orchestrator. The Orchestrator accepts only application files encoded in
+ASCII. Prior to defining each element and attribute in detail, behaviours that
+are common to a significant number of concepts in the application definition
+are introduced. Then, each of the following subsections describes a
+(semantically-acceptable) element of the XML tree:
 
 ~~~
-Graphs                (4.1)
--GraphType            (4.1.1)
---Properties          (4.1.1.1)
---SharedCode          (4.1.1.2)
---MessageTypes        (4.1.1.3)
----MessageType        (4.1.1.3.1)
---DeviceTypes         (4.1.1.4)
----DeviceType         (4.1.1.4.1)
+Graphs                (4.2)
+-GraphType            (4.2.1)
+--Properties          (4.2.1.1)
+--SharedCode          (4.2.1.2)
+--MessageTypes        (4.2.1.3)
+---MessageType        (4.2.1.3.1)
+--DeviceTypes         (4.2.1.4)
+---DeviceType         (4.2.1.4.1)
 ----Properties
 ----State
 ----SharedCode
@@ -170,20 +173,127 @@ Graphs                (4.1)
 ----ReadyToSend
 ----OnInit
 ----OnDeviceIdle
----SupervisorType     (4.1.1.4.2)
+---SupervisorType     (4.2.1.4.2)
 ----Code
 ----SupervisorInPin
 -----OnReceive
 ----SupervisorOutPin
 -----OnSend
 ----OnSupervisorIdle
--GraphInstance        (4.1.2)
---Properties          (4.1.2.1)
---DeviceInstances     (4.1.2.2)
----DevI               (4.1.2.2.1)
---EdgeInstances       (4.1.2.3)
----EdgeI              (4.1.2.3.1)
+-GraphInstance        (4.2.2)
+--Properties          (4.2.2.1)
+--DeviceInstances     (4.2.2.2)
+---DevI               (4.2.2.2.1)
+--EdgeInstances       (4.2.2.3)
+---EdgeI              (4.2.2.3.1)
 ~~~
+
+## Source Code Fragments (`CDATA`)
+
+Application XML supports the use of `CDATA` sections to define various system
+behaviours. Code in these sections should be written in C++11, and make no
+assumptions of included non-standard libraries or functions that are not
+introduced in this documentation. Table 1 shows the variables exposed to each
+`CDATA` section. Table 2 explains what each variable introduced in Table 1
+represents.
+
++--------------------+--------------------------------------------------------+
+| Containing Element | Provided Variables                                     |
++====================+========================================================+
+| `DeviceType/`      | - `deviceProperties` (read-only)                       |
+| `SupervisorInPin`  | - `deviceState`                                        |
+| `/OnReceive`       | - `graphProperties` (read-only)                        |
+|                    | - `message` (read-only)                                |
++--------------------+--------------------------------------------------------+
+| `DeviceType/`      | - `deviceProperties` (read-only)                       |
+| `SupervisorOutPin` | - `deviceState`                                        |
+| `/OnSend`          | - `graphProperties` (read-only)                        |
+|                    | - `message`                                            |
++--------------------+--------------------------------------------------------+
+| `InputPin`         | - `deviceProperties` (read-only)                       |
+| `/OnReceive`       | - `deviceState`                                        |
+|                    | - `graphProperties` (read-only)                        |
+|                    | - `message` (read-only)                                |
+|                    | - `pinProperties` (read-only)                          |
+|                    | - `pinState`                                           |
++--------------------+--------------------------------------------------------+
+| `OutputPin`        | - `deviceProperties` (read-only)                       |
+| `/OnSend`          | - `deviceState`                                        |
+|                    | - `graphProperties` (read-only)                        |
+|                    | - `message`                                            |
++--------------------+--------------------------------------------------------+
+| `ReadyToSend`      | - `deviceProperties` (read-only)                       |
+|                    | - `deviceState`                                        |
+|                    | - `graphProperties` (read-only)                        |
+|                    | - `readyToSend`                                        |
++--------------------+--------------------------------------------------------+
+| `OnInit`           | - `deviceProperties` (read-only)                       |
+|                    | - `deviceState`                                        |
+|                    | - `graphProperties` (read-only)                        |
++--------------------+--------------------------------------------------------+
+| `OnDeviceIdle`     | - `deviceProperties` (read-only)                       |
+|                    | - `deviceState`                                        |
+|                    | - `graphProperties` (read-only)                        |
+| `DeviceType/`      | - `deviceProperties` (read-only)                       |
++--------------------+--------------------------------------------------------+
+| `SupervisorType/`  | - `deviceState`                                        |
+| `SupervisorInPin`  | - `graphProperties` (read-only)                        |
+| `/OnReceive`       | - `message` (read-only)                                |
++--------------------+--------------------------------------------------------+
+| `SupervisorType/`  | - `deviceState`                                        |
+| `SupervisorOutPin` | - `graphProperties` (read-only)                        |
+| `/OnSend`          | - `message`                                            |
++--------------------+--------------------------------------------------------+
+| `OnSupervisorIdle` | - `deviceState`                                        |
+|                    | - `graphProperties` (read-only)                        |
++--------------------+--------------------------------------------------------+
+| Other elements     | None                                                   |
++--------------------+--------------------------------------------------------+
+
+Table: Variables exposed to code written in `CDATA` sections in application
+XML.
+
++--------------------+--------------------------------------------------------+
+| Variable           | Meaning (All variables are pointers to structures)     |
++====================+========================================================+
+| `deviceProperties` | The target structure defines one field for each        |
+|                    | variable defined in the `CFRAG` in                     |
+|                    | `DeviceType/Properties`.                               |
++--------------------+--------------------------------------------------------+
+| `deviceState`      | The target structure defines one field for each        |
+|                    | variable defined (or at least declared) in the `CFRAG` |
+|                    | in `DeviceType/State`.                                 |
++--------------------+--------------------------------------------------------+
+| `graphProperties`  | The target structure defines one field for each        |
+|                    | variable defined in the `CFRAG` in                     |
+|                    | `GraphType/Properties`.                                |
++--------------------+--------------------------------------------------------+
+| `message`          | The target structure defines one field for each        |
+|                    | variable declared in the `CFRAG` in `MessageType`,     |
+|                    | for the message type with `id` attribute matching the  |
+|                    | `messageTypeId` attribute of the pin element using this|
+|                    | variable.                                              |
++--------------------+--------------------------------------------------------+
+| `pinProperties`    | The target structure defines one field for each        |
+|                    | variable defined in the `CFRAG` in the `Properties`    |
+|                    | element in the pin element using this variable.        |
++--------------------+--------------------------------------------------------+
+| `pinState`         | The target structure defines one field for each        |
+|                    | variable defined (or at least declared) in the `CFRAG` |
+|                    | in the `Properties` element in the pin element using   |
+|                    | this variable.                                         |
++--------------------+--------------------------------------------------------+
+| `readyToSend`      | The target structure defines one field for each        |
+|                    | `OutputPin` associated with this `DeviceType`. The     |
+|                    | names of these fields are the names of each `OutputPin`|
+|                    | as defined by their `name` attribute, prefixed with    |
+|                    | "`RTS_FLAG_`". At the beginning of the `readyToSend`   |
+|                    | handler, each of these fields is initialised to zero.  |
+|                    | For each field, if it is one after the handler has been|
+|                    | executed, a message is sent over that `OutputPin`.     |
++--------------------+--------------------------------------------------------+
+
+Table: Explanation of variables exposed to `CDATA` code.
 
 ## Graphs
 
