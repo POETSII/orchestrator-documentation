@@ -27,16 +27,18 @@ any domain that **remains constant with respect to the execution of the
 application** is suitable. This decomposition results in connected "regions" of
 the problem, which can be represented as a graph. Figure 1 shows an example of
 this. Formally, application graphs are tripartite directed graphs, which may
-contain loops and disconnected regions. With reference to Figure 1:
+contain loops, disconnected regions, and isolated vertices. With reference to
+Figure 1:
 
 [^dis]: For example, finite-difference or finite-element schemes where space is
     tiled (sometimes irregularly), in order to "break up" computation.
 
  - The major set of nodes (black circles) represent "Devices"
    (`:DeviceInstances:`), which each capture the behaviour of a vertex in the
-   discretised problem - it could be a vertex in the finite-difference mesh, or
-   an element in a finite-element discretisation. Each device has machine
-   instructions associated with it (introduced as C) to perform computation.
+   discretised problem. A device could represent a (set of) vertex/ices in the
+   finite-difference mesh, or a/n (set of) element/s in a finite-element
+   discretisation. Each device has machine instructions associated with it
+   to perform computation (`:CDATA:`).
 
  - The minor set of edges (black arrows) represent "Edges" (`:EdgeInstances:`),
    which each capture communication behaviour between one communication mode
@@ -49,15 +51,15 @@ contain loops and disconnected regions. With reference to Figure 1:
    sent along the edges associated with them, which is useful to assign
    "weights" to communications along an edge (`:Pin-Properties:`,
    `:Pin-State:`). Each edge is associated with one input pin and one output
-   pin. Each input/output pin can have multiple input/output edges connected to
-   it.
+   pin. Each input/output pin can have multiple input/output edges connected
+   to/from it.
 
 ![A graph representation of an application. Computation is performed by
 "Devices", and communication is facilitated by "Pins" and "Edges".](images/application_graph_simple.png)
 
 Applications in POETS can consist of millions of devices, each with thousands
-of connections to other devices. The behaviour of the device is intended to be
-as atomic and local as possible, supporting emergent macroscale
+of connections to other devices. The design intent is that device behaviour is
+as atomic and local as possible, and results in emergent macroscale
 behaviour. There exists no notion of global application state, as devices only
 operate on information visible to them, or that they request from neighbouring
 devices.
@@ -66,7 +68,8 @@ devices.
 
 As an application can contain many devices, a typing system (`:GraphType:`)
 exists to define properties, initial state, code, and pin types for a set of
-devices in the application without repetition, where:
+devices in the application. An application will instantiate each device with a
+type (`:DevI:`). Definitions:
 
  - **Properties** (`:DeviceType-Properties:`) define attributes of all devices
    of the type, which remain constant throughout the execution of the
@@ -75,7 +78,8 @@ devices in the application without repetition, where:
 
  - **Initial State** (`:DeviceType-State:`) defines attributes that can change
    during execution, but are initialised to a certain value. The initial value
-   of a state can be overriden on a per-device basis (`:DevI-State:`).
+   of a state can be overriden on a per-device basis (`:DevI-State:`), and is
+   free to differ across devices as an application executes.
 
  - **Code** defines the behaviours for devices of this type, which are invoked
    in response to input messages (`:InputPin-OnReceive:`), in response to
@@ -83,20 +87,24 @@ devices in the application without repetition, where:
    (`:DeviceType-OnInit:`), and when no computation is being carried out
    (`:DeviceType-OnDeviceIdle:`).
 
- - **Pin Types** hold property (`:InputPin-Properties:`,
-   `:OutputPin-Properties:`), state (`:InputPin-State:`, `:OutputPin-State:`),
-   and code (`:InputPin-OnReceive:`, `:OutputPin-OnSend:`) information for the
-   types of pins that can be connected to devices of this type. A pin type only
-   exists "in the context" of its containing device type.
+ - **Output Pin Types** hold code (`:OutputPin-OnSend:`) to define the contents
+   of messages sent from them. Output pins can read the properties of the
+   device that contains them, and can alter its state, which is useful to
+   locally "track" that a message has been sent
+
+ - **Input Pin Types** also hold code (`:InputPin-OnReceive:`) to read in
+   messages, and to influence the device that contains them. Input pins also
+   hold property (`:InputPin-Properties:`) and state (`:InputPin-State:`)
+   information, to support "weighting" of messages.
 
 The messages that devices use to communicate also have types
-(`:MessageTypes:`), which determine their fields. Each pin type is associated
-with a message type (`:MessageType:`) - if it is an input/output pin, then it
-expects to receive/send a message of a certain type. This typing mechanism
+(`:MessageTypes:`), which determines the fields of its payload. Each pin type
+is associated with a message type (`:MessageType:`) - if it is an input/output
+pin, then it can only receive/send messages of that type. This typing mechanism
 allows messages to be populated by the code of the sender
 (`:OutputPin-OnSend:`), and decoded by the receiver (`:InputPin-OnReceive:`).
 
-An application will instantiate each device with a type (`:DevI:`). Pins are
+ Pins are
 instantiated by edge connections (`:EdgeI:`). A device can have types of pins
 that are not connected - for example, a device instance (`:DevI:`) can have a
 type with a defined input pin, but not have any connections that use that input
@@ -107,20 +115,20 @@ pin.
 Supervisor devices are an optional component of a POETS application, which
 allow application writers to define behaviours at a centralised point. Unlike
 normal devices[^normal] which run on POETS hardware, supervisor devices run on
-the host machine, making them suitable for file I/O. Also unlike normal devices
-(`:DevI:`), supervisor devices are not instantiated by the application
-writer. If a supervisor device is required, the supervisor device type
-(`:SupervisorType:`) can be defined by the application writer (one per
-application), and supervisor devices are instantiated automatically by the
-Orchestrator.
+the host machine, making them suitable for file I/O and heavier compute
+loads. Also unlike normal devices (`:DevI:`), supervisor devices are not
+instantiated by the application writer. If a supervisor device is required, the
+supervisor device type (`:SupervisorType:`) can be defined by the application
+writer (one per application), and the Orchestrator will instantiate supervisor
+devices automatically.
 
 [^normal]: Prior to the introduction of supervisor devices in this document,
     the term "devices" specifically referred to normal devices for
     simplicity. Going forwards, this document makes an explicit distinction
     between "normal devices" and "supervisor devices" where possible.
 
-Supervisor devices have input (`:SupervisorType-SupervisorInPin:`) and output
-(`:SupervisorType-SupervisorOutPin:`) pins, and edges (`:EdgeI`) can be
+Supervisor devices have input pins (`:SupervisorType - SupervisorInPin:`),
+output (`:SupervisorType - SupervisorOutPin:`) pins. Edges (`:EdgeI:`) can be
 instantiated in the same way as with normal devices.
 
 Two common uses for supervisor devices is in data exfiltration and application
@@ -132,6 +140,7 @@ latter use. However, declaring one edge connecting each device to its
 supervisor (or vice-versa) significantly increases the number of edge
 declarations, resulting in a larger input file. Consequently, supervisors
 support implicit input and output pins for communication with normal devices.
+**All normal devices have an implicit connection to their supervisor device.**
 
 # Walk Through Example
 
@@ -188,7 +197,7 @@ Graphs                (4.2)
 ---EdgeI              (4.2.2.3.1)
 ~~~
 
-## Source Code Fragments (`CDATA`)
+## Source Code Fragments (`:CDATA:`)
 
 Application XML supports the use of `CDATA` sections to define various system
 behaviours. Code in these sections should be written in C++11, and make no
@@ -197,61 +206,59 @@ introduced in this documentation. Table 1 shows the variables exposed to each
 `CDATA` section. Table 2 explains what each variable introduced in Table 1
 represents.
 
-+--------------------+--------------------------------------------------------+
-| Containing Element | Provided Variables                                     |
-+====================+========================================================+
-| `DeviceType/`      | - `deviceProperties` (read-only)                       |
-| `SupervisorInPin`  | - `deviceState`                                        |
-| `/OnReceive`       | - `graphProperties` (read-only)                        |
-|                    | - `message` (read-only)                                |
-+--------------------+--------------------------------------------------------+
-| `DeviceType/`      | - `deviceProperties` (read-only)                       |
-| `SupervisorOutPin` | - `deviceState`                                        |
-| `/OnSend`          | - `graphProperties` (read-only)                        |
-|                    | - `message`                                            |
-+--------------------+--------------------------------------------------------+
-| `InputPin`         | - `deviceProperties` (read-only)                       |
-| `/OnReceive`       | - `deviceState`                                        |
-|                    | - `graphProperties` (read-only)                        |
-|                    | - `message` (read-only)                                |
-|                    | - `pinProperties` (read-only)                          |
-|                    | - `pinState`                                           |
-+--------------------+--------------------------------------------------------+
-| `OutputPin`        | - `deviceProperties` (read-only)                       |
-| `/OnSend`          | - `deviceState`                                        |
-|                    | - `graphProperties` (read-only)                        |
-|                    | - `message`                                            |
-+--------------------+--------------------------------------------------------+
-| `ReadyToSend`      | - `deviceProperties` (read-only)                       |
-|                    | - `deviceState`                                        |
-|                    | - `graphProperties` (read-only)                        |
-|                    | - `readyToSend`                                        |
-+--------------------+--------------------------------------------------------+
-| `OnInit`           | - `deviceProperties` (read-only)                       |
-|                    | - `deviceState`                                        |
-|                    | - `graphProperties` (read-only)                        |
-+--------------------+--------------------------------------------------------+
-| `OnDeviceIdle`     | - `deviceProperties` (read-only)                       |
-|                    | - `deviceState`                                        |
-|                    | - `graphProperties` (read-only)                        |
-| `DeviceType/`      | - `deviceProperties` (read-only)                       |
-+--------------------+--------------------------------------------------------+
-| `SupervisorType/`  | - `deviceState`                                        |
-| `SupervisorInPin`  | - `graphProperties` (read-only)                        |
-| `/OnReceive`       | - `message` (read-only)                                |
-+--------------------+--------------------------------------------------------+
-| `SupervisorType/`  | - `deviceState`                                        |
-| `SupervisorOutPin` | - `graphProperties` (read-only)                        |
-| `/OnSend`          | - `message`                                            |
-+--------------------+--------------------------------------------------------+
-| `OnSupervisorIdle` | - `deviceState`                                        |
-|                    | - `graphProperties` (read-only)                        |
-+--------------------+--------------------------------------------------------+
-| Other elements     | None                                                   |
-+--------------------+--------------------------------------------------------+
++------------------------------------------+----------------------------------+
+| Containing Element                       | Provided Variables               |
++==========================================+==================================+
+| `DeviceType / SupervisorInPin /`         | - `deviceProperties` (read-only) |
+| `OnReceive`                              | - `deviceState`                  |
+|                                          | - `graphProperties` (read-only)  |
+|                                          | - `message` (read-only)          |
++------------------------------------------+----------------------------------+
+| `DeviceType / SupervisorOutPin /`        | - `deviceProperties` (read-only) |
+| `OnSend`                                 | - `deviceState`                  |
+|                                          | - `graphProperties` (read-only)  |
+|                                          | - `message`                      |
++------------------------------------------+----------------------------------+
+| `InputPin / OnReceive`                   | - `deviceProperties` (read-only) |
+|                                          | - `deviceState`                  |
+|                                          | - `graphProperties` (read-only)  |
+|                                          | - `message` (read-only)          |
+|                                          | - `pinProperties` (read-only)    |
+|                                          | - `pinState`                     |
++------------------------------------------+----------------------------------+
+| `OutputPin / OnSend`                     | - `deviceProperties` (read-only) |
+|                                          | - `deviceState`                  |
+|                                          | - `graphProperties` (read-only)  |
+|                                          | - `message`                      |
++------------------------------------------+----------------------------------+
+| `ReadyToSend`                            | - `deviceProperties` (read-only) |
+|                                          | - `deviceState`                  |
+|                                          | - `graphProperties` (read-only)  |
+|                                          | - `readyToSend`                  |
++------------------------------------------+----------------------------------+
+| `OnInit`                                 | - `deviceProperties` (read-only) |
+|                                          | - `deviceState`                  |
+|                                          | - `graphProperties` (read-only)  |
++------------------------------------------+----------------------------------+
+| `DeviceType / OnDeviceIdle`              | - `deviceProperties` (read-only) |
+|                                          | - `deviceState`                  |
+|                                          | - `graphProperties` (read-only)  |
++------------------------------------------+----------------------------------+
+| `SupervisorType / SupervisorInPin /`     | - `deviceState`                  |
+| `OnReceive`                              | - `graphProperties` (read-only)  |
+|                                          | - `message` (read-only)          |
++------------------------------------------+----------------------------------+
+| `SupervisorType / SupervisorOutPin /`    | - `deviceState`                  |
+| `OnSend`                                 | - `graphProperties` (read-only)  |
+|                                          | - `message`                      |
++------------------------------------------+----------------------------------+
+| `OnSupervisorIdle`                       | - `deviceState`                  |
+|                                          | - `graphProperties` (read-only)  |
++------------------------------------------+----------------------------------+
+| Other elements                           | None                             |
++------------------------------------------+----------------------------------+
 
-Table: Variables exposed to code written in `CDATA` sections in application
-XML.
+Table: Variables exposed to code written in `CDATA` sections.
 
 +--------------------+--------------------------------------------------------+
 | Variable           | Meaning (All variables are pointers to structures)     |
