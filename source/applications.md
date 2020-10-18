@@ -146,7 +146,7 @@ handled by their Supervisor input pin (`:DeviceType - SupervisorInPin:`), and
 likewise messages are sent over the implicit connection by their supervisor
 output pin (`:DeviceType - SupervisorOutPin:`)
 
-# Walk Through Example
+# Example: Ring Test
 
 Because it's easier to learn by example than by trawling through a
 specification.
@@ -157,6 +157,13 @@ This section outlines how each of the features described in the "Applications
 as Graphs" section manifest as an application file (XML), which is consumed by
 the Orchestrator. The Orchestrator accepts only application files encoded in
 ASCII.
+
+## Mark's Questions for Graeme
+
+ - Do SupervisorInPins and SupervisorOutPins (on both normal and supervisor
+   devices) have message types associated with them?
+
+ - What is `Graphs/GraphInstance/Properties` for?
 
 ## Source Code Fragments (`:CDATA:`)
 
@@ -676,8 +683,8 @@ attributes:
 
 **Graphs/GraphInstance/Properties**
 
-Mark has no idea what this is for. When Graeme reads this document, he will
-fill it in.
+**Mark has no idea what this is for. When Graeme reads this document, he will
+fill it in.**
 
 This element must occur at most once in each `GraphInstance` section. No
 attributes are valid.
@@ -760,3 +767,197 @@ section. Valid attributes:
    device is a normal device. Define using the same syntax as the content of a
    `CDATA` section. This attribute must be undefined if the receiving device is
    a supervisor device.
+
+# Appendix A: Ring Test Example (XML)
+
+What follows is a complete application definition for the example presented in
+the Ring Test example section.
+
+~~~ {.xml}
+<?xml version="1.0"?>
+<!-- A series of five devices connected in a directional ring. When a device
+receives a message, it sends two messages: one to the next normal device in the
+ring, and one to its supervisor device.
+
+A message holds the "lap" it's on. Device zero increments the lap counter of a
+message on receipt, and stops the packet after its tenth lap. Device zero is
+also responsible for sending the initial packet.
+
+The supervisor device records all received packets (including their sender and
+the lap), and writes "1" to the output file ("ring_test_output") once the
+packet has completed ten laps. If an inappropriate packet is received, the
+supervisor device writes "0", and ignores all new packets.
+-->
+<Graphs xmlns="" appname="ring_test">
+  <GraphType id="ring_test_type">
+    <Properties><![CDATA[
+uint8_t maxLaps = 9;  /* Zero-based indexing */
+    ]]></Properties>
+    <MessageTypes>
+      <!-- All communications in this application use this message type. -->
+      <MessageType id="only"><![CDATA[
+uint8_t sourceId;
+uint8_t lap;
+      ]]></MessageType>
+    </MessageTypes>
+    <DeviceTypes>
+      <DeviceType id="ring_element">
+        <!-- This device type defines the behaviour of all elements in the
+             ring.
+        -->
+        <Properties>
+          <!-- Properties remain constant throughout application execution, and
+               are set in the DeviceInstances section.
+          -->
+          <![CDATA[
+/* An identifier for this device, useful for supervisor communications. */
+uint8_t id;
+          ]]>
+        </Properties>
+        <State>
+          <!-- State can change throughout application execution, and is
+               initialised here (though it can be initialised in the
+               DeviceInstances section).
+          -->
+            <![CDATA[
+/* Holds the lap for the most recently-received message. Is used to define the
+ * lap for outgoing messages. */
+uint8_t lap = 0;
+
+/* When a message is received, this field is populated either with one (true)
+ * or zero (false). */
+uint8_t sendMessage = 0;
+            ]]>
+        </State>
+        <InputPin name="receiver" messageTypeId="only">
+          <OnReceive><![CDATA[
+/* Only device zero increments the lap counter. Remember - this field in the
+ * state is later propagated into the message. */
+deviceState->lap = message->lap;
+if (deviceProperties->id == 0) deviceState->lap += + 1;
+
+/* Don't send a message if the incoming message has completed its tenth lap. */
+if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
+else deviceState->sendMessage = 0;
+          ]]></OnReceive>
+        </InputPin>
+        <OutputPin name="sender" messageTypeId="only">
+          <OnSend><![CDATA[
+/* Define the fields in the message. */
+message->sourceId = deviceProperties->id;
+message->lap = deviceState->lap;
+
+/* Since we're sending a message, reset this field so that we don't send
+ * another one. */
+deviceState->sendMessage = 0;
+          ]]></OnSend>
+        </OutputPin>
+        <!-- This handler is invoked after a message is received, and after
+             OnInit (if it returns nonzero).
+        -->
+        <ReadyToSend><![CDATA[
+/* If the input handler determined that we should send a message, do so. */
+if (deviceState->sendMessage == 1) *readyToSend != RTS_FLAG_sender;
+        ]]></ReadyToSend>
+        <!-- Initialisation logic.
+        -->
+        <OnInit><![CDATA[
+/* Device zero starts things off by telling the ReadyToSend handler to send a
+ * message. No other device does this. */
+if (deviceProperties->id == 0) deviceState->sendMessage = 1;
+
+/* A return of one invokes ReadyToSend (in the default softswitch), whereas a
+ * return of zero does not. */
+return deviceState->sendMessage;
+        ]]></OnInit>
+      </DeviceType>
+      <SupervisorType id="">
+        <!-- There is one supervisor device type in a given application. This
+             particular supervisor is written assuming there is only one
+             instance for simplicity.
+
+             Note that the number of devices that this supervisor is
+             supervising is hardcoded (as 5, again for simplicity).
+        -->
+        <Code><![CDATA[
+#include <stdio.h>  /* For writing an output file */
+
+/* Holds state information to ensure each ring member has seen the packet an
+ * appropriate number of times. */
+uint8_t messagesPerDevice[5] = {0, 0, 0, 0, 0};
+
+/* Ominous. */
+bool failed = false;
+bool finished = false;
+        ]]></Code>
+        <SupervisorInPin id="tracker" messageTypeId="only">
+          <OnReceive><![CDATA[
+/* If the application has failed, don't act on any more messages. */
+if (!failed)
+{
+    /* Failure condition: once we've finished, we fail if we receive any more
+     * messages. Also, fail if we receive a message that has done too many
+     * laps. Note that this does not fail if the messages are received out of
+     * order - POETS guarantees delivery, not ordering. */
+    if (message->lap > graphProperties->maxLaps or finished)
+    {
+        failed = true;
+        FILE* resultFile = fopen("ring_test_output", "a");
+        fprintf(resultFile, "0");
+        fclose(resultFile);
+    }
+
+    /* If we've not failed, track the message, and check the finishing
+     * condition. */
+    else
+    {
+        messagesPerDevice[message->sourceId] += 1;
+
+        /* Check the finishing condition. */
+        finished = true;
+        for (uint8_t index = 0; index < 5; index++)
+        {
+            if (messagesPerDevice[index] != graphProperties->maxLaps)
+            {
+                finished = false;
+                break;
+            }
+        }
+
+        /* Check the finish condition. */
+        if (finished)
+        {
+            FILE* resultFile = fopen("ring_test_output", "a");
+            fprintf(resultFile, "1");
+            fclose(resultFile);
+        }
+    }
+}
+          ]]></OnReceive>
+        </SupervisorInPin>
+      </SupervisorType>
+    </DeviceTypes>
+  </GraphType>
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+    <DeviceInstances>
+      <DevI id="0" type="ring_element"><P>"id = 0;"</P></DevI>
+      <DevI id="1" type="ring_element"><P>"id = 1;"</P></DevI>
+      <DevI id="2" type="ring_element"><P>"id = 2;"</P></DevI>
+      <DevI id="3" type="ring_element"><P>"id = 3;"</P></DevI>
+      <DevI id="4" type="ring_element"><P>"id = 4;"</P></DevI>
+    </DeviceInstances>
+    <EdgeInstances>
+      <EdgeI path=":tracker-0:sender"/>
+      <EdgeI path=":tracker-1:sender"/>
+      <EdgeI path=":tracker-2:sender"/>
+      <EdgeI path=":tracker-3:sender"/>
+      <EdgeI path=":tracker-4:sender"/>
+      <EdgeI path="1:receiver-0:sender"/>
+      <EdgeI path="2:receiver-1:sender"/>
+      <EdgeI path="3:receiver-2:sender"/>
+      <EdgeI path="4:receiver-3:sender"/>
+      <EdgeI path="0:receiver-4:sender"/>
+    </EdgeInstances>
+  </GraphInstance>
+</Graphs>
+~~~
