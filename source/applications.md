@@ -175,8 +175,6 @@ ASCII.
  - Do SupervisorInPins and SupervisorOutPins (on both normal and supervisor
    devices) have message types associated with them?
 
- - What is `Graphs/GraphInstance/Properties` for?
-
 ## Source Code Fragments (`:CDATA:`)
 
 Application XML supports the use of `CDATA` sections to define various system
@@ -359,7 +357,8 @@ attributes:
 Defines graph-level properties (constant throughout execution), which can be
 accessed by code fragments through the `graphProperties` structure
 pointer. Members of the structure pointed to by `graphProperties` are defined
-as `CDATA`.
+as `CDATA`. These properties may be overriden in the graph instance definition
+(`:GraphInstance-Properties:`).
 
 This element must occur at most once in each `:GraphType:` section. No
 attributes are valid.
@@ -694,10 +693,11 @@ attributes:
    from, to determine the behaviour of device and pin types. Corresponds to the
    `id` attribute of a `:GraphType:` element.
 
-**Graphs/GraphInstance/Properties**
+**Graphs/GraphInstance/Properties** (`:GraphInstance-Properties:`)
 
-**Mark has no idea what this is for. When Graeme reads this document, he will
-fill it in.**
+Overrides graph-level properties defined by the graph type used by this
+instance (`:GraphType-Properties:`). These overrides are defined as
+(`:CDATA:`).
 
 This element must occur at most once in each `GraphInstance` section. No
 attributes are valid.
@@ -805,6 +805,8 @@ supervisor device writes "0", and ignores all new packets.
   <GraphType id="ring_test_type">
     <Properties><![CDATA[
 uint8_t maxLaps = 9;  /* Zero-based indexing */
+uint8_t numDevices;  /* Defined in the graph instance section, used by the
+                      * supervisor */
     ]]></Properties>
     <MessageTypes>
       <!-- All communications in this application use this message type. -->
@@ -888,16 +890,17 @@ return deviceState->sendMessage;
         <!-- There is one supervisor device type in a given application. This
              particular supervisor is written assuming there is only one
              instance for simplicity.
-
-             Note that the number of devices that this supervisor is
-             supervising is hardcoded (as 5, again for simplicity).
         -->
         <Code><![CDATA[
 #include <stdio.h>  /* For writing an output file */
 
 /* Holds state information to ensure each ring member has seen the packet an
  * appropriate number of times. */
-uint8_t messagesPerDevice[5] = {0, 0, 0, 0, 0};
+uint8_t messagesPerDevice[graphProperties->numDevices];
+for (uint8_t index = 0; index < graphProperties->numDevices; index++)
+{
+    messagesPerDevice[index] = 0;
+}
 
 /* Ominous. */
 bool failed = false;
@@ -928,7 +931,7 @@ if (!failed)
 
         /* Check the finishing condition. */
         finished = true;
-        for (uint8_t index = 0; index < 5; index++)
+        for (uint8_t index = 0; index < graphProperties->numDevices; index++)
         {
             if (messagesPerDevice[index] != graphProperties->maxLaps)
             {
@@ -952,6 +955,9 @@ if (!failed)
     </DeviceTypes>
   </GraphType>
   <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+    <Properties><![CDATA[
+numDevices = 5;
+    ]]></Properties>
     <DeviceInstances>
       <DevI id="0" type="ring_element"><P>"id = 0;"</P></DevI>
       <DevI id="1" type="ring_element"><P>"id = 1;"</P></DevI>
