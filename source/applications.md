@@ -961,3 +961,119 @@ if (!failed)
   </GraphInstance>
 </Graphs>
 ~~~
+
+# Glossary of Terms
+
+Application:
+
+: Defined by the user, applications perform computation and output information
+  using the POETS compute system. See the Applications as Graphs Section.
+
+Device:
+
+: A "unit of compute", responsible for taking part in an application. Devices
+  work together to execute an application. For classes of device, see **Normal
+  Device** and **Supervisor Device**. For device typing and instances, see
+  **Device Type** and **Device Instance**.
+
+Device Instance:
+
+: A single "unit of compute" that takes part in an application by (typically)
+  sending messages to other devices. All device instances have a device type.
+
+Device Type:
+
+: Behaviour common to a set of devices (that share this type). Normal devices
+  may have different types, though all supervisor devices have the same
+  type. Normal device types may have properties and initial state, though these
+  can be overridden on a per-instance basis.
+
+Edge (instance):
+
+: A directed connection between two minor nodes in the tripartite application
+  graph (i.e. from the output pin of one device to the input pin of another (or
+  the same) device). Messages sent from devices traverse edges.
+
+Handler:
+
+: A set of instructions, provided by the application writer as C++11 source
+  code, to be executed in response to an event occuring. See all terms ending
+  in "(handler)".
+
+Input Pin:
+
+: A pin, attached to a device, and the receiving end of one or more
+  edges. Messages received by this pin are handled by its "OnReceive" handler,
+  which may draw from the properties and state of the input pin.
+
+Message:
+
+: A representation of a packet, used to communicate between two
+  devices. Messages are lightweight, and are guaranteed to eventually arrive at
+  their destination, though are not guaranteed to arrive in the order they are
+  sent. Messages may have a payload, populated by the sender.
+
+Normal Device:
+
+: A device that participates in an application as part of the underlying POETS
+  compute fabric.
+
+OnInit (handler):
+
+: See the definition provided in Appendix A.
+
+OnDeviceIdle(handler):
+
+: See the definition provided in Appendix A.
+
+OnReceive (handler):
+
+: A handler, called in response to a message being received on a pin, which
+  changes the state of the device that owns the pin that owns this
+  handler. Once a message is received, messages may be sent (according to the
+  behaviour of the ReadyToSend handler.
+
+OnSend (handler):
+
+: A handler, called when a message has been sent (as instructed by the
+  ReadyToSend handler). This handler populates the content of the outgoing
+  message, and may change the state of the device that owns the pin that owns
+  this handler.
+
+Output Pin:
+
+: A pin, attached to a device, and the sending end of one or more
+  edges. Messages sent by this pin are populated by its "OnSend"
+  handler. Output pins have no properties or state.
+
+Pin:
+
+: A node in the minor set of nodes in the tripartite application graph. Also
+  see **Input Pin** and **Output Pin**.
+
+Properties (graph, device, input pin):
+
+: Fields with values that are constant with respect to application execution,
+  defined either on the graph level, device level, or input pin
+  level. Properties can be accessed through the structures introduced in the
+  Source Code Fragments (:CDATA:) Section. See also **State**.
+
+ReadyToSend (handler):
+
+: A handler, called in response to a message being received, or a non-zero
+  return value from OnInit or OnDeviceIdle handlers. Determines, from the state
+  of the device, which output pins are to be "activated" for sending
+  messages. Also see the definition in Appendix A.
+
+State (device, pin):
+
+: Fields with values that may change during application execution, defined
+  either on the device level or input pin level. State can be accessed through
+  the structures introduced in the Source Code Fragments (:CDATA:) Section. See
+  also **Properties**.
+
+Supervisor Device:
+
+: A device that participates in an application on the host machine (typically a
+  more-powerful x86 server). A many-to-one relationship exists between normal
+  devices and supervisor devices.
