@@ -160,8 +160,327 @@ output pin (`:DeviceType - SupervisorOutPin:`)
 
 # Example: Ring Test
 
-Because it's easier to learn by example than by trawling through a
-specification.
+This Section presents an example application, which is arrived at from a
+high-level description of the intended behaviour. This is not intended to be as
+detailed as the comprehensive description presented in the "Application Files"
+section, but should be sufficient to educate the reader in writing simple
+applications. A listing of the complete application, with additional comments,
+is presented in Appendix A. For further information about elements presented in
+this example, consult the "Application Files" Section.
+
+The desired application, "Ring Test", is similar to the ring oscillator device
+in electrical engineering, in which "NOT" gates are connected in a ring to
+oscillate the voltage state of a circuit. In the ring test, a message is to be
+passed around a ring of devices multiple times. Each time the message is
+received at a destination, the receiver informs the supervisor of the progress
+of the message. After ten (=$N$) "laps" of the ring, the message is dropped and
+the application is complete. When the supervisor is informed that the message
+has completed $N$ laps, it writes a success value (1) to a file. If the
+supervisor sees that the message has looped too many times, it writes a failure
+value (0) to a file.
+
+## Towards a Normal Device Type
+
+To begin, we define the skeletal structure of the XML:
+
+~~~ {.xml}
+<?xml version="1.0"?>
+<Graphs xmlns="" appname="ring_test">
+  <GraphType id="ring_test_type">
+  </GraphType>
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+  </GraphInstance>
+</Graphs>
+~~~
+
+Here, no `xmlns` is used, and the application name is defined as
+`ring_test`. An empty graph type is created, and an empty graph instance is
+connected to that type.
+
+Within the `GraphType`, we can define the behaviour for the members of the
+ring - the type of devices that are going to propagate our message around the
+ring.
+
+~~~ {.xml}
+...
+  <GraphType id="ring_test_type">
+  <DeviceTypes>
+    <DeviceType id="ring_element">
+    </DeviceType>
+  </DeviceTypes>
+  </GraphType>
+...
+~~~
+
+It is convenient at this point to define an identifier for the ring members -
+one of them is going to have to start the application by sending a message
+later, and it will be relevant for supervisor communications:
+
+~~~ {.xml}
+...
+    <DeviceType id="ring_element">
+      <Properties><![CDATA[
+/* An identifier for this device, useful for supervisor communications. */
+uint8_t id;
+      ]]></Properties>
+    </DeviceType>
+...
+~~~
+
+This declares a property of all ring elements, which should be defined when the
+ring is instantiated later. Note that this property is defined in a `:CDATA:`
+section, written in C++11. This property will be readable by other code
+sections (for ring elements) via `deviceProperties->id`.
+
+With a way to identify devices in code, we can define startup logic. We make
+device zero be the first to send a message:
+
+~~~ {.xml}
+...
+    <DeviceType id="ring_element">
+      <Properties><![CDATA[
+/* An identifier for this device, useful for supervisor communications. */
+uint8_t id;
+      ]]></Properties>
+      <State><![CDATA[
+/* When a message is received, this field is populated either with one (true)
+* or zero (false). */
+uint8_t sendMessage = 0;
+      ]]></State>
+      <OnInit><![CDATA[
+/* Device zero starts things off by telling the ReadyToSend handler to send a
+ * message. No other device does this. */
+if (deviceProperties->id == 0) deviceState->sendMessage = 1;
+
+/* A return of one invokes ReadyToSend (in the default softswitch), whereas a
+ * return of zero does not. */
+return deviceState->sendMessage;
+      ]]></OnInit>
+    </DeviceType>
+...
+~~~
+
+A state field `sendMessage` is introduced here, with an initial value of
+zero. This field will be read by another handler later, to determine whether a
+message is to be sent or not. The code in the `:OnInit:` handler is run by each
+device when the application starts. This handler sets the `sendMessage` field
+in the state to one (so that a message will be sent later). The `:OnInit:`
+handler also returns one on device zero, causing the `ReadyToSend` handler to
+be invoked.
+
+The `ReadyToSend` handler is responsible for determining whether a message
+should be sent, and which output pins should be used to send that message. To
+do this, it reads the state of the device, as follows:
+
+~~~ {.xml}
+...
+    <DeviceType id="ring_element">
+      ...
+      <State><![CDATA[
+/* When a message is received, this field is populated either with one (true)
+ * or zero (false). */
+uint8_t sendMessage = 0;
+      ]]></State>
+      ...
+      <ReadyToSend><![CDATA[
+if (deviceState->sendMessage == 1) *readyToSend |= RTS_FLAG_sender;
+      ]]></ReadyToSend>
+    </DeviceType>
+...
+~~~
+
+The `ReadyToSend` handler here checks whether another handler "wants a message
+to be sent". If so, it sets a flag (`RTS_FLAG_sender`) in the `readyToSend`
+structure. This flag is checked after the `ReadyToSend` handler is invoked, and
+causes a message to be sent. In order to send a message in this way, an output
+pin must be defined for this type, as follows:
+
+~~~ {.xml}
+...
+    <DeviceType id="ring_element">
+      <State><![CDATA[
+/* Holds the lap for the most recently-received message. Is used to define the
+ * lap for outgoing messages. */
+uint8_t lap = 0;
+
+/* When a message is received, this field is populated either with one (true)
+ * or zero (false). */
+uint8_t sendMessage = 0;
+      ]]></State>
+      <OutputPin name="sender" messageTypeId="only">
+        <OnSend><![CDATA[
+/* Define the fields in the message. */
+message->lap = deviceState->lap;
+
+/* Since we're sending a message, reset this field so that we don't send
+ * another one. */
+deviceState->sendMessage = 0;
+        ]]></OnSend>
+      </OutputPin>
+      ...
+      <ReadyToSend><![CDATA[
+if (deviceState->sendMessage == 1) *readyToSend |= RTS_FLAG_sender;
+      ]]></ReadyToSend>
+    </DeviceType>
+...
+~~~
+
+Note that the `name` attribute on the output pin is "`sender`", which
+corresponds to the suffix of the flax "`RTS_FLAG_sender`" used in the
+`ReadyToSend` element. This is essential to ensure that the correct pin is
+selected to send the message. Output pins define an `OnSend` handler - in this
+case, the handler clears the `sendMessage` state set by `OnInit` (or another
+handler, later on). It also defines the `lap` field in the payload of the
+outgoing message from the state - to facilitate this, the state of ring element
+devices is expanded to include a lap field.
+
+Like pins and devices, all messages must have a defined type. The element
+introducing the "`sender`" output pin also has attribute `messageTypeId` with
+value "`only`", so a message type must also be defined as follows:
+
+~~~ {.xml}
+...
+  <MessageTypes>
+    <MessageType id="only"><![CDATA[
+uint8_t lap;
+    ]]></MessageType>
+  </MessageTypes>
+  <DeviceTypes>
+    <DeviceType id="ring_element">
+      <OutputPin name="sender" messageTypeId="only">
+          ...
+      </OutputPin>
+      ...
+    </DeviceType>
+  </DeviceTypes>
+...
+~~~
+
+Again, a `:CDATA:` section is introduced to hold the field for the payload.
+
+To complete the device definition, we require an input pin to receive
+communications from output pins:
+
+~~~ {.xml}
+...
+  <DeviceTypes>
+    <InputPin name="receiver" messageTypeId="only">
+      <OnReceive><![CDATA[
+/* Only device zero increments the lap counter. Remember - this field in the
+ * state is later propagated into the message. */
+deviceState->lap = message->lap;
+if (deviceProperties->id == 0) deviceState->lap += + 1;
+
+/* Don't send a message if the incoming message has completed its tenth lap. */
+if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
+else deviceState->sendMessage = 0;
+      ]]></OnReceive>
+    </InputPin>
+    ...
+  </DeviceTypes>
+...
+~~~
+
+When an `"only"` message is received on this input pin, the `"lap"` state of
+the device is updated with the contents of the message. Only device zero is
+permitted to increment the lap (as it is the origin point of the message). Like
+the `OnInit` handler, this `OnReceive` handler sets the `"sendMessage"` state
+of the device for the `ReadyToSend` handler (which is called after
+`OnReceive`).
+
+Lastly, this handler requires the definition of a global `maxLaps` property,
+which determines when the application should stop. This is defined on the graph
+level:
+
+~~~ {.xml}
+<?xml version="1.0"?>
+<Graphs xmlns="" appname="ring_test">
+  <GraphType id="ring_test_type">
+    <Properties><![CDATA[
+uint8_t maxLaps = 9;  /* Zero-based indexing */
+    ]]></Properties>
+    ...
+  </GraphType>
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+  </GraphInstance>
+</Graphs>
+~~~
+
+So far, we have defined the behaviour for all normal devices in the application
+using the type system. The (incomplete) XML at this stage is:
+
+~~~ {.xml}
+<?xml version="1.0"?>
+<Graphs xmlns="" appname="ring_test">
+  <GraphType id="ring_test_type">
+    <Properties><![CDATA[
+uint8_t maxLaps = 9;  /* Zero-based indexing */
+    ]]></Properties>
+    <MessageTypes>
+      <MessageType id="only"><![CDATA[
+uint8_t lap;
+      ]]></MessageType>
+    </MessageTypes>
+    <DeviceTypes>
+      <DeviceType id="ring_element">
+        <Properties><![CDATA[
+/* An identifier for this device, useful for supervisor communications. */
+uint8_t id;
+        ]]></Properties>
+        <State><![CDATA[
+/* Holds the lap for the most recently-received message. Is used to define the
+ * lap for outgoing messages. */
+uint8_t lap = 0;
+
+/* When a message is received, this field is populated either with one (true)
+* or zero (false). */
+uint8_t sendMessage = 0;
+        ]]></State>
+        <InputPin name="receiver" messageTypeId="only">
+          <OnReceive><![CDATA[
+/* Only device zero increments the lap counter. Remember - this field in the
+ * state is later propagated into the message. */
+deviceState->lap = message->lap;
+if (deviceProperties->id == 0) deviceState->lap += + 1;
+
+/* Don't send a message if the incoming message has completed its tenth lap. */
+if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
+else deviceState->sendMessage = 0;
+          ]]></OnReceive>
+        </InputPin>
+        <OutputPin name="sender" messageTypeId="only">
+          <OnSend><![CDATA[
+/* Define the fields in the message. */
+message->lap = deviceState->lap;
+
+/* Since we're sending a message, reset this field so that we don't send
+ * another one. */
+deviceState->sendMessage = 0;
+          ]]></OnSend>
+        </OutputPin>
+        <ReadyToSend><![CDATA[
+if (deviceState->sendMessage == 1) *readyToSend |= RTS_FLAG_sender;
+        ]]></ReadyToSend>
+        <OnInit><![CDATA[
+/* Device zero starts things off by telling the ReadyToSend handler to send a
+ * message. No other device does this. */
+if (deviceProperties->id == 0) deviceState->sendMessage = 1;
+
+/* A return of one invokes ReadyToSend (in the default softswitch), whereas a
+ * return of zero does not. */
+return deviceState->sendMessage;
+        ]]></OnInit>
+      </DeviceType>
+    </DeviceTypes>
+  </GraphType>
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+  </GraphInstance>
+</Graphs>
+~~~
+
+## Introducing the Supervisor Device Type
+
+The application brief requires...
 
 # Application Files
 
@@ -872,7 +1191,7 @@ deviceState->sendMessage = 0;
         -->
         <ReadyToSend><![CDATA[
 /* If the input handler determined that we should send a message, do so. */
-if (deviceState->sendMessage == 1) *readyToSend != RTS_FLAG_sender;
+if (deviceState->sendMessage == 1) *readyToSend |= RTS_FLAG_sender;
         ]]></ReadyToSend>
         <!-- Initialisation logic.
         -->
