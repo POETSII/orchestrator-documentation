@@ -13,14 +13,12 @@ event-based computing concepts, and the design intent of the Orchestrator, is
 assumed.
 
 This document outlines how applications are to be written, by external software
-or by hand, in a form suitable for consumption by the Orchestrator. This
-document does not include design decisions, past designs, or future extensions
-or refactors.
-
-This document introduces a series of concepts before introducing the semantics
-of acceptable XML. Tags surrounded by colons, like `:This:`, relate a concept
-to an appropriate XML chunk. These tags correspond to elements defined the
-"Application Files" section.
+or "by hand", in a form suitable for the Orchestrator. This document does not
+include design decisions, past designs, future extensions or refactors, or
+common design patterns. This document introduces a series of concepts before
+introducing the semantics of acceptable XML. Tags surrounded by colons, like
+`:GraphType:`, relate a concept to an appropriate XML chunk, and they
+correspond to elements defined the "Application Files" Section.
 
 # Applications as Graphs
 
@@ -28,8 +26,12 @@ Event-based computing is appropriate for problems that can be decomposed into a
 discrete mesh. This often manifests as a spatial discretisation[^dis], though
 any domain that **remains constant with respect to the execution of the
 application** is suitable. This decomposition results in connected "regions" of
-the problem, which can be represented as a graph[^formal]. Figure 1 shows an example of
-this. With reference to Figure 1:
+the problem, which can be represented as a graph[^formal]. Figure 1 shows an
+example of this, where:
+
+![A graph representation of an application. Computation is performed by
+"Normal Devices", and communication is facilitated by "Pins" and
+"Edges".](images/application_graph_simple.png)
 
 [^dis]: For example, finite-difference or finite-element schemes where space is
     tiled (sometimes irregularly), in order to "break up" computation.
@@ -44,17 +46,17 @@ this. With reference to Figure 1:
     only the edges that connect elements of the minor set together.
 
  - The major set of nodes (black circles) represent "Normal Devices"
-   (`:DeviceInstances:`), which each capture the behaviour of a vertex in the
+   (`:DeviceInstances:`), which each capture the behaviour of a node in the
    discretised problem. A normal device could represent a vertex in the
    finite-difference mesh, an element in a finite-element discretisation, or
    even a collection of vertices or elements. Each device has machine
    instructions associated with it to perform computation (`:CDATA:`).
 
  - The set of edges (black arrows) represent "Edges" (`:EdgeInstances:`), which
-   each capture communication behaviour between one communication mode between
-   two devices. By way of example, a device could send a "start" type of
-   message (`:MessageType:`) to another device along an edge, but would have to
-   send a different "stop" type of message along a different edge.
+   each capture a "communication mode" between two devices. By way of example,
+   a device could send a "start" type of message (`:MessageType:`) to another
+   device along an edge, but would have to send a different "stop" type of
+   message along a different edge.
 
  - The minor set of nodes (red and blue circles) represent "Pins"
    (`:InputPin:`, `:OutputPin:`). Input pins alter the behaviour of messages
@@ -62,11 +64,8 @@ this. With reference to Figure 1:
    "weights" to communications along an edge (`:Pin-Properties:`,
    `:Pin-State:`). Each edge is associated with one input pin and one output
    pin. Each input/output pin can have multiple input/output edges connected
-   to/from it, and can only receive/send messages of a single type.
-
-![A graph representation of an application. Computation is performed by
-"Normal Devices", and communication is facilitated by "Pins" and
-"Edges".](images/application_graph_simple.png)
+   to/from it, and can only receive/send messages of a single type. A device an
+   have any number of input pins and output pins.
 
 Applications in POETS can consist of millions of devices, each with thousands
 of connections to other devices. The design intent is that normal device
@@ -79,7 +78,7 @@ neighbouring devices.
 
 As an application can contain many normal devices, a typing system
 (`:GraphType:`) exists to define properties, initial state, code, and pin types
-for a set of normal devices in the application. This section presents an
+for a set of normal devices in the application. This Section presents an
 abridged, accessible definition for the main features of the typing system.
 
 All devices and all pins must have a defined type. An application will
@@ -104,7 +103,7 @@ instantiate each device with a type (`:DevI:`), with:
  - **Output Pin Types**, which hold code (`:OutputPin-OnSend:`) to define the
    contents of messages sent from them. Output pins can read the properties of
    the device that contains them, and can alter its state, which is useful to
-   locally "track" that a message has been sent
+   locally "track" that a message has been sent.
 
  - **Input Pin Types**, which also hold code (`:InputPin-OnReceive:`) to read
    in messages, and to influence the device that contains them. Input pins also
@@ -112,7 +111,7 @@ instantiate each device with a type (`:DevI:`), with:
    information, to support "weighting" of messages.
 
 The messages that devices use to communicate also have types
-(`:MessageTypes:`), which determines the fields of its payload. Each pin type
+(`:MessageTypes:`), which determines the fields of their payload. Each pin type
 is associated with a message type (`:MessageType:`) - if it is an input/output
 pin, then it can only receive/send messages of that type. This typing mechanism
 allows messages to be populated by the code of the sender
@@ -156,7 +155,7 @@ support implicit input and output pins for communication with normal devices.
 Messages received by devices over the implicit supervisor connection are
 handled by their Supervisor input pin (`:DeviceType - SupervisorInPin:`), and
 likewise messages are sent over the implicit connection by their supervisor
-output pin (`:DeviceType - SupervisorOutPin:`)
+output pin (`:DeviceType - SupervisorOutPin:`).
 
 # Example: Ring Test
 
