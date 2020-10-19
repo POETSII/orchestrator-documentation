@@ -3,21 +3,24 @@
 # Overview
 
 Applications are consumed by the Orchestrator, and perform computation desired
-by the user on POETS. This document outlines how applications are to be
-written, by external software, in a form suitable for consumption by the
-Orchestrator.
+by the user on POETS. Applications in POETS are described as graphs, where
+vertices represent "compute" behaviour, and edges represent "communication"
+behaviour. Such applications must be realised as eXtensible Markup Language
+(XML) files, suitable for the Orchestrator. This document explains the
+properties of these application-graphs conceptually, and how these graphs are
+represented in POETS-XML along with examples. A surface-level understanding of
+event-based computing concepts, and the design intent of the Orchestrator, is
+assumed.
 
-Applications in POETS are described as graphs, where vertices represent
-"compute" behaviour, and edges represent "communication" behaviour. Such
-applications must be realised as Extensible Markup Language (XML) files,
-suitable for the Orchestrator. This document explains the properties of these
-application-graphs conceptually, and how these graphs are represented in
-POETS-XML along with examples. A surface-level understanding of event-based
-computing concepts, and the design intent of the Orchestrator, is assumed.
+This document outlines how applications are to be written, by external software
+or by hand, in a form suitable for consumption by the Orchestrator. This
+document does not include design decisions, past designs, or future extensions
+or refactors.
 
 This document introduces a series of concepts before introducing the semantics
 of acceptable XML. Tags surrounded by colons, like `:This:`, relate a concept
-to an appropriate XML chunk.
+to an appropriate XML chunk. These tags correspond to elements defined the
+"Application Files" section.
 
 # Applications as Graphs
 
@@ -25,26 +28,33 @@ Event-based computing is appropriate for problems that can be decomposed into a
 discrete mesh. This often manifests as a spatial discretisation[^dis], though
 any domain that **remains constant with respect to the execution of the
 application** is suitable. This decomposition results in connected "regions" of
-the problem, which can be represented as a graph. Figure 1 shows an example of
-this. Formally, application graphs are tripartite directed graphs, which may
-contain loops, disconnected regions, and isolated vertices. With reference to
-Figure 1:
+the problem, which can be represented as a graph[^formal]. Figure 1 shows an example of
+this. With reference to Figure 1:
 
 [^dis]: For example, finite-difference or finite-element schemes where space is
     tiled (sometimes irregularly), in order to "break up" computation.
 
- - The major set of nodes (black circles) represent "Devices"
-   (`:DeviceInstances:`), which each capture the behaviour of a vertex in the
-   discretised problem. A device could represent a (set of) vertex/ices in the
-   finite-difference mesh, or a/n (set of) element/s in a finite-element
-   discretisation. Each device has machine instructions associated with it
-   to perform computation (`:CDATA:`).
+[^formal]: Formally, application graphs are tripartite directed graphs, which
+    may contain loops, disconnected regions, and isolated vertices. The three
+    independent sets of nodes consist of the "major" set as "the set of normal
+    devices", the "minor input" as "the set of input pins", and the "minor
+    output" set as "the set of output pins". For brevity, we define the union
+    of the minor input and minor output sets as the "minor" set, which holds
+    all pins. When we refer to the edges of the application graph, we intend
+    only the edges that connect elements of the minor set together.
 
- - The minor set of edges (black arrows) represent "Edges" (`:EdgeInstances:`),
-   which each capture communication behaviour between one communication mode
-   between two devices. By way of example, a device could send a "start" type
-   of message (`:MessageType:`) to another device along an edge, but would have
-   to send a different "stop" type of message along a different edge.
+ - The major set of nodes (black circles) represent "Normal Devices"
+   (`:DeviceInstances:`), which each capture the behaviour of a vertex in the
+   discretised problem. A normal device could represent a vertex in the
+   finite-difference mesh, an element in a finite-element discretisation, or
+   even a collection of vertices or elements. Each device has machine
+   instructions associated with it to perform computation (`:CDATA:`).
+
+ - The set of edges (black arrows) represent "Edges" (`:EdgeInstances:`), which
+   each capture communication behaviour between one communication mode between
+   two devices. By way of example, a device could send a "start" type of
+   message (`:MessageType:`) to another device along an edge, but would have to
+   send a different "stop" type of message along a different edge.
 
  - The minor set of nodes (red and blue circles) represent "Pins"
    (`:InputPin:`, `:OutputPin:`). Input pins alter the behaviour of messages
@@ -52,49 +62,52 @@ Figure 1:
    "weights" to communications along an edge (`:Pin-Properties:`,
    `:Pin-State:`). Each edge is associated with one input pin and one output
    pin. Each input/output pin can have multiple input/output edges connected
-   to/from it.
+   to/from it, and can only receive/send messages of a single type.
 
 ![A graph representation of an application. Computation is performed by
-"Devices", and communication is facilitated by "Pins" and "Edges".](images/application_graph_simple.png)
+"Normal Devices", and communication is facilitated by "Pins" and
+"Edges".](images/application_graph_simple.png)
 
 Applications in POETS can consist of millions of devices, each with thousands
-of connections to other devices. The design intent is that device behaviour is
-as atomic and local as possible, and results in emergent macroscale
-behaviour. There exists no notion of global application state, as devices only
-operate on information visible to them, or that they request from neighbouring
-devices.
+of connections to other devices. The design intent is that normal device
+behaviour is as atomic and local as possible, and results in emergent
+macroscale behaviour. There exists no notion of global application state, as
+devices only operate on information visible to them, or that they request from
+neighbouring devices.
 
 ## Types and Instances
 
-As an application can contain many devices, a typing system (`:GraphType:`)
-exists to define properties, initial state, code, and pin types for a set of
-devices in the application. All devices and all pins must have a defined
-type. An application will instantiate each device with a type
-(`:DevI:`). Definitions:
+As an application can contain many normal devices, a typing system
+(`:GraphType:`) exists to define properties, initial state, code, and pin types
+for a set of normal devices in the application. This section presents an
+abridged, accessible definition for the main features of the typing system.
 
- - **Properties** (`:DeviceType-Properties:`) define attributes of all devices
-   of the type, which remain constant throughout the execution of the
+All devices and all pins must have a defined type. An application will
+instantiate each device with a type (`:DevI:`), with:
+
+ - **Properties** (`:DeviceType-Properties:`), which define attributes of all
+   devices of the type that remain constant throughout the execution of the
    application. The value of a property can be overriden on a per-device basis
    (`:DevI-Properties:`).
 
- - **Initial State** (`:DeviceType-State:`) defines attributes that can change
-   during execution, but are initialised to a certain value. The initial value
-   of a state can be overriden on a per-device basis (`:DevI-State:`), and is
-   free to differ across devices as an application executes.
+ - **Initial State** (`:DeviceType-State:`), which defines attributes that can
+   change during execution, but are initialised to a certain value. The initial
+   value of a state can be overriden on a per-device basis (`:DevI-State:`),
+   and is free to differ across devices as an application executes.
 
- - **Code** defines the behaviours for devices of this type, which are invoked
-   in response to input messages (`:InputPin-OnReceive:`), in response to
-   sending a message (`:OutputPin-OnSend:`), on initialisation
+ - **Code**, which defines the behaviours for devices of this type, and are
+   invoked in response to input messages (`:InputPin-OnReceive:`), in response
+   to sending a message (`:OutputPin-OnSend:`), on initialisation
    (`:DeviceType-OnInit:`), and when no computation is being carried out
    (`:OnDeviceIdle:`).
 
- - **Output Pin Types** hold code (`:OutputPin-OnSend:`) to define the contents
-   of messages sent from them. Output pins can read the properties of the
-   device that contains them, and can alter its state, which is useful to
+ - **Output Pin Types**, which hold code (`:OutputPin-OnSend:`) to define the
+   contents of messages sent from them. Output pins can read the properties of
+   the device that contains them, and can alter its state, which is useful to
    locally "track" that a message has been sent
 
- - **Input Pin Types** also hold code (`:InputPin-OnReceive:`) to read in
-   messages, and to influence the device that contains them. Input pins also
+ - **Input Pin Types**, which also hold code (`:InputPin-OnReceive:`) to read
+   in messages, and to influence the device that contains them. Input pins also
    hold property (`:InputPin-Properties:`) and state (`:InputPin-State:`)
    information, to support "weighting" of messages.
 
@@ -110,22 +123,21 @@ of pins that are not connected - for example, a device instance (`:DevI:`) can
 have a type with a defined input pin, but not have any connections that use
 that input pin.
 
+A graph can also define properties (`:GraphType-Properties:`) and code
+(`:GraphType-SharedCode:`) common to all devices and pins in the
+application.
+
 ## Supervisor Devices
 
 Supervisor devices are an optional component of a POETS application, which
 allow application writers to define behaviours at a centralised point. Unlike
-normal devices[^normal] which run on POETS hardware, supervisor devices run on
-the host machine, making them suitable for file I/O and heavier compute
-loads. Also unlike normal devices (`:DevI:`), supervisor devices are not
-instantiated by the application writer. If a supervisor device is required, the
-supervisor device type (`:SupervisorType:`) can be defined by the application
-writer (one per application), and the Orchestrator will instantiate supervisor
-devices automatically.
-
-[^normal]: Prior to the introduction of supervisor devices in this document,
-    the term "devices" specifically referred to normal devices for
-    simplicity. Going forwards, this document makes an explicit distinction
-    between "normal devices" and "supervisor devices" where possible.
+normal devices which run on POETS hardware, supervisor devices run on the host
+machine, making them suitable for file I/O and heavier compute loads. Also
+unlike normal devices (`:DevI:`), supervisor devices are not instantiated by
+the application writer. If a supervisor device is required, the supervisor
+device type (`:SupervisorType:`) can be defined by the application writer (one
+per application), and the Orchestrator will instantiate supervisor devices
+automatically, and connect them to normal devices.
 
 Supervisor devices have input pins (`:SupervisorType - SupervisorInPin:`),
 output (`:SupervisorType - SupervisorOutPin:`) pins. Edges (`:EdgeI:`) can be
@@ -153,8 +165,8 @@ specification.
 
 # Application Files
 
-This section outlines how each of the features described in the "Applications
-as Graphs" section manifest as an application file (XML), which is consumed by
+This Section outlines how each of the features described in the "Applications
+as Graphs" Section manifest as an application file (XML), which is consumed by
 the Orchestrator. The Orchestrator accepts only application files encoded in
 ASCII.
 
@@ -272,7 +284,7 @@ Table: Explanation of variables exposed to `CDATA` code.
 
 ## Expected Semantic Structure
 
-This section introduces the meaning behind each element of the XML tree. The
+This Section introduces the meaning behind each element of the XML tree. The
 order of elements on each level is free to vary without compromising the
 semantic integrity of an application definition file. The XML tree structure
 for a semantically-valid input file is:
@@ -342,7 +354,7 @@ attributes:
  - `id` (must occur exactly once): Used by graph instances
    (`:GraphInstance:`) to determine the types for an instantiated application.
 
-**Graphs/GraphType/Properties**
+**Graphs/GraphType/Properties** (`:GraphType-Properties:`)
 
 Defines graph-level properties (constant throughout execution), which can be
 accessed by code fragments through the `graphProperties` structure
@@ -352,7 +364,7 @@ as `CDATA`.
 This element must occur at most once in each `:GraphType:` section. No
 attributes are valid.
 
-**Graphs/GraphType/SharedCode**
+**Graphs/GraphType/SharedCode** (`:GraphType-SharedCode:`)
 
 Contains code common to all devices in an application. Useful for defining
 constants and free functions for use in handler `CDATA` sections.
@@ -532,9 +544,10 @@ attributed are valid.
 **Graphs/GraphType/DeviceTypes/DeviceType/ReadyToSend** (`:ReadyToSend:`)
 
 Contains code that reads the state of the device, and determines whether any
-messages are to be sent. Note that the state of the device cannot be modified
-in this block. Execution of this block is dependent on the softswitch used,
-though the default softswitch executes this block:
+messages are to be sent. If multiple messages are to be sent, the order of
+their sending is undefined. Note that the state of the device cannot be
+modified in this block. Execution of this block is dependent on the softswitch
+used, though the default softswitch executes this block:
 
  - After a message has been received and handled by the handler code in
    `InputPin/OnReceive` or `SupervisorInPin/OnReceive`.
@@ -771,7 +784,7 @@ section. Valid attributes:
 # Appendix A: Ring Test Example (XML)
 
 What follows is a complete application definition for the example presented in
-the Ring Test example section.
+the Ring Test example Section.
 
 ~~~ {.xml}
 <?xml version="1.0"?>
