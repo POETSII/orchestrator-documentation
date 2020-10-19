@@ -1,4 +1,4 @@
-% Application Definition
+% Orchestrator Documentation Volume II: Application Definition
 
 # Overview
 
@@ -166,7 +166,9 @@ detailed as the comprehensive description presented in the "Application Files"
 section, but should be sufficient to educate the reader in writing simple
 applications. A listing of the complete application, with additional comments,
 is presented in Appendix A. For further information about elements presented in
-this example, consult the "Application Files" Section.
+this example, consult the "Application Files" Section. We recommend the reader
+to follow along in their favourite text editor as concepts are introduced, to
+see how components of the XML file connect together.
 
 The desired application, "Ring Test", is similar to the ring oscillator device
 in electrical engineering, in which "NOT" gates are connected in a ring to
@@ -195,7 +197,8 @@ To begin, we define the skeletal structure of the XML:
 
 Here, no `xmlns` is used, and the application name is defined as
 `ring_test`. An empty graph type is created, and an empty graph instance is
-connected to that type.
+connected to that type - these will both be populated as we progress through
+this example.
 
 Within the `GraphType`, we can define the behaviour for the members of the
 ring - the type of devices that are going to propagate our message around the
@@ -204,10 +207,10 @@ ring.
 ~~~ {.xml}
 ...
   <GraphType id="ring_test_type">
-  <DeviceTypes>
-    <DeviceType id="ring_element">
-    </DeviceType>
-  </DeviceTypes>
+    <DeviceTypes>
+      <DeviceType id="ring_element">
+      </DeviceType>
+    </DeviceTypes>
   </GraphType>
 ...
 ~~~
@@ -340,19 +343,19 @@ value "`only`", so a message type must also be defined as follows:
 
 ~~~ {.xml}
 ...
-  <MessageTypes>
-    <MessageType id="only"><![CDATA[
+    <MessageTypes>
+      <MessageType id="only"><![CDATA[
 uint8_t lap;
-    ]]></MessageType>
-  </MessageTypes>
-  <DeviceTypes>
-    <DeviceType id="ring_element">
-      <OutputPin name="sender" messageTypeId="only">
+      ]]></MessageType>
+    </MessageTypes>
+    <DeviceTypes>
+      <DeviceType id="ring_element">
+        <OutputPin name="sender" messageTypeId="only">
           ...
-      </OutputPin>
-      ...
-    </DeviceType>
-  </DeviceTypes>
+        </OutputPin>
+        ...
+      </DeviceType>
+    </DeviceTypes>
 ...
 ~~~
 
@@ -363,9 +366,9 @@ communications from output pins:
 
 ~~~ {.xml}
 ...
-  <DeviceTypes>
-    <InputPin name="receiver" messageTypeId="only">
-      <OnReceive><![CDATA[
+    <DeviceType id="ring_element">
+      <InputPin name="receiver" messageTypeId="only">
+        <OnReceive><![CDATA[
 /* Only device zero increments the lap counter. Remember - this field in the
  * state is later propagated into the message. */
 deviceState->lap = message->lap;
@@ -374,10 +377,10 @@ if (deviceProperties->id == 0) deviceState->lap += + 1;
 /* Don't send a message if the incoming message has completed its tenth lap. */
 if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
 else deviceState->sendMessage = 0;
-      ]]></OnReceive>
-    </InputPin>
-    ...
-  </DeviceTypes>
+        ]]></OnReceive>
+      </InputPin>
+      ...
+    </DeviceType>
 ...
 ~~~
 
@@ -480,7 +483,277 @@ return deviceState->sendMessage;
 
 ## Introducing the Supervisor Device Type
 
-The application brief requires...
+The application brief requires a file to be written, whose contents depend on
+the behaviour of the system. A supervisor device is well-positioned to do this,
+as it runs on the host machine, and can communicate with the other normal
+devices in the application.
+
+Starting from the output of the previous Section, we introduce a supervisor
+device type alongside the ring element normal device type:
+
+~~~ {.xml}
+<?xml version="1.0"?>
+<Graphs xmlns="" appname="ring_test">
+  <GraphType id="ring_test_type">
+    <DeviceTypes>
+      <DeviceType id="ring_element">
+      </DeviceType>
+      <SupervisorType id="">
+      </SupervisorType>
+    </DeviceTypes>
+  </GraphType>
+  ...
+</Graphs>
+~~~
+
+The supervisor type holds a single input pin, so that ring element devices can
+send messages to it. When it receives a message, the supervisor device
+increments a counter indexed by the sender. Then, if it has received $N$
+messages from all devices, it opens a file and writes "1" to it. If the
+supervisor receives too many messages from a given device, it instead opens a
+file and writes "0" to it, denoting application failure. If the application
+fails in this way, it doesn't process any more messages. The full supervisor
+type definition is:
+
+~~~ {.xml}
+...
+      <SupervisorType id="">
+        <Code><![CDATA[
+#include <stdio.h>  /* For writing an output file */
+
+/* Holds state information to ensure each ring member has seen the packet an
+ * appropriate number of times. */
+uint8_t messagesPerDevice[graphProperties->numDevices];
+for (uint8_t index = 0; index < graphProperties->numDevices; index++)
+{
+    messagesPerDevice[index] = 0;
+}
+
+/* Ominous. */
+bool failed = false;
+bool finished = false;
+        ]]></Code>
+        <SupervisorInPin id="tracker" messageTypeId="only">
+          <OnReceive><![CDATA[
+/* If the application has failed, don't act on any more messages. */
+if (!failed)
+{
+    /* Failure condition: once we've finished, we fail if we receive any more
+     * messages. Also, fail if we receive a message that has done too many
+     * laps. Note that this does not fail if the messages are received out of
+     * order - POETS guarantees delivery, not ordering. */
+    if (message->lap > graphProperties->maxLaps or finished)
+    {
+        failed = true;
+        FILE* resultFile = fopen("ring_test_output", "a");
+        fprintf(resultFile, "0");
+        fclose(resultFile);
+    }
+
+    /* If we've not failed, track the message, and check the finishing
+     * condition. */
+    else
+    {
+        messagesPerDevice[message->sourceId] += 1;
+
+        /* Check the finishing condition. */
+        finished = true;
+        for (uint8_t index = 0; index < graphProperties->numDevices; index++)
+        {
+            if (messagesPerDevice[index] != graphProperties->maxLaps)
+            {
+                finished = false;
+                break;
+            }
+        }
+
+        /* Check the finish condition. */
+        if (finished)
+        {
+            FILE* resultFile = fopen("ring_test_output", "a");
+            fprintf(resultFile, "1");
+            fclose(resultFile);
+        }
+    }
+}
+          ]]></OnReceive>
+        </SupervisorInPin>
+      </SupervisorType>
+...
+~~~
+
+The `Code` section holds includes and variables accessible to supervisor
+handlers - in this case, the `stdio` library from C is included, two booleans
+(`failed` and `finished`) are initialised, as is an array that holds the number
+of messages received from each device (initialised to zero). The
+`SupervisorInPin` section introduces an input pin type named `"tracker"`, which
+consumes the same messages as normal devices do. The source in the `OnReceive`
+element, analogous to `OnReceive` elements for normal devices, encapsulates the
+logic the supervisor needs to execute when it receives a message.
+
+This logic requires another graph-level property to identify the number of
+normal devices in the application. This property must be initialised without a
+default, as it must be defined by the `GraphInstance` section later. The
+following change introduces this property:
+
+~~~ {.xml}
+...
+  <GraphType id="ring_test_type">
+    <Properties><![CDATA[
+uint8_t maxLaps = 9;  /* Zero-based indexing */
+uint8_t numDevices;   /* Defined in the graph instance section, used by the
+                       * supervisor */
+    ]]></Properties>
+  </GraphType>
+...
+~~~
+
+This logic also requires an additional `sourceId` field to be defined in the
+`"only"` message type, and requires that field is populated by the sender. The
+following changes are necessary:
+
+~~~ {.xml}
+...
+  <GraphType id="ring_test_type">
+    ...
+    <MessageTypes>
+      <MessageType id="only"><![CDATA[
+uint8_t sourceId;
+uint8_t lap;
+      ]]></MessageType>
+    </MessageTypes>
+    <DeviceTypes>
+      <DeviceType id="ring_element">
+        ...
+        <OutputPin name="sender" messageTypeId="only">
+          <OnSend><![CDATA[
+/* Define the fields in the message. */
+message->sourceId = deviceProperties->id;
+message->lap = deviceState->lap;
+
+/* Since we're sending a message, reset this field so that we don't send
+ * another one. */
+deviceState->sendMessage = 0;
+          ]]></OnSend>
+        </OutputPin>
+        ...
+      </DeviceType>
+      ...
+    </DeviceTypes>
+  </GraphType>
+...
+~~~
+
+Alternatively, a different message type could have been declared with this
+payload, along with a new output pin for ring element devices that sends
+messages of that type.
+
+Following this example, the `GraphType` section now matches with the complete
+XML presented in Appendix A.
+
+## Defining a Graph Instance
+
+Given a complete `GraphType` definition, an instance of the ring test
+application can be created, which can be loaded by the Orchestrator and
+executed using the POETS compute system. Beginning from the earlier skeletal
+structure:
+
+~~~ {.xml}
+<?xml version="1.0"?>
+<Graphs xmlns="" appname="ring_test">
+  <GraphType id="ring_test_type">
+    ...
+  </GraphType>
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+  </GraphInstance>
+</Graphs>
+~~~
+
+we define the graph level property required for the supervisor:
+
+~~~ {.xml}
+...
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+    <Properties><![CDATA[
+numDevices = 5;
+    ]]></Properties>
+  </GraphInstance>
+...
+~~~
+
+This particular property is used by the supervisor logic to capture the number
+of devices it is supervising (to track incoming messages). Consequently, we
+instantiate exactly five devices:
+
+~~~ {.xml}
+...
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+    <Properties><![CDATA[
+numDevices = 5;
+    ]]></Properties>
+    <DeviceInstances>
+      <DevI id="0" type="ring_element"><P>"id = 0;"</P></DevI>
+      <DevI id="1" type="ring_element"><P>"id = 1;"</P></DevI>
+      <DevI id="2" type="ring_element"><P>"id = 2;"</P></DevI>
+      <DevI id="3" type="ring_element"><P>"id = 3;"</P></DevI>
+      <DevI id="4" type="ring_element"><P>"id = 4;"</P></DevI>
+    </DeviceInstances>
+  </GraphInstance>
+...
+~~~
+
+Each device instance has a different value for its `id` property (defined in
+the `P` element). Note that the `id` attribute of each `DevI` element can be
+any alphanumeric, as long as they are unique. Each device instance is of the
+`"ring_element"` device type. Note that we do not need to instantiate a
+supervisor device, as the Orchestrator does so as the application is handled.
+
+We then define the connections between devices. Firstly, between two normal
+devices:
+
+~~~ {.xml}
+...
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+    ...
+    <EdgeInstances>
+      <EdgeI path="1:receiver-0:sender"/>
+      <EdgeI path="2:receiver-1:sender"/>
+      <EdgeI path="3:receiver-2:sender"/>
+      <EdgeI path="4:receiver-3:sender"/>
+      <EdgeI path="0:receiver-4:sender"/>
+    </EdgeInstances>
+  </GraphInstance>
+...
+~~~
+
+and secondly, between normal devices and their supervisor device:
+
+~~~ {.xml}
+...
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
+    ...
+    <EdgeInstances>
+      ...
+      <EdgeI path=":tracker-0:sender"/>
+      <EdgeI path=":tracker-1:sender"/>
+      <EdgeI path=":tracker-2:sender"/>
+      <EdgeI path=":tracker-3:sender"/>
+      <EdgeI path=":tracker-4:sender"/>
+    </EdgeInstances>
+  </GraphInstance>
+...
+~~~
+
+For information on the path syntax, see the description of the `:EdgeI:`
+element in the "Application Files" Section.
+
+Now we have created a fully-defined application with both a graph type
+definition (detailing the behaviour of normal devices, supervisor devices, and
+their communication), and an instantiation (a given number of devices in a
+certain configuration). The resulting file (see Appendix A) can be loaded in
+the Orchestrator and run as a complete application (see the Usage
+documentation, or Orchestrator Volume IV, for further information on how to do
+this).
 
 # Application Files
 
