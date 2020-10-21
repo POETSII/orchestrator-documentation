@@ -144,8 +144,7 @@ device type (`:SupervisorType:`) can be defined by the application writer (one
 per application), and the Orchestrator will instantiate supervisor devices
 automatically, and connect them to normal devices. Supervisor devices have
 input pins (`:SupervisorType - SupervisorInPin:`), output (`:SupervisorType -
-SupervisorOutPin:`) pins. Edges (`:EdgeI:`) can be instantiated in the same way
-as with normal devices.
+SupervisorOutPin:`) pins.
 
 Two common uses for supervisor devices is in data exfiltration and application
 termination. These uses require all normal devices in the application to
@@ -160,7 +159,9 @@ support implicit input and output pins for communication with normal devices.
 Messages received by devices over the implicit supervisor connection are
 handled by their Supervisor input pin (`:DeviceType - SupervisorInPin:`), and
 likewise messages are sent over the implicit connection by their supervisor
-output pin (`:DeviceType - SupervisorOutPin:`).
+output pin (`:DeviceType - SupervisorOutPin:`). Being "implicit", this
+connection does not need to be defined in the edge instance (`:EdgeI:`) section
+of the application definition.
 
 # Example: Ring Test
 
@@ -205,7 +206,7 @@ connected to that type - these will both be populated as we progress through
 this example.
 
 Within the `GraphType`, we can define the behaviour for the members of the
-ring - the type of devices that are going to propagate our message around the
+ring - the type of devices that are going to propagate our data around the
 ring.
 
 ~~~ {.xml}
@@ -275,7 +276,7 @@ in the state to one (so that a message will be sent later). The `:OnInit:`
 handler also returns one on device zero, causing the `ReadyToSend` handler to
 be invoked.
 
-The `ReadyToSend` handler is responsible for determining whether a message
+The `ReadyToSend` handler is responsible for determining whether messages
 should be sent, and which output pins should be used to send that message. To
 do this, it reads the state of the device, as follows:
 
@@ -300,7 +301,7 @@ The `ReadyToSend` handler here checks whether another handler "wants a message
 to be sent". If so, it sets a flag (`RTS_FLAG_sender`) in the `readyToSend`
 structure. This flag is checked after the `ReadyToSend` handler is invoked, and
 causes a message to be sent. In order to send a message in this way, an output
-pin must be defined for this type, as follows:
+pin with the name "`sender`" must be defined for this type, as follows:
 
 ~~~ {.xml}
 ...
@@ -314,7 +315,7 @@ uint8_t lap = 0;
  * or zero (false). */
 uint8_t sendMessage = 0;
       ]]></State>
-      <OutputPin name="sender" messageTypeId="only">
+      <OutputPin name="sender" messageTypeId="ring_propagate">
         <OnSend><![CDATA[
 /* Define the fields in the message. */
 message->lap = deviceState->lap;
@@ -333,28 +334,28 @@ if (deviceState->sendMessage == 1) *readyToSend |= RTS_FLAG_sender;
 ~~~
 
 Note that the `name` attribute on the output pin is "`sender`", which
-corresponds to the suffix of the flax "`RTS_FLAG_sender`" used in the
+corresponds to the suffix of the flag "`RTS_FLAG_sender`" used in the
 `ReadyToSend` element. This is essential to ensure that the correct pin is
 selected to send the message. Output pins define an `OnSend` handler - in this
 case, the handler clears the `sendMessage` state set by `OnInit` (or another
 handler, later on). It also defines the `lap` field in the payload of the
 outgoing message from the state - to facilitate this, the state of ring element
-devices is expanded to include a lap field.
+devices is expanded to include a `lap` field.
 
 Like pins and devices, all messages must have a defined type. The element
 introducing the "`sender`" output pin also has attribute `messageTypeId` with
-value "`only`", so a message type must also be defined as follows:
+value "`ring_propagate`", so a message type must also be defined as follows:
 
 ~~~ {.xml}
 ...
     <MessageTypes>
-      <MessageType id="only"><![CDATA[
+      <MessageType id="ring_propagate"><![CDATA[
 uint8_t lap;
       ]]></MessageType>
     </MessageTypes>
     <DeviceTypes>
       <DeviceType id="ring_element">
-        <OutputPin name="sender" messageTypeId="only">
+        <OutputPin name="sender" messageTypeId="ring_propagate">
           ...
         </OutputPin>
         ...
@@ -371,12 +372,12 @@ communications from output pins:
 ~~~ {.xml}
 ...
     <DeviceType id="ring_element">
-      <InputPin name="receiver" messageTypeId="only">
+      <InputPin name="receiver" messageTypeId="ring_propagate">
         <OnReceive><![CDATA[
 /* Only device zero increments the lap counter. Remember - this field in the
  * state is later propagated into the message. */
 deviceState->lap = message->lap;
-if (deviceProperties->id == 0) deviceState->lap += + 1;
+if (deviceProperties->id == 0) deviceState->lap += 1;
 
 /* Don't send a message if the incoming message has completed its tenth lap. */
 if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
@@ -388,16 +389,20 @@ else deviceState->sendMessage = 0;
 ...
 ~~~
 
-When an `"only"` message is received on this input pin, the `"lap"` state of
-the device is updated with the contents of the message. Only device zero is
-permitted to increment the lap (as it is the origin point of the message). Like
-the `OnInit` handler, this `OnReceive` handler sets the `"sendMessage"` state
-of the device for the `ReadyToSend` handler (which is called after
-`OnReceive`).
+When a `"ring_propagate"` message is received on this input pin, the `"lap"`
+state of the device is updated with the contents of the message. Only device
+zero is permitted to increment the lap (as it is the origin point of the
+message). Like the `OnInit` handler, this `OnReceive` handler sets the
+`"sendMessage"` state of the device for the `ReadyToSend` handler (which is
+called after `OnReceive`).
+
+Note that the output pin name "`sender`" and the input pin name "`receiver`"
+are not special - as long as their names are used consistently throughout the
+XML where they are required.
 
 Lastly, this handler requires the definition of a global `maxLaps` property,
 which determines when the application should stop. This is defined on the graph
-level:
+level, and will be accessible by all code fragments in the application:
 
 ~~~ {.xml}
 <?xml version="1.0"?>
@@ -424,7 +429,7 @@ using the type system. The (incomplete) XML at this stage is:
 uint8_t maxLaps = 9;  /* Zero-based indexing */
     ]]></Properties>
     <MessageTypes>
-      <MessageType id="only"><![CDATA[
+      <MessageType id="ring_propagate"><![CDATA[
 uint8_t lap;
       ]]></MessageType>
     </MessageTypes>
@@ -443,19 +448,19 @@ uint8_t lap = 0;
 * or zero (false). */
 uint8_t sendMessage = 0;
         ]]></State>
-        <InputPin name="receiver" messageTypeId="only">
+        <InputPin name="receiver" messageTypeId="ring_propagate">
           <OnReceive><![CDATA[
 /* Only device zero increments the lap counter. Remember - this field in the
  * state is later propagated into the message. */
 deviceState->lap = message->lap;
-if (deviceProperties->id == 0) deviceState->lap += + 1;
+if (deviceProperties->id == 0) deviceState->lap += 1;
 
 /* Don't send a message if the incoming message has completed its tenth lap. */
 if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
 else deviceState->sendMessage = 0;
           ]]></OnReceive>
         </InputPin>
-        <OutputPin name="sender" messageTypeId="only">
+        <OutputPin name="sender" messageTypeId="ring_propagate">
           <OnSend><![CDATA[
 /* Define the fields in the message. */
 message->lap = deviceState->lap;
@@ -485,6 +490,10 @@ return deviceState->sendMessage;
 </Graphs>
 ~~~
 
+We now have a device type definition, which is capable of receiving messages
+from the prior devices in the ring, and "forwarding" them to the next devices
+in the ring.
+
 ## Introducing the Supervisor Device Type
 
 The application brief requires a file to be written, whose contents depend on
@@ -502,7 +511,7 @@ device type alongside the ring element normal device type:
     <DeviceTypes>
       <DeviceType id="ring_element">
       </DeviceType>
-      <SupervisorType id="">
+      <SupervisorType id="" SupervisorInPin="tracker">
       </SupervisorType>
     </DeviceTypes>
   </GraphType>
@@ -510,18 +519,18 @@ device type alongside the ring element normal device type:
 </Graphs>
 ~~~
 
-The supervisor type holds a single input pin, so that ring element devices can
-send messages to it. When it receives a message, the supervisor device
-increments a counter indexed by the sender. Then, if it has received $N$
-messages from all devices, it opens a file and writes "1" to it. If the
-supervisor receives too many messages from a given device, it instead opens a
-file and writes "0" to it, denoting application failure. If the application
-fails in this way, it doesn't process any more messages. The full supervisor
-type definition is:
+This supervisor type holds a single input pin ("`tracker`"), so that ring
+element devices can send messages to it using their implicit connection. When
+the supervisor device receives a message, it increments a counter indexed by
+the sender. Then, if it has received $N$ messages from all devices, it opens a
+file and writes "1" to it. If the supervisor receives too many messages from a
+given device, it instead opens a file and writes "0" to it, denoting
+application failure. If the application fails in this way, it doesn't process
+any more messages. The full supervisor type definition is:
 
 ~~~ {.xml}
 ...
-      <SupervisorType id="">
+      <SupervisorType id="" SupervisorInPin="tracker">
         <Code><![CDATA[
 #include <stdio.h>  /* For writing an output file */
 
@@ -537,7 +546,7 @@ for (uint8_t index = 0; index < graphProperties->numDevices; index++)
 bool failed = false;
 bool finished = false;
         ]]></Code>
-        <SupervisorInPin id="tracker" messageTypeId="only">
+        <SupervisorInPin id="tracker" messageTypeId="exfiltration">
           <OnReceive><![CDATA[
 /* If the application has failed, don't act on any more messages. */
 if (!failed)
@@ -590,8 +599,8 @@ The `Code` section holds includes and variables accessible to supervisor
 handlers - in this case, the `stdio` library from C is included, two booleans
 (`failed` and `finished`) are initialised, as is an array that holds the number
 of messages received from each device (initialised to zero). The
-`SupervisorInPin` section introduces an input pin type named `"tracker"`, which
-consumes the same messages as normal devices do. The source in the `OnReceive`
+`SupervisorInPin` section introduces an input pin type named "`tracker`", which
+consumes a new type of "`exfiltration`" messages. The source in the `OnReceive`
 element, analogous to `OnReceive` elements for normal devices, encapsulates the
 logic the supervisor needs to execute when it receives a message.
 
@@ -612,24 +621,27 @@ uint8_t numDevices;   /* Defined in the graph instance section, used by the
 ...
 ~~~
 
-This logic also requires an additional `sourceId` field to be defined in the
-`"only"` message type, and requires that field is populated by the sender. The
-following changes are necessary:
+This logic also requires an additional "`exfiltration"` message type to be
+defined, and requires that field is populated by the sender. The following
+changes are necessary:
 
 ~~~ {.xml}
 ...
   <GraphType id="ring_test_type">
     ...
     <MessageTypes>
-      <MessageType id="only"><![CDATA[
+      <MessageType id="exfiltration"><![CDATA[
 uint8_t sourceId;
+uint8_t lap;
+      ]]></MessageType>
+      <MessageType id="only"><![CDATA[
 uint8_t lap;
       ]]></MessageType>
     </MessageTypes>
     <DeviceTypes>
       <DeviceType id="ring_element">
         ...
-        <OutputPin name="sender" messageTypeId="only">
+        <SupervisorOutPin messageTypeId="exfiltration">
           <OnSend><![CDATA[
 /* Define the fields in the message. */
 message->sourceId = deviceProperties->id;
@@ -639,8 +651,18 @@ message->lap = deviceState->lap;
  * another one. */
 deviceState->sendMessage = 0;
           ]]></OnSend>
-        </OutputPin>
+        </SupervisorOutPin>
         ...
+        <ReadyToSend><![CDATA[
+/* If the input handler determined that we should send a message, do so to the
+ * next normal device in the ring, and to our supervisor device. */
+if (deviceState->sendMessage == 1)
+{
+    *readyToSend |= RTS_FLAG_sender;
+    *readyToSend |= RTS_SUPER_IMPLICIT_SEND_FLAG;
+}
+        ]]></ReadyToSend>
+
       </DeviceType>
       ...
     </DeviceTypes>
@@ -648,19 +670,21 @@ deviceState->sendMessage = 0;
 ...
 ~~~
 
-Alternatively, a different message type could have been declared with this
-payload, along with a new output pin for ring element devices that sends
-messages of that type.
+The above change defines the payload for the new "`exfiltration`" message type,
+adds a `SupervisorOutPin` to facilitate an implicit output connection with the
+supervisor, and includes the additional\
+`RTS_SUPER_IMPLICIT_SEND_FLAG` in the
+`ReadyToSend` element, to ensure all messages go to the supervisor device as
+well as the next device in the ring.
 
 Following this example, the `GraphType` section now matches with the complete
-XML presented in Appendix A.
+XML in Appendix A.
 
 ## Defining a Graph Instance
 
 Given a complete `GraphType` definition, an instance of the ring test
 application can be created, which can be loaded by the Orchestrator and
-executed using the POETS compute system. Beginning from the earlier skeletal
-structure:
+executed using the POETS compute system. Beginning from the previous Section:
 
 ~~~ {.xml}
 <?xml version="1.0"?>
@@ -712,8 +736,7 @@ any alphanumeric, as long as they are unique. Each device instance is of the
 `"ring_element"` device type. Note that we do not need to instantiate a
 supervisor device, as the Orchestrator does so as the application is handled.
 
-We then define the connections between devices. Firstly, between two normal
-devices:
+We then define the connections between devices:
 
 ~~~ {.xml}
 ...
@@ -730,26 +753,12 @@ devices:
 ...
 ~~~
 
-and secondly, between normal devices and their supervisor device:
-
-~~~ {.xml}
-...
-  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
-    ...
-    <EdgeInstances>
-      ...
-      <EdgeI path=":tracker-0:sender"/>
-      <EdgeI path=":tracker-1:sender"/>
-      <EdgeI path=":tracker-2:sender"/>
-      <EdgeI path=":tracker-3:sender"/>
-      <EdgeI path=":tracker-4:sender"/>
-    </EdgeInstances>
-  </GraphInstance>
-...
-~~~
-
 For information on the path syntax, see the description of the `:EdgeI:`
-element in the "Application Files" Section.
+element in the "Application Files" Section. Note that we do not define
+connections between the normal devices and their supervisor device, as we are
+using implicit connections to achieve this (every normal device can talk to
+their supervisor device over the implicit connection, facilitated by
+`:DeviceType - SupervisorOutPin:`.
 
 Now we have created a fully-defined application with both a graph type
 definition (detailing the behaviour of normal devices, supervisor devices, and
@@ -864,14 +873,19 @@ Table: Variables exposed to code written in `CDATA` sections.
 |                    | in the `Properties` element in the pin element using   |
 |                    | this variable.                                         |
 +--------------------+--------------------------------------------------------+
-| `readyToSend`      | The target structure defines one field for each        |
-|                    | `OutputPin` associated with this `DeviceType`. The     |
-|                    | names of these fields are the names of each `OutputPin`|
+| `readyToSend`      | The target structure (defining `|=`) holds one flag for|
+|                    | each `OutputPin` associated with this `DeviceType`. The|
+|                    | names of these flags are the names of each `OutputPin` |
 |                    | as defined by their `name` attribute, prefixed with    |
 |                    | "`RTS_FLAG_`". At the beginning of the `readyToSend`   |
-|                    | handler, each of these fields is initialised to zero.  |
-|                    | For each field, if it is one after the handler has been|
-|                    | executed, a message is sent over that `OutputPin`.     |
+|                    | handler, each of these flags is lowered, and can be    |
+|                    | raised using the `|=` operator. For each flag, if it   |
+|                    | is raised after the handler has been executed, a       |
+|                    | message is sent sent over that `OutputPin`. To send a  |
+|                    | message over the implicit supervisor output pin, raise |
+|                    | the flag "`RTS_SUPER_IMPLICIT_SEND_FLAG`". The order in|
+|                    | which handlers are executed are undefined, except that |
+|                    | the implicit supervisor handler is invoked last.       |
 +--------------------+--------------------------------------------------------+
 
 Table: Explanation of variables exposed to `CDATA` code.
@@ -1405,10 +1419,15 @@ uint8_t numDevices;  /* Defined in the graph instance section, used by the
                       * supervisor */
     ]]></Properties>
     <MessageTypes>
-      <!-- All communications in this application use this message type. -->
-      <MessageType id="only"><![CDATA[
-uint8_t sourceId;
+      <!-- Communications between normal devices use this message type. -->
+      <MessageType id="ring_propagate"><![CDATA[
 uint8_t lap;
+      ]]></MessageType>
+      <!-- Communications from normal devices to supervisor devices use this
+           message type.
+       -->
+      <MessageType id="exfiltration"><![CDATA[
+uint8_t sourceId;
       ]]></MessageType>
     </MessageTypes>
     <DeviceTypes>
@@ -1440,22 +1459,32 @@ uint8_t lap = 0;
 uint8_t sendMessage = 0;
             ]]>
         </State>
-        <InputPin name="receiver" messageTypeId="only">
+        <SupervisorOutPin messageTypeId="exfiltration">
+          <OnSend><![CDATA[
+/* Define the fields in the message. */
+message->sourceId = deviceProperties->id;
+message->lap = deviceState->lap;
+
+/* Since we're sending a message, reset this field so that we don't send
+ * another one. */
+deviceState->sendMessage = 0;
+          ]]></OnSend>
+        </SupervisorOutPin>
+        <InputPin name="receiver" messageTypeId="ring_propagate">
           <OnReceive><![CDATA[
 /* Only device zero increments the lap counter. Remember - this field in the
  * state is later propagated into the message. */
 deviceState->lap = message->lap;
-if (deviceProperties->id == 0) deviceState->lap += + 1;
+if (deviceProperties->id == 0) deviceState->lap += 1;
 
 /* Don't send a message if the incoming message has completed its tenth lap. */
 if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
 else deviceState->sendMessage = 0;
           ]]></OnReceive>
         </InputPin>
-        <OutputPin name="sender" messageTypeId="only">
+        <OutputPin name="sender" messageTypeId="ring_propagate">
           <OnSend><![CDATA[
 /* Define the fields in the message. */
-message->sourceId = deviceProperties->id;
 message->lap = deviceState->lap;
 
 /* Since we're sending a message, reset this field so that we don't send
@@ -1467,11 +1496,15 @@ deviceState->sendMessage = 0;
              OnInit (if it returns nonzero).
         -->
         <ReadyToSend><![CDATA[
-/* If the input handler determined that we should send a message, do so. */
-if (deviceState->sendMessage == 1) *readyToSend |= RTS_FLAG_sender;
+/* If the input handler determined that we should send a message, do so to the
+ * next normal device in the ring, and to our supervisor device. */
+if (deviceState->sendMessage == 1)
+{
+    *readyToSend |= RTS_FLAG_sender;
+    *readyToSend |= RTS_SUPER_IMPLICIT_SEND_FLAG;
+}
         ]]></ReadyToSend>
-        <!-- Initialisation logic.
-        -->
+        <!-- Initialisation logic. -->
         <OnInit><![CDATA[
 /* Device zero starts things off by telling the ReadyToSend handler to send a
  * message. No other device does this. */
@@ -1482,7 +1515,7 @@ if (deviceProperties->id == 0) deviceState->sendMessage = 1;
 return deviceState->sendMessage;
         ]]></OnInit>
       </DeviceType>
-      <SupervisorType id="">
+      <SupervisorType id="" SupervisorInPin="tracker">
         <!-- There is one supervisor device type in a given application. This
              particular supervisor is written assuming there is only one
              instance for simplicity.
@@ -1562,11 +1595,6 @@ numDevices = 5;
       <DevI id="4" type="ring_element"><P>"id = 4;"</P></DevI>
     </DeviceInstances>
     <EdgeInstances>
-      <EdgeI path=":tracker-0:sender"/>
-      <EdgeI path=":tracker-1:sender"/>
-      <EdgeI path=":tracker-2:sender"/>
-      <EdgeI path=":tracker-3:sender"/>
-      <EdgeI path=":tracker-4:sender"/>
       <EdgeI path="1:receiver-0:sender"/>
       <EdgeI path="2:receiver-1:sender"/>
       <EdgeI path="3:receiver-2:sender"/>
