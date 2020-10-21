@@ -15,16 +15,15 @@ This document does not:
  - Describe how to get an account on a POETS machine (speak to a project member
    if you wish to set this up).
 
- - Describe compilation in detail (rudimentary knowledge of the POSIX shell
-   `sh` is assumed in the Setup section).
+ - Describe compilation outside of POETS machines (a Makefile is provided).
 
  - Describe how compilation and execution can be adapted to run on non-POETS
    machines.
 
 # Orchestrator Introduction
 
-Figure 1 (left) shows the POETS stack; POETS consists of major three layers,
-one of which is the Orchestrator. The other layers are:
+Figure 1 shows the POETS stack; POETS consists of major three layers, one of
+which is the Orchestrator. The other layers are:
 
  - Application Layer: The application is domain-specific problem (with
    context), which is to be solved on the POETS Engine. The role of the
@@ -36,13 +35,14 @@ one of which is the Orchestrator. The other layers are:
  - Engine Layer: The highly-distributed hardware on which the application is
    solved. The POETS Engine (or just "Engine") has no idea about context. The
    Engine Layer consists of a POETS box, which contains some interconnected
-   FPGA boards, and an x86 machine used to control them (termed a
-   "Mothership"). Hostlink exists as an API for the Engine.
+   FPGA boards, and an x86 machine used to control them.
+
+![Layers in the POETS stack](images/stack.png "The POETS Stack"){width=40%}
 
 With only these two layers, POETS still requires a way to map the application
 (Application Layer) onto the hardware (Engine Layer). POETS also lacks any way
 for the user to start, stop, observe, get results from, or otherwise generally
-interact with the Engine during operation. Enter the Orchestrator!
+interact with the Engine during operation.
 
 ## Features of the Orchestrator
 
@@ -64,18 +64,6 @@ responsibilities of the Orchestrator are:
 
  - To allow the user to retrieve results computed by the Engine.
 
-Figure 1 (right) shows how the layers of POETS interact to deliver on these
-features.
-
-![Layers in the POETS stack](images/stack.png "The POETS Stack"){width=40%}
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ![How the Orchestrator
-interacts with those layers](images/orchestrator_interaction.png "How the
-Orchestrator interacts with the POETS Stack"){width=40%}
-\begin{figure}
-\caption{Left: Layers in the POETS stack. Right: How the Orchestrator interacts
-with those layers to achieve its objectives}
-\end{figure}
-
 ## Components of the Orchestrator
 
 The Orchestrator consists of disparate components, which are logically arranged
@@ -85,14 +73,13 @@ applications include:
 
  - "Root": While the Orchestrator is comprised of a series of modular
    components, the "Root" uses these components to achieve the features of the
-   Orchestrator. Precisely, the Root component:
+   Orchestrator. The Root component:
 
-   - Can interface with a user, via a command prompt, or via batch commands.
+   - Interfaces with the operator via a command prompt.
 
    - Manages an internal model of the Engine (the "hardware graph" of how
      cores, threads, mailboxes, FPGA boards, and supervisors are
-     connected). This is either achieved through prior knowledge, or through a
-     dynamic hardware-discovery mechanism.
+     connected).
 
    - Can, on command, map an application onto the internal model of the Engine
      in an efficient manner (placement).
@@ -133,49 +120,18 @@ Other components include:
    enables lookup in either direction.
 
  - "Monitor": The Monitor component displays information about the current
-   activity of the Engine, and other useful details from the Orchestrator.
+   activity of the Engine, and other useful details from the Orchestrator. Not
+   yet implemented.
 
  - "User Input and User Output": The User Input component handles inputs from
    the application frontend, by translating them into instructions (messages)
    for other components to execute. The User Output component handles messages
-   from components to be displayed in the application frontend.
+   from components to be displayed in the application frontend. Not yet
+   implemented
 
-All of these components exist as separate processes in the same MPI
-(Message-Passing Interface,
-[https://www.mpi-forum.org/docs/](https://www.mpi-forum.org/docs/)) universe,
-so that each component is able to communicate with each other component. A
-fully-functioning Orchestrator must have exactly one running instance of each
-of these component processes. All components of the Orchestrator make use of
-the communications broker "CommonBase" (see the implementation documentation).
-
-## Supervisor Devices
-
-Supervisor devices^[Note that "Supervisor" in the context of POETS is not
-related to supervisors in the context of UNIX-likes; the concepts are
-completely different.] are a further component of the Orchestrator, but are
-unique in that they execute as part of a deployed application, on a POETS box,
-as part of the Mothership. Each application has one Supervisor device per POETS
-box it is deployed to. Supervisors are uniquely positioned at interface
-between the message-based (MPI) communication of the Orchestrator, and the
-packet-based communication of the Engine. The supervisor can:
-
- - Collect data from an application running on the Engine (specifically, the
-   POETS box that the Supervisor is running on).
-
- - Process that data at run time.
-
- - Input data into the Engine, either fed in externally or from processing.
-
-While a Supervisor is a component of the Orchestrator (reachable by messages
-from the Orchestrator), a Supervisor is also a participant in an application
-(reachable by packets from the Engine). Supervisors act as a "local" point of
-contact for devices in the Engine, facilitating:
-
- - Data exfiltration (logging).
-
- - "Centralised" termination detection.
-
- - Interaction between an application and the host operating system (!).
+All of these components exist as separate processes reachable in the same MPI
+(Message-Passing Interface) communicator, so that each component is able to
+communicate with each other component.
 
 ## Key Points
 
@@ -189,14 +145,12 @@ contact for devices in the Engine, facilitating:
 - The Orchestrator is a modular system; it is divided into a series of
   components each responsible for a unit of functionality.
 
-- Supervisors are components of the Orchestrator that exist at the interface
-  between the Orchestartor and the Engine.
-
 # Setup on a POETS Machine
 
 Given that you have an account on a POETS machine, you will first need to build
 the Orchestrator in order to use it. To set up the Orchestrator, perform the
-following actions on the POETS machine from your user account:
+following actions on the POETS machine from your user account (assuming
+rudimentary `sh` knowledge):
 
  - **Obtain the sources:** Clone the Orchestrator Git repository, at
    https://github.com/poetsii/Orchestrator, and check out the `development`
@@ -218,13 +172,14 @@ following actions on the POETS machine from your user account:
 
  - **Build the Orchestrator:** From the `Build/gcc` directory in the
    Orchestrator repository, command `make all` to build the Orchestrator. You
-   may also wish to build in parallel, using the `-j N` flag ("N" build slaves
-   will be used). A `debug` build is also supported.
+   may also wish to build in parallel, using the `-j N` flag ("N" parallel
+   workers will be used). A `debug` build is also supported, accessible by
+   building instead with `make debug`.
 
-The build process creates a series of disparate executables in the `bin`
-directory in the Orchestrator repository. If this process fails, or raises
-warnings, please alert an Orchestrator developer. Once you have successfully
-completed the build, you are ready to use the Orchestrator on POETS hardware.
+The build process creates executables in the `bin` directory in the
+Orchestrator repository, as well as a startup script in the root directory of
+the Orchestrator repository. Once you have successfully completed the build,
+you are ready to use the Orchestrator on POETS hardware.
 
 # Usage
 ## Interactive Usage
@@ -252,9 +207,9 @@ session, command:
 exit
 ~~~
 
-then hit any key to end the Orchestrator process. Note that this will
-effectively disown any jobs running on the Engine, so you will be unable to
-reconnect to any jobs started in this way.
+which ends the Orchestrator process. Note that this will effectively disown any
+jobs running on the Engine, so you will be unable to reconnect to any jobs
+started in this way.
 
 When starting the Orchestrator, you may also encounter a pair of messages
 similar to:
@@ -273,17 +228,17 @@ If your session terminates with:
 Failed to acquire HostLink lock: Resource temporarily unavailable
 ~~~
 
-then the Mothership process was unable to connect to the API that allows it to
-another Mothership process[^hl] is already running on this box; only one
+then the Mothership process was unable to connect to the underlying POETS
+Engine, as another Mothership process[^hl] is running on your box; only one
 Mothership process can run on a box in the Engine at a time. Until that process
 ends, you will not be able to use the Orchestrator. This error may also be
 raised when the disk runs out of space, which you can check by commanding `df
--h`.
+-h` in the shell.
 
 [^hl]: or another HostLink process
 
 While your session is running, if you include the Logserver component, a log
-file will be written in the `bin` directory containing details of the
+file will be written in the `Output` directory containing details of the
 Orchestrator session.
 
 ### Help
@@ -318,10 +273,11 @@ both to your prompt (on `stdout`) and to a log file at `Output/POETS.log`. Each
 line corresponds to a different logging entry. Using the first line of the
 above as an example:
 
- - `13:11:17.37` is a timestamp (obviously)
+ - `13:11:17.37` is a timestamp
 
- - `23(I)` is the ID of the message, corresponding to entries in
-   `Config/OrchestratorMessages.ocfg` (not user-facing).
+ - `23(I)` is the ID of the message^[These messages correspond to entries in
+   `Config/OrchestratorMessages.ocfg`, which is not intended to be
+   user-facing.].
 
  - `test /echo = "Hello world"` is the text of the log message.
 
@@ -343,8 +299,7 @@ from console
 Hello world
 ~~~
 
-To demonstrate how multiple clauses and parameters typically interact, command
-(forgive my syntax highlighting, I'm only human):
+To demonstrate how multiple clauses and parameters typically interact, command:
 
 ~~~ {.bash}
 test /echo = "Hello","world" /echo = "Rise to vote sir" /echo = "test /echo = 'what,','why,','how?'"
@@ -360,7 +315,7 @@ POETS> 13:46:48.82:   1(I) Rise to vote sir
 POETS> 13:46:48.82:   1(I) test /echo = 'what,','why,','how?'
 ~~~
 
-and prints to the microlog:
+and which prints to the microlog:
 
 ~~~ {.bash}
 ======================================================================================
@@ -493,8 +448,8 @@ tlink /app = *
 
 which links all graph instances loaded from all application files in
 sequence. This syntax is accepted for all commands where an application graph
-instance is accepted as a parameter. We adopt this last notation going forward
-in this guide (for brevity's sake).
+instance is accepted as a parameter. For the sake of brevity, we adopt this
+last notation going forward.
 
 #### Mapping Application Graph Instances to Hardware (Placement))
 
@@ -531,10 +486,12 @@ documentation.
 
 The application definition is comprised of the application graph instance (how
 devices are connected to each other, and how they communicate), and the device
-logic (the C fragments that define what each device does). Given the hardware
-mapping from the placement step, the Orchestrator can now produce binary files
-to execute on the cores of the POETS engine, and binary files to act as
-supervisor devices. To build these binaries in an idempotent manner, command:
+logic (the C fragments that define what each device does). See Volume II of the
+documentation for more information on defining POETS applications for the
+Orchestrator. Given the hardware mapping from the placement step, the
+Orchestrator can now produce binary files to execute on the cores of the POETS
+engine, and binary files to act as supervisor devices. To build these binaries
+in an idempotent manner, command:
 
 ~~~ {.bash}
 compose /app = *
@@ -568,7 +525,7 @@ To start the application immediately when all cores report they are ready,
 commanding:
 
 ~~~ {.bash}
-build /run = "plate_3x3"
+build /run = *
 ~~~
 
 will start the application once the cores have been initialised; the
@@ -576,7 +533,7 @@ application will not start before all cores have been initialised. While they
 are running, jobs can be stopped by commanding:
 
 ~~~ {.bash}
-build /stop = "plate_3x3"
+build /stop = *
 ~~~
 
 ### Interactive Usage Summary
@@ -612,13 +569,13 @@ Note that you will need to exit the Orchestrator once your job has finished, by
 commanding `exit` (this cannot be scripted, as it would result in premature
 termination of your job).
 
-# Appendix A: Command List
+# Appendix A: Useful Command List
 
 What follows is a list of the most useful operator commands supported by the
 present working version of the Orchestrator. Other commands exist, though are
 either internally used by other systems (`*`, `return`), or are for testing
 (basically everything in `system`). For the comprehensive list of commands
-(present and future), consult the implementation document (big Word document).
+(present and future), consult Volume II (implementation documentation).
 
 ## Build (`build`)
 
@@ -645,8 +602,8 @@ either internally used by other systems (`*`, `return`), or are for testing
    devices for that application.
 
  - `build /recl`: Given a placed application graph instance (or multiple),
-   informs all Motherships that host the application to forget about it
-   completely, unless it is running (it will need to be stopped first).
+   informs all Motherships that host the application to recall it (forget about
+   it completely), unless it is running (it will need to be stopped first).
 
 ## Call (`call`)
 
@@ -753,7 +710,7 @@ placement documentation for a comprehensive list of commands.
 ## Return (`return`)
 
 The return command skips the rest of the commands from the calling file. Is a
-no-operation unless called form a batch file.
+no-operation unless called from a batch file.
 
 ## Show (`show`)
 

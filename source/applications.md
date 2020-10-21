@@ -128,19 +128,24 @@ application.
 
 ## Supervisor Devices
 
-Supervisor devices are an optional component of a POETS application, which
+Supervisor devices^[Note that "Supervisor" in the context of POETS is not
+related to supervisors in the context of UNIX-likes; the concepts are
+completely different.] are an optional component of a POETS application, which
 allow application writers to define behaviours at a centralised point. Unlike
 normal devices which run on POETS hardware, supervisor devices run on the host
-machine, making them suitable for file I/O and heavier compute loads. Also
-unlike normal devices (`:DevI:`), supervisor devices are not instantiated by
+machine, making them suitable for file I/O and heavier compute
+loads. Supervisor devices are both components of the Orchestrator (reachable by
+messages over the Orchestrator's multiprocess communications mechanism), and
+components of an application (reachable by messages from the POETS Engine).
+
+Unlike normal devices (`:DevI:`), supervisor devices are not instantiated by
 the application writer. If a supervisor device is required, the supervisor
 device type (`:SupervisorType:`) can be defined by the application writer (one
 per application), and the Orchestrator will instantiate supervisor devices
-automatically, and connect them to normal devices.
-
-Supervisor devices have input pins (`:SupervisorType - SupervisorInPin:`),
-output (`:SupervisorType - SupervisorOutPin:`) pins. Edges (`:EdgeI:`) can be
-instantiated in the same way as with normal devices.
+automatically, and connect them to normal devices. Supervisor devices have
+input pins (`:SupervisorType - SupervisorInPin:`), output (`:SupervisorType -
+SupervisorOutPin:`) pins. Edges (`:EdgeI:`) can be instantiated in the same way
+as with normal devices.
 
 Two common uses for supervisor devices is in data exfiltration and application
 termination. These uses require all normal devices in the application to
