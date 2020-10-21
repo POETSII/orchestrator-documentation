@@ -21,7 +21,7 @@ MD := mkdir --parents
 PRINT := printf
 
 # Defines targets using a given extension. Arguments:
-#  - $1: Desired extension (e.g. "docx").
+#  - $1: Desired extension (e.g. "pdf").
 define targets_for_filetype
     $(patsubst $(TEXT_SOURCES_DIR)/%.md,\
 	    $(TEXT_TARGETS_DIR)/%.$1,\
@@ -69,10 +69,9 @@ ALL_IMAGE_TARGETS := $(GRAPH_TARGETS_DIR)/addressing_structure.png \
 
 # Define targets and backmatter dependencies. Backmatter dependencies are stuck
 # on the end of markdown files (literally cat-style) before pandoc parses them.
-DOCX_TARGETS := $(call targets_for_filetype,docx)
 PDF_TARGETS := $(call targets_for_filetype,pdf)
 PDF_BACKMATTER := $(TEXT_SOURCES_DIR)/include/latex.md
-ALL_TARGETS := $(DOCX_TARGETS) $(PDF_TARGETS)
+ALL_TARGETS := $(PDF_TARGETS)
 
 # General targets
 all: $(ALL_TARGETS)
@@ -83,8 +82,6 @@ clean:
 	@$(PRINT) "\r[DONE] Clearing.\n"
 
 # Targets for document types.
-docx: $(DOCX_TARGETS)
-
 pdf: $(PDF_TARGETS)
 
 # Builds one PDF from one markdown file, using the backmatter (dependency
@@ -93,12 +90,8 @@ $(TEXT_TARGETS_DIR)/%.pdf: $(TEXT_SOURCES_DIR)/%.md $(PDF_BACKMATTER) \
 	$(ALL_IMAGE_TARGETS)
 	$(call pandoc_build)
 
-# Builds one DOCX file from one markdown file, using no backmatter.
-$(TEXT_TARGETS_DIR)/%.docx: $(TEXT_SOURCES_DIR)/%.md $(ALL_IMAGE_TARGETS)
-	$(call pandoc_build)
-
 # Builds one PNG from one dot (graph) file.
 $(GRAPH_TARGETS_DIR)/%.png: $(GRAPH_SOURCES_DIR)/%.dot
 	$(call dot_build)
 
-.PHONY: all clean docx pdf
+.PHONY: all clean pdf
