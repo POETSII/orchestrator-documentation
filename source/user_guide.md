@@ -625,8 +625,9 @@ by calling `return` (from within a batch file).
 What follows is a list of the most useful operator commands supported by the
 present working version of the Orchestrator. Other commands exist, though are
 either internally used by other systems (`*`, `return`), or are for testing
-(basically everything in `system`). For the comprehensive list of commands
-(present and future), consult Volume II (implementation documentation).
+(basically everything in `system`). For a more detailed, developer-facing
+description of the more complicated commands, consult Volume II (implementation
+documentation).
 
 ## Call (`call`)
 
