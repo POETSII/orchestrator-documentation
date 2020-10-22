@@ -145,12 +145,18 @@ communicate with each other component.
 - The Orchestrator is a modular system; it is divided into a series of
   components each responsible for a unit of functionality.
 
-# Setup on a POETS Machine
+# Setup
 
-Given that you have an account on a POETS machine, you will first need to build
-the Orchestrator in order to use it. To set up the Orchestrator, perform the
-following actions on the POETS machine from your user account (assuming
-rudimentary `sh` knowledge):
+As a user, you will need to build the Orchestrator from its sources in order to
+use it. This Section describes the process for building the Orchestrator on
+traditional POETS hardware, and potential "gotchas" users have encountered in
+building on other platforms.
+
+## Setup on a POETS Machine
+
+Given that you have an account on a POETS machine, to set up the Orchestrator,
+perform the following actions on the POETS machine from your user account
+(assuming rudimentary `sh` knowledge):
 
  - **Obtain the sources:** Clone the Orchestrator Git repository, at
    https://github.com/poetsii/Orchestrator, and check out the `development`
@@ -181,7 +187,42 @@ Orchestrator repository, as well as a startup script in the root directory of
 the Orchestrator repository. Once you have successfully completed the build,
 you are ready to use the Orchestrator on POETS hardware.
 
+## Gotchas for Other Platforms
+
+ - The Orchestrator is designed to be compatible with 32-bit and 64-bit
+   architectures. Large applications will require a 64-bit architecture to
+   operate, though 32-bit architectures can be used for smaller applications
+   and development.
+
+ - The Orchestrator, being a multi-process system, requires multiple individual
+   executables to be created (see the "Components of the Orchestrator"
+   Section). These processes each have a `main` function defined in
+   `Source/PROCESS_NAME`.
+
+ - All processes need to be linked against MPI to facilitate communication (the
+   example in the previous Section builds using MPICH). Under MSMPIv6, the
+   preprocessor macros with identifiers `MSMPI_NO_DEPRECATE_20` and
+   `MSMPI_NO_SAL` must be defined. Using MSVC also requires `_TIMESPEC_DEFINED`
+   and `_CRT_SECURE_NO_WARNINGS` to be defined in the same way.
+
+ - The Orchestrator can be compiled either under either C++98 or C++11
+   standards. Post-modern standards are not supported.
+
+ - The `dl` library is required by most Linux systems for Orchestrator
+   compilation.
+
+ - The `pthreads` library is also required for Orchestrator compilation,
+   regardless of platform.
+
+ - Note that Borland C++ and MSVC use different formats for library files (this
+   applies particularly to `pthreads` and MPI). Both libraries (.lib) are
+   shipped in the Common Object File Format (COFF). For use with Borland C++
+   and Embarcadero C++ (at least), these need to be translated to Object Module
+   Format (OMF). The utility `COFF2OMF` is freely available (and is included
+   with Borland C++).
+
 # Usage
+
 ## Interactive Usage
 
 ### Execution
