@@ -616,7 +616,9 @@ run /app = *
 
 Note that you will need to exit the Orchestrator once your job has finished, by
 commanding `exit` (this cannot be scripted, as it would result in premature
-termination of your job).
+termination of your job). It is possible to nest batch files using the `call
+/file` command, and it is possible to prematurely end execution of a batch file
+by calling `return` (from within a batch file).
 
 # Appendix A: Useful Command List
 
