@@ -215,7 +215,7 @@ When starting the Orchestrator, you may also encounter a pair of messages
 similar to:
 
 ~~~ {.bash}
-POETS> 11:50:38.02:  20(I) The microlog for the command 'load /engine = "/local/orchestrator-common/hdf.uif"' will be written to '../Output/Microlog/Microlog_2020-10-02T11-50-38p0.plog'.
+POETS> 11:50:38.02:  20(I) The microlog for the command 'load /engine = "/local/orchestrator-common/hdf.uif"' will be written to '../Output/Microlog/Microlog_2020_10_02T11_50_38p0.plog'.
 POETS> 11:50:38.02: 140(I) Topology loaded from file ||/local/orchestrator-common/hdf.uif||.
 ~~~
 
@@ -264,7 +264,7 @@ operator. The command causes the Orchestrator to print something like:
 
 ~~~ {.bash}
 POETS> 13:11:17.37:  23(I) test /echo = "Hello world"
-POETS> 13:11:17.37:  20(I) The microlog for the command 'test /echo = "Hello world"' will be written to '../Output/Microlog/Microlog_2020-10-02T13-11-17p0.plog'.
+POETS> 13:11:17.37:  20(I) The microlog for the command 'test /echo = "Hello world"' will be written to '../Output/Microlog/Microlog_2020_10_02T13_11_17p0.plog'.
 POETS> 13:11:17.37:   1(I) Hello world
 ~~~
 
@@ -291,7 +291,7 @@ the file shown by the "`20`" message:
 
 ~~~ {.bash}
 ==================================================================================
-02/10/2020 13:09:20.42 file ../Output/Microlog/Microlog_2020-10-02T13-09-20p0.plog
+02/10/2020 13:09:20.42 file ../Output/Microlog/Microlog_2020_10_02T13_09_20p0.plog
 command [test /echo = "Hello world"]
 from console
 ==================================================================================
@@ -309,7 +309,7 @@ which displays:
 
 ~~~ {.bash}
 POETS> 13:46:48.82:  23(I) test /echo = "Hello","world" /echo = "Rise to vote sir" /echo = "test /echo = 'what,','why,','how?'"
-POETS> 13:46:48.82:  20(I) The microlog for the command 'test /echo = "Hello","world" /echo = "Rise to vote sir" /echo = "test /echo = 'what,','why,','how?'"' will be written to '../Output/Microlog/Microlog_2020-10-02T13-46-48p0.plog'.
+POETS> 13:46:48.82:  20(I) The microlog for the command 'test /echo = "Hello","world" /echo = "Rise to vote sir" /echo = "test /echo = 'what,','why,','how?'"' will be written to '../Output/Microlog/Microlog_2020_10_02T13_46_48p0.plog'.
 POETS> 13:46:48.82:   1(I) Hello world
 POETS> 13:46:48.82:   1(I) Rise to vote sir
 POETS> 13:46:48.82:   1(I) test /echo = 'what,','why,','how?'
@@ -319,7 +319,7 @@ and which prints to the microlog:
 
 ~~~ {.bash}
 ======================================================================================
-02/10/2020 13:46:48.82 file ../Output/Microlog/Microlog_2020-10-02T13-46-48p0.plog
+02/10/2020 13:46:48.82 file ../Output/Microlog/Microlog_2020_10_02T13_46_48p0.plog
 command [test /echo = "Hello","world" /echo = "Rise to vote sir" /echo = "test /echo = 'what,','why,','how?'"]
 from console
 ======================================================================================
