@@ -680,6 +680,22 @@ well as the next device in the ring.
 Following this example, the `GraphType` section now matches with the complete
 XML in Appendix A.
 
+# Writing for POETS Hardware
+
+This Section provides a brief description of the POETS hardware, sufficient for
+writing applications for the Orchestrator. For detailed instructions, see the
+Tinsel documentation (at https://github.com/poetsii/tinsel^[Specifically, in
+README.md, visible if you scroll down past the source listing.]).
+
+Tinsel is the overlay architecture used on POETS hardware. The Tinsel system
+operates on a series of connected FPGA boards, and implements a subset of the
+RISCV32IMF instruction set profile. Each board consists of two 4GB DDR3 DRAMs
+and four 8MB QDRII+ SRAMs.
+
+ - RV32IMF
+
+ - Memory
+
 ## Defining a Graph Instance
 
 Given a complete `GraphType` definition, an instance of the ring test
