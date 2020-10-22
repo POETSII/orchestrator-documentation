@@ -554,21 +554,21 @@ application can be run. Firstly, stage each binary onto its appropriate core by
 commanding:
 
 ~~~ {.bash}
-build /deploy = *
+deploy /app = *
 ~~~
 
 Once executed, this command provisions the cores with the binaries. To execute
 the binaries on the cores, and to start the supervisor, command:
 
 ~~~ {.bash}
-build /init = *
+initialise /app = *
 ~~~
 
 To start the application immediately when all cores report they are ready,
 commanding:
 
 ~~~ {.bash}
-build /run = *
+run /app = *
 ~~~
 
 will start the application once the cores have been initialised; the
@@ -576,7 +576,7 @@ application will not start before all cores have been initialised. While they
 are running, jobs can be stopped by commanding:
 
 ~~~ {.bash}
-build /stop = *
+stop /app = *
 ~~~
 
 You can confirm that the application has executed successfully by checking the
@@ -609,9 +609,9 @@ load /app = +"ring_test.xml"
 tlink /app = *
 place /bucket = *
 compose /app = *
-build /deploy = *
-build /init = *
-build /run = *
+deploy /app = *
+initialise /app = *
+run /app = *
 ~~~
 
 Note that you will need to exit the Orchestrator once your job has finished, by
@@ -625,34 +625,6 @@ present working version of the Orchestrator. Other commands exist, though are
 either internally used by other systems (`*`, `return`), or are for testing
 (basically everything in `system`). For the comprehensive list of commands
 (present and future), consult Volume II (implementation documentation).
-
-## Build (`build`)
-
- - `build /deploy`: Given a built application graph instance (or multiple),
-   deploys its binaries to Motherships. This command informs the Mothership of
-   the existence of an application.
-
- - `build /initialise`: Given a placed application graph instance (or
-   multiple), informs all Motherships that host the application that its
-   binaries are to be pushed to each core in the POETS Engine, and the
-   Supervisor device for the application is to be started, once deployment
-   (from `build /deploy`) is complete.
-
- - `build /run`: Given a placed application graph instance (or multiple),
-   informs all Motherships that host the application that it is to be started
-   once it is fully initialised (from `build /initialise`). An application is
-   fully initialised when all cores report they are ready to begin, and once
-   the supervisor device has started.
-
- - `build /stop`: Given a placed application graph instance (or multiple),
-   informs all Motherships that host the application that it is to be stopped,
-   once started (from `build /run`). If the application is already running, it
-   is stopped immediately. Stopping an application also stops any supervisor
-   devices for that application.
-
- - `build /recl`: Given a placed application graph instance (or multiple),
-   informs all Motherships that host the application to recall it (forget about
-   it completely), unless it is running (it will need to be stopped first).
 
 ## Call (`call`)
 
@@ -687,6 +659,12 @@ configured staging directory (`Output/Composer` in the default configuration).
    multiple), builds instruction and data binaries to be loaded onto the POETS
    Engine, and produces a binary representation of the application supervisor.
 
+## Deploy (`deploy`)
+
+ - `deploy /app`: Given a built application graph instance (or multiple),
+   deploys its binaries to Motherships. This command informs the Mothership of
+   the existence of an application.
+
 ## Dump (`dump`)
 
 Provides various developer-facing diagnostic information.
@@ -705,6 +683,14 @@ Provides various developer-facing diagnostic information.
 ## Exit (`exit`)
 
 Exits the Orchestrator. Cannot be used (meaningfully) inside a batch file.
+
+## Initialise (`initialise`)
+
+ - `initialise /app`: Given a placed application graph instance (or multiple),
+   informs all Motherships that host the application that its binaries are to
+   be pushed to each core in the POETS Engine, and the Supervisor device for
+   the application is to be started, once deployment (from `deploy /app`) is
+   complete.
 
 ## Load (`load`)
 
@@ -756,10 +742,24 @@ argument, and these paths are relative to the `bin` directory.
 Place commands operate on the placement subsystem of the Orchestrator. See the
 placement documentation for a comprehensive list of commands.
 
+## Recall (`recall`)
+
+ - `recall /app`: Given a placed application graph instance (or multiple),
+   informs all Motherships that host the application to recall it (forget about
+   it completely), unless it is running (it will need to be stopped first).
+
 ## Return (`return`)
 
 The return command skips the rest of the commands from the calling file. Is a
 no-operation unless called from a batch file.
+
+## Run (`run`)
+
+ - `run /app`: Given a placed application graph instance (or multiple), informs
+   all Motherships that host the application that it is to be started once it
+   is fully initialised (from `initialise /app`). An application is fully
+   initialised when all cores report they are ready to begin, and once the
+   supervisor device has started.
 
 ## Show (`show`)
 
@@ -779,6 +779,14 @@ Expose various pieces of information about the Orchestrator in microlog files.
  - `show /system`: Writes (detailed) information about running MPI processes to
    microlog.
 
+## Stop (`stop`)
+
+ - `stop /app`: Given a placed application graph instance (or multiple),
+   informs all Motherships that host the application that it is to be stopped,
+   once started (from `run /app`). If the application is already running, it is
+   stopped immediately. Stopping an application also stops any supervisor
+   devices for that application.
+
 ## System (`system`)
 
 Lower-level system commands.
@@ -793,7 +801,7 @@ For information.
 
  - `test /echo`: Logs and micrologs a message passed as one or more parameters.
 
-## TLink (`tlink`)
+## Typelink (`tlink`)
 
  - `tlink /app`: Given a loaded application graph instance (or multiple),
    type-links them. Type-linking a graph instance (loaded from XML) defines the
