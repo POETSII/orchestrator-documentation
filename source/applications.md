@@ -680,22 +680,6 @@ well as the next device in the ring.
 Following this example, the `GraphType` section now matches with the complete
 XML in Appendix A.
 
-# Writing for POETS Hardware
-
-This Section provides a brief description of the POETS hardware, sufficient for
-writing applications for the Orchestrator. For detailed instructions, see the
-Tinsel documentation (at https://github.com/poetsii/tinsel^[Specifically, in
-README.md, visible if you scroll down past the source listing.]).
-
-Tinsel is the overlay architecture used on POETS hardware. The Tinsel system
-operates on a series of connected FPGA boards, and implements a subset of the
-RISCV32IMF instruction set profile. Each board consists of two 4GB DDR3 DRAMs
-and four 8MB QDRII+ SRAMs.
-
- - RV32IMF
-
- - Memory
-
 ## Defining a Graph Instance
 
 Given a complete `GraphType` definition, an instance of the ring test
@@ -783,6 +767,45 @@ certain configuration). The resulting file (see Appendix A) can be loaded in
 the Orchestrator and run as a complete application (see the Usage
 documentation, or Orchestrator Volume IV, for further information on how to do
 this).
+
+# Writing for POETS Hardware
+
+This Section provides a brief description of the POETS hardware, sufficient for
+writing applications for the Orchestrator. For a more detailed description, see
+the Tinsel documentation (at https://github.com/poetsii/tinsel)^[Specifically,
+in README.md, visible if you scroll down past the source listing.]. Values here
+are correct as of Tinsel 0.8.
+
+Tinsel is the overlay architecture used on POETS hardware. The Tinsel system
+operates on a series of connected FPGA boards, and implements a subset of the
+RISCV32IMF instruction set profile. **This subset notably omits integer divison
+(and the modulo operator as a consequence), and floating-point fused
+instructions** (as the ALU doesn't support them). See the Tinsel documentation
+for the full set of forbidden instructions.
+
+Each board consists of two 4GB DDR3 DRAMs and four 8MB QDRII+ SRAMs, which are
+shared evenly throughout the POETS Engine. The Softswitch (see
+"softswitch.pdf") only makes use of these DRAMs to store properties, state, and
+connections information at present. Consequently, **data space is limited**,
+which imposes a constraint on the footprint of properties, state, and
+connection information (though this has yet to become an issue in Orchestrator
+applications).
+
+Instruction memory is stored in on-chip RAM (8kB) shared between core pairs. As
+such, **all threads across each pair of cores shares the same instruction
+memory**. Put another way, this means that a given "neighbouring" pair of cores
+in the POETS Engine can have only one type of device placed upon it (but can
+have many instances of those types). This provides an intrisic communications
+benefit to devices of the same type: since they can be placed on the same core
+(pair), their communication is less latent. **Application writers must ensure
+their application (and the supporting Softswitch infrastructure) together
+optimise-compiles to fit in this on-chip RAM.** Also of note, **instruction
+memory cannot be accessed explicitly using load and store instructions** (so no
+cheating).
+
+The Orchestrator will inform you during application composition if any of these
+conditions is violated by the application (or its placement). If so, the
+Orchestrator will refuse to build it.
 
 # Application Files
 
