@@ -187,7 +187,7 @@ Orchestrator repository, as well as a startup script in the root directory of
 the Orchestrator repository. Once you have successfully completed the build,
 you are ready to use the Orchestrator on POETS hardware.
 
-## Gotchas for Other Platforms
+## Gotchas for Compiling on Other Platforms
 
  - The Orchestrator is designed to be compatible with 32-bit and 64-bit
    architectures. Large applications will require a 64-bit architecture to
