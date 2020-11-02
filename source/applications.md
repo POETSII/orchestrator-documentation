@@ -1356,7 +1356,8 @@ attributes are valid.
 Contains elements that instantiate every normal device in an application. If
 this section contains no children, no normal devices are instantiated (a
 supervisor device is still instantiated, though this is of questionable value
-outside debugging).
+outside debugging). The order of devices introduced in this section is
+preserved, which affects the result of bucket-filling placement.
 
 This element must occur exactly once in each `GraphInstance` section. No
 attributes are valid.
