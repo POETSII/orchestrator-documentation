@@ -485,7 +485,7 @@ the `ring_test` application. Alternatively, we could have commanded:
 tlink /app = "ring_test"
 ~~~
 
-which links all graph instances loaded from the `plate_heat` application in
+which links all graph instances loaded from the `ring_test` application in
 sequence. This is useful when the application definition contains multiple
 instances, and the user wishes to type link all of them. More generally, we
 could have commanded:
