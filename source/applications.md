@@ -720,11 +720,11 @@ instantiate exactly five devices:
 numDevices = 5;
     ]]></Properties>
     <DeviceInstances>
-      <DevI id="0" type="ring_element"><P>"id = 0;"</P></DevI>
-      <DevI id="1" type="ring_element"><P>"id = 1;"</P></DevI>
-      <DevI id="2" type="ring_element"><P>"id = 2;"</P></DevI>
-      <DevI id="3" type="ring_element"><P>"id = 3;"</P></DevI>
-      <DevI id="4" type="ring_element"><P>"id = 4;"</P></DevI>
+      <DevI id="0" type="ring_element"><P>"id = 0"</P></DevI>
+      <DevI id="1" type="ring_element"><P>"id = 1"</P></DevI>
+      <DevI id="2" type="ring_element"><P>"id = 2"</P></DevI>
+      <DevI id="3" type="ring_element"><P>"id = 3"</P></DevI>
+      <DevI id="4" type="ring_element"><P>"id = 4"</P></DevI>
     </DeviceInstances>
   </GraphInstance>
 ...
@@ -1356,7 +1356,8 @@ attributes are valid.
 Contains elements that instantiate every normal device in an application. If
 this section contains no children, no normal devices are instantiated (a
 supervisor device is still instantiated, though this is of questionable value
-outside debugging).
+outside debugging). The order of devices introduced in this section is
+preserved, which affects the result of bucket-filling placement.
 
 This element must occur exactly once in each `GraphInstance` section. No
 attributes are valid.
@@ -1375,11 +1376,14 @@ section. Valid attributes:
    the value of the `id` field of a `:DeviceType:` element.
 
  - `P` (must occur at most once): Default property definitions overriding type
-   defaults. Define using the same syntax as the content of a `CDATA` section.
+   defaults. Define using syntax that is valid in C++14 initialiser lists
+   (e.g. `field=value,anotherfield=anothervalue`, or `value,anothervalue` for
+   each property field in order).
 
  - `S` (must occur at most once): Default initial state definitions overriding
-   type defaults. Define using the same syntax as the content of a `CDATA`
-   section.
+   type defaults. Define using syntax that is valid in C++14 initialiser lists
+   (e.g. `field=value,anotherfield=anothervalue`, or `value,anothervalue` for
+   each state field in order).
 
 **Graphs/GraphInstance/EdgeInstances** (`:EdgeInstances:`)
 
@@ -1420,15 +1424,17 @@ section. Valid attributes:
 
  - `P` (must occur at most once): Default property definitions overriding type
    defaults for the input pin on the receiving device, if the receiving device
-   is a normal device. Define using the same syntax as the content of a `CDATA`
-   section. This attribute must be undefined if the receiving device is a
-   supervisor device.
+   is a normal device. Define using syntax that is valid in C++14 initialiser
+   lists (e.g. `field=value,anotherfield=anothervalue`, or `value,anothervalue`
+   for each property field in order). This attribute must be undefined if the
+   receiving device is a supervisor device.
 
  - `S` (must occur at most once): Default initial state definitions overriding
    type defaults for the input pin on the receiving device, if the receiving
-   device is a normal device. Define using the same syntax as the content of a
-   `CDATA` section. This attribute must be undefined if the receiving device is
-   a supervisor device.
+   device is a normal device. Define using syntax that is valid in C++14
+   initialiser lists (e.g. `field=value,anotherfield=anothervalue`, or
+   `value,anothervalue` for each state field in order). This attribute must be
+   undefined if the receiving device is a supervisor device.
 
 # Appendix A: Ring Test Example (XML)
 
@@ -1627,11 +1633,11 @@ if (!failed)
 numDevices = 5;
     ]]></Properties>
     <DeviceInstances>
-      <DevI id="0" type="ring_element"><P>"id = 0;"</P></DevI>
-      <DevI id="1" type="ring_element"><P>"id = 1;"</P></DevI>
-      <DevI id="2" type="ring_element"><P>"id = 2;"</P></DevI>
-      <DevI id="3" type="ring_element"><P>"id = 3;"</P></DevI>
-      <DevI id="4" type="ring_element"><P>"id = 4;"</P></DevI>
+      <DevI id="0" type="ring_element"><P>"id = 0"</P></DevI>
+      <DevI id="1" type="ring_element"><P>"id = 1"</P></DevI>
+      <DevI id="2" type="ring_element"><P>"id = 2"</P></DevI>
+      <DevI id="3" type="ring_element"><P>"id = 3"</P></DevI>
+      <DevI id="4" type="ring_element"><P>"id = 4"</P></DevI>
     </DeviceInstances>
     <EdgeInstances>
       <EdgeI path="1:receiver-0:sender"/>
