@@ -720,11 +720,11 @@ instantiate exactly five devices:
 numDevices = 5;
     ]]></Properties>
     <DeviceInstances>
-      <DevI id="0" type="ring_element"><P>"id = 0"</P></DevI>
-      <DevI id="1" type="ring_element"><P>"id = 1"</P></DevI>
-      <DevI id="2" type="ring_element"><P>"id = 2"</P></DevI>
-      <DevI id="3" type="ring_element"><P>"id = 3"</P></DevI>
-      <DevI id="4" type="ring_element"><P>"id = 4"</P></DevI>
+      <DevI id="0" type="ring_element" P="id = 0"/>
+      <DevI id="1" type="ring_element" P="id = 1"/>
+      <DevI id="2" type="ring_element" P="id = 2"/>
+      <DevI id="3" type="ring_element" P="id = 3"/>
+      <DevI id="4" type="ring_element" P="id = 4"/>
     </DeviceInstances>
   </GraphInstance>
 ...
@@ -1633,11 +1633,11 @@ if (!failed)
 numDevices = 5;
     ]]></Properties>
     <DeviceInstances>
-      <DevI id="0" type="ring_element"><P>"id = 0"</P></DevI>
-      <DevI id="1" type="ring_element"><P>"id = 1"</P></DevI>
-      <DevI id="2" type="ring_element"><P>"id = 2"</P></DevI>
-      <DevI id="3" type="ring_element"><P>"id = 3"</P></DevI>
-      <DevI id="4" type="ring_element"><P>"id = 4"</P></DevI>
+      <DevI id="0" type="ring_element" P="id = 0"/>
+      <DevI id="1" type="ring_element" P="id = 1"/>
+      <DevI id="2" type="ring_element" P="id = 2"/>
+      <DevI id="3" type="ring_element" P="id = 3"/>
+      <DevI id="4" type="ring_element" P="id = 4"/>
     </DeviceInstances>
     <EdgeInstances>
       <EdgeI path="1:receiver-0:sender"/>
