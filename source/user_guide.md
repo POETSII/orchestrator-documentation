@@ -714,8 +714,8 @@ Load commands inject information into the Orchestrator from files.
    clobbering any existing model. If the parameter is prefixed with the "`+`"
    operator, the path is used relative to the configured hardware model loading
    directory. Alternatively, the special strings "`1_box_prototype`" or
-   "`2_box_prototype`" can be passed as parameters to load baked-in default
-   configurations for testing purposes.
+   "`2_box_prototype`" can be passed as parameters, prefixed with the "`?`"
+   operator, to load baked-in default configurations for testing purposes.
 
 ## Path (`path`)
 
