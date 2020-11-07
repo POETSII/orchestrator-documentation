@@ -221,7 +221,8 @@ a thread.<BR ALIGN="TEXT"/>
 + debug_post(int, unsigned, ...) : bool<BR ALIGN="LEFT"/>
 + queue_mpi_message(PMsg_p, unsigned) : void<BR ALIGN="LEFT"/>
 - load_backend() : void<BR ALIGN="LEFT"/>
-- setup_mpi_hooks() : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
+- setup_mpi_hooks() : void<BR ALIGN="LEFT"/>
+- OnIdle() : void<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
 Application transition methods:<BR ALIGN="LEFT"/>
 + initialise_application(AppInfo*) : void<BR ALIGN="LEFT"/>
 ... (for each transition)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>

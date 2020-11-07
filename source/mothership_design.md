@@ -102,7 +102,8 @@ threads with fast spinners. The threads are:
    poorly-written supervisor[^malicious] floods with MPI messages, it will not
    be possible for the operator to stop the application in reasonable time,
    potentially compromising the running of other applications on the compute
-   fabric. It calls `CommonBase::MPISpinner`. This is a fast spinner.
+   fabric. It calls `CommonBase::MPISpinner` and, when idle, executes idle
+   logic from supervisor devices. This is a fast spinner.
 
  - `MPICncResolver`: Responsible for draining the `MPICncQueue` queue, and
    enacting those messages in sequence as appropriate. This is a slow spinner.
@@ -198,6 +199,13 @@ mutexes):
 [^fatalerror]: By "fatal error", I mean that an exception is thrown in the
     thread logic, which is not caught. When this happens, the error is logged,
     and a graceful shutdown is attempted.
+
+Another lock exists on a per-supervisor basis (`pthread_mutex_t
+SuperHolder::lock`), which ensures that only one method from a given supervisor
+is called at a time (to maintain the integrity of properties and state provided
+by the application writer), and ensures that the supervisor is not compromised
+when the application is stopped and started again. All supervisor calls respect
+this lock.
 
 # Command and Control
 The Mothership process exists on the front of two streams of data traffic - the
@@ -559,7 +567,7 @@ Mothership, as well as external devices elsewhere. They are:
 
  - Defined in the application description (XML)
 
- - Compiled into shared object files by `P_Builder`
+ - Compiled into shared object files by the `Composer`
 
  - Deployed to the Mothership process via an (`APP`, `SUPD`) message
 
@@ -571,22 +579,34 @@ Mothership, as well as external devices elsewhere. They are:
    will cause the Mothership to report and set the application state to
    `BROKEN`):
 
+    - `pthread_mutex_t lock`: Restricts supervisor operations to happen in
+      sequence.
+
     - `std::string path`: Where the supervisor was loaded from.
 
     - `void* so`: The dynamically-loaded supervisor (using `dlopen`), which
       populates the function pointer members.
 
-    - `int (*initialise)()`: Called when the application is started.
+    - `int (*exit)()`: Called when the application is stopped. Be aware that
+      this is not called when the Supervisor is destroyed, either due to a
+      recalled application, or due to a Mothership shutdown.
 
-    - `int (*entryPoint)(PMsg_p, PMsg_p)`: The entry point for all supervisor
-      calls while the application is running.
+    - `int (*idle)()`: Called when the MPI Input Broker thread has no incoming
+      messages to process - that thread iterates over every supervisor in the
+      Mothership and calls this method if the supervisor is not locked.
+
+    - `int (*init)()`: Called when the application is started.
+
+    - `int (*call)(PMsg_p, PMsg_p)`: The entry point for all incoming
+      supervisor packets while the application is running.
 
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
    application name. For an incoming packet, the appropriate supervisor is
    identified from the task component of the software address. If the task
    component does not correspond to a loaded application, the Mothership
-   `Post`-s an error message, and drops the packet.
+   `Post`-s an error message, and drops the packet. The packet is also dropped
+   if the application is not running.
 
 ## Supervisor API
 The following API is available to application-writers to support functionality
