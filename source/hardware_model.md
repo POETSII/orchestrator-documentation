@@ -1214,11 +1214,11 @@ Members:
    all threads that can be run by this core. Threads are indexed by the thread
    component ($C_{\mathrm{THREAD}}$) of their hardware address.
 
- - `std::string dataBinary`: Holds the path to the data binary (to be)/deployed
-   to this core.
+ - `std::string dataBinary`: Holds the filename of the data binary (to
+   be)/deployed to this core.
 
- - `std::string instructionBinary`: Holds the path to the instruction binary
-   (to be)/deployed to this core.
+ - `std::string instructionBinary`: Holds the filename of the instruction
+   binary (to be)/deployed to this core.
 
  - `unsigned int dataMemory`: Amount of memory available for a data binary.
 
