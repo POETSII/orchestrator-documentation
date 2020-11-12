@@ -822,7 +822,7 @@ ASCII.
 ## Source Code Fragments (`:CDATA:`)
 
 Application XML supports the use of `CDATA` sections to define various system
-behaviours. Code in these sections should be written in C++11, and make no
+behaviours. Code in these sections should be written in C++14, and make no
 assumptions of included non-standard libraries or functions that are not
 introduced in this documentation. Table 1 shows the variables exposed to each
 `CDATA` section. Table 2 explains what each variable introduced in Table 1
