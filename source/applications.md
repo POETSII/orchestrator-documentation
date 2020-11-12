@@ -829,104 +829,125 @@ introduced in this documentation. Table 1 shows the variables exposed to each
 represents. Aside from these variables, avoid declaring variables with the `__`
 prefix to avoid collisions with (internal) Softswitch data structures.
 
-+------------------------------------------+----------------------------------+
-| Containing Element                       | Provided Variables               |
-+==========================================+==================================+
-| `DeviceType / SupervisorInPin /`         | - `deviceProperties` (read-only) |
-| `OnReceive`                              | - `deviceState`                  |
-|                                          | - `graphProperties` (read-only)  |
-|                                          | - `message` (read-only)          |
-+------------------------------------------+----------------------------------+
-| `DeviceType / SupervisorOutPin /`        | - `deviceProperties` (read-only) |
-| `OnSend`                                 | - `deviceState`                  |
-|                                          | - `graphProperties` (read-only)  |
-|                                          | - `message`                      |
-+------------------------------------------+----------------------------------+
-| `InputPin / OnReceive`                   | - `deviceProperties` (read-only) |
-|                                          | - `deviceState`                  |
-|                                          | - `graphProperties` (read-only)  |
-|                                          | - `message` (read-only)          |
-|                                          | - `pinProperties` (read-only)    |
-|                                          | - `pinState`                     |
-+------------------------------------------+----------------------------------+
-| `OutputPin / OnSend`                     | - `deviceProperties` (read-only) |
-|                                          | - `deviceState`                  |
-|                                          | - `graphProperties` (read-only)  |
-|                                          | - `message`                      |
-+------------------------------------------+----------------------------------+
-| `ReadyToSend`                            | - `deviceProperties` (read-only) |
-|                                          | - `deviceState` (read-only)      |
-|                                          | - `graphProperties` (read-only)  |
-|                                          | - `readyToSend`                  |
-+------------------------------------------+----------------------------------+
-| `OnInit`                                 | - `deviceProperties` (read-only) |
-|                                          | - `deviceState`                  |
-|                                          | - `graphProperties` (read-only)  |
-+------------------------------------------+----------------------------------+
-| `DeviceType / OnDeviceIdle`              | - `deviceProperties` (read-only) |
-|                                          | - `deviceState`                  |
-|                                          | - `graphProperties` (read-only)  |
-+------------------------------------------+----------------------------------+
-| `SupervisorType / SupervisorInPin /`     | - `deviceState`                  |
-| `OnReceive`                              | - `graphProperties` (read-only)  |
-|                                          | - `message` (read-only)          |
-+------------------------------------------+----------------------------------+
-| `SupervisorType / SupervisorOutPin /`    | - `deviceState`                  |
-| `OnSend`                                 | - `graphProperties` (read-only)  |
-|                                          | - `message`                      |
-+------------------------------------------+----------------------------------+
-| `OnSupervisorIdle`                       | - `deviceState`                  |
-|                                          | - `graphProperties` (read-only)  |
-+------------------------------------------+----------------------------------+
-| Other elements                           | None                             |
-+------------------------------------------+----------------------------------+
++--------------------------------------+--------------------------------------+
+| Containing Element                   | Provided Variables                   |
++======================================+======================================+
+| `DeviceType / SupervisorInPin /`     | - `deviceProperties` (read-only)     |
+| `OnReceive`                          | - `deviceState`                      |
+|                                      | - `graphProperties` (read-only)      |
+|                                      | - `message` (read-only)              |
++--------------------------------------+--------------------------------------+
+| `DeviceType / SupervisorOutPin /`    | - `deviceProperties` (read-only)     |
+| `OnSend`                             | - `deviceState`                      |
+|                                      | - `graphProperties` (read-only)      |
+|                                      | - `message`                          |
++--------------------------------------+--------------------------------------+
+| `InputPin / OnReceive`               | - `deviceProperties` (read-only)     |
+|                                      | - `deviceState`                      |
+|                                      | - `graphProperties` (read-only)      |
+|                                      | - `message` (read-only)              |
+|                                      | - `pinProperties` (read-only)        |
+|                                      | - `pinState`                         |
++--------------------------------------+--------------------------------------+
+| `OutputPin / OnSend`                 | - `deviceProperties` (read-only)     |
+|                                      | - `deviceState`                      |
+|                                      | - `graphProperties` (read-only)      |
+|                                      | - `message`                          |
++--------------------------------------+--------------------------------------+
+| `ReadyToSend`                        | - `deviceProperties` (read-only)     |
+|                                      | - `deviceState` (read-only)          |
+|                                      | - `graphProperties` (read-only)      |
+|                                      | - `readyToSend`                      |
++--------------------------------------+--------------------------------------+
+| `DeviceType / OnInit`                | - `deviceProperties` (read-only)     |
+|                                      | - `deviceState`                      |
+|                                      | - `graphProperties` (read-only)      |
++--------------------------------------+--------------------------------------+
+| `DeviceType / OnDeviceIdle`          | - `deviceProperties` (read-only)     |
+|                                      | - `deviceState`                      |
+|                                      | - `graphProperties` (read-only)      |
++--------------------------------------+--------------------------------------+
+| `SupervisorType / SupervisorInPin /` | - `supervisorProperties` (read-only) |
+| `OnReceive`                          | - `supervisorState`                  |
+|                                      | - `graphProperties` (read-only)      |
+|                                      | - `message` (read-only)              |
++--------------------------------------+--------------------------------------+
+| `SupervisorType / SupervisorOutPin`  | - `supervisorProperties` (read-only) |
+| `/ OnSend`                           | - `supervisorState`                  |
+|                                      | - `graphProperties` (read-only)      |
+|                                      | - `message`                          |
++--------------------------------------+--------------------------------------+
+| `SupervisorType / OnSupervisorIdle`  | - `supervisorProperties` (read-only) |
+|                                      | - `supervisorState`                  |
+|                                      | - `graphProperties` (read-only)      |
++--------------------------------------+--------------------------------------+
+| `SupervisorType / OnInit`            | - `supervisorProperties` (read-only) |
+|                                      | - `supervisorState`                  |
+|                                      | - `graphProperties` (read-only)      |
++--------------------------------------+--------------------------------------+
+| `SupervisorType / OnStop`            | - `supervisorProperties` (read-only) |
+|                                      | - `supervisorState`                  |
+|                                      | - `graphProperties` (read-only)      |
++--------------------------------------+--------------------------------------+
+| Other elements                       | None                                 |
++--------------------------------------+--------------------------------------+
 
 Table: Variables exposed to code written in `CDATA` sections.
 
-+--------------------+--------------------------------------------------------+
-| Variable           | Meaning (All variables are pointers to structures)     |
-+====================+========================================================+
-| `deviceProperties` | The target structure defines one field for each        |
-|                    | variable defined in the `CFRAG` in                     |
-|                    | `DeviceType/Properties`.                               |
-+--------------------+--------------------------------------------------------+
-| `deviceState`      | The target structure defines one field for each        |
-|                    | variable defined (or at least declared) in the `CFRAG` |
-|                    | in `DeviceType/State`.                                 |
-+--------------------+--------------------------------------------------------+
-| `graphProperties`  | The target structure defines one field for each        |
-|                    | variable defined in the `CFRAG` in                     |
-|                    | `GraphType/Properties`.                                |
-+--------------------+--------------------------------------------------------+
-| `message`          | The target structure defines one field for each        |
-|                    | variable declared in the `CFRAG` in `MessageType`,     |
-|                    | for the message type with `id` attribute matching the  |
-|                    | `messageTypeId` attribute of the pin element using this|
-|                    | variable.                                              |
-+--------------------+--------------------------------------------------------+
-| `pinProperties`    | The target structure defines one field for each        |
-|                    | variable defined in the `CFRAG` in the `Properties`    |
-|                    | element in the pin element using this variable.        |
-+--------------------+--------------------------------------------------------+
-| `pinState`         | The target structure defines one field for each        |
-|                    | variable defined (or at least declared) in the `CFRAG` |
-|                    | in the `Properties` element in the pin element using   |
-|                    | this variable.                                         |
-+--------------------+--------------------------------------------------------+
-| `readyToSend`      | The target structure (defining `|=`) holds one flag for|
-|                    | each `OutputPin` associated with this `DeviceType`. The|
-|                    | names of these flags are the names of each `OutputPin` |
-|                    | as defined by their `name` attribute, prefixed with    |
-|                    | "`RTS_FLAG_`". At the beginning of the `readyToSend`   |
-|                    | handler, each of these flags is lowered, and can be    |
-|                    | raised using the `|=` operator. For each flag, if it   |
-|                    | is raised after the handler has been executed, a       |
-|                    | message is sent sent over that `OutputPin`. To send a  |
-|                    | message over the implicit supervisor output pin, raise |
-|                    | the flag "`RTS_SUPER_IMPLICIT_SEND_FLAG`". The order in|
-|                    | which handlers are executed are undefined, except that |
-|                    | the implicit supervisor handler is invoked last.       |
-+--------------------+--------------------------------------------------------+
++------------------------+----------------------------------------------------+
+| Variable               | Meaning (All variables are pointers to structures) |
++========================+====================================================+
+| `deviceProperties`     | The target structure defines one field for each    |
+|                        | variable defined in the `CFRAG` in                 |
+|                        | `DeviceType/Properties`.                           |
++------------------------+----------------------------------------------------+
+| `deviceState`          | The target structure defines one field for each    |
+|                        | variable defined (or at least declared) in the     |
+|                        | `CFRAG` in `DeviceType/State`.                     |
++------------------------+----------------------------------------------------+
+| `graphProperties`      | The target structure defines one field for each    |
+|                        | variable defined in the `CFRAG` in                 |
+|                        | `GraphType/Properties`.                            |
++------------------------+----------------------------------------------------+
+| `message`              | The target structure defines one field for each    |
+|                        | variable declared in the `CFRAG` in `MessageType`, |
+|                        | for the message type with `id` attribute matching  |
+|                        | the `messageTypeId` attribute of the pin element   |
+|                        | using this variable.                               |
++------------------------+----------------------------------------------------+
+| `pinProperties`        | The target structure defines one field for each    |
+|                        | variable defined in the `CFRAG` in the `Properties`|
+|                        | element in the pin element using this variable.    |
++------------------------+----------------------------------------------------+
+| `pinState`             | The target structure defines one field for each    |
+|                        | variable defined (or at least declared) in the     |
+|                        | `CFRAG` in the `Properties` element in the pin     |
+|                        | element using this variable.                       |
++------------------------+----------------------------------------------------+
+| `readyToSend`          | The target structure (defining `|=`) holds one     |
+|                        | flag for each `OutputPin` associated with this     |
+|                        | `DeviceType`. The names of these flags are the     |
+|                        | names of each `OutputPin` as defined by their      |
+|                        | `name` attribute, prefixed with "`RTS_FLAG_`". At  |
+|                        | the beginning of the `readyToSend` handler, each   |
+|                        | of these flags is lowered, and can be raised using |
+|                        | the `|=` operator. For each flag, if it is raised  |
+|                        | after the handler has been executed, a message is  |
+|                        | sent sent over that `OutputPin`. To send a message |
+|                        | over the implicit supervisor output pin, raise the |
+|                        | flag "`RTS_SUPER_IMPLICIT_SEND_FLAG`". The order   |
+|                        | in which handlers are executed are undefined,      |
+|                        | except that the implicit supervisor handler is     |
+|                        | invoked last.                                      |
++------------------------+----------------------------------------------------+
+| `supervisorProperties` | The target structure defines one field for each    |
+|                        | variable defined in the `CFRAG` in                 |
+|                        | `SupervisorType/Properties`.                       |
++------------------------+----------------------------------------------------+
+| `supervisorState`      | The target structure defines one field for each    |
+|                        | variable defined (or at least declared) in the     |
+|                        | `CFRAG` in `SupervisorType/State`.                 |
++------------------------+----------------------------------------------------+
 
 Table: Explanation of variables exposed to `CDATA` code.
 
@@ -968,7 +989,9 @@ Graphs
 -----OnReceive
 ----SupervisorOutPin
 -----OnSend
+----OnInit
 ----OnSupervisorIdle
+----OnStop
 -GraphInstance
 --Properties
 --DeviceInstances
@@ -1320,12 +1343,31 @@ Contains code that may populate an outbound message from a supervisor device.
 This element must occur exactly once in each `:SupervisorOutPin:` section. No
 attributed are valid.
 
+**Graphs/GraphType/DeviceTypes/SupervisorType/OnInit**
+(`:SupervisorType - OnInit:`)
+
+Contains code that is executed by the supervisor device when the application
+starts.
+
+This element must occur at most once in each `:SupervisorType:` section. No
+attributes are valid.
+
 **Graphs/GraphType/DeviceTypes/SupervisorType/OnSupervisorIdle**
 (`:OnSupervisorIdle:`)
 
 Contains code that is executed by the supervisor device when no messages are
 being received by the Mothership (and hence all supervisor devices from all
 applications running on it)
+
+This element must occur at most once in each `:SupervisorType:` section. No
+attributes are valid.
+
+**Graphs/GraphType/DeviceTypes/SupervisorType/OnStop**
+(`:SupervisorType - OnStop:`)
+
+Contains code that is executed by the supervisor device when the application is
+stopped by the operator (root). Note that this handler is not executed in the
+event of an application crash or an "unrecoverable" Orchestrator state.
 
 This element must occur at most once in each `:SupervisorType:` section. No
 attributes are valid.
