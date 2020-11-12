@@ -658,6 +658,16 @@ configured staging directory (`Output/Composer` in the default configuration).
    and produces a binary representation of the application supervisor. It
    performs the generation and build steps in sequence.
 
+ - `compose /clean`: Given a placed application graph instance (or multiple),
+   clear any compiled binaries composed for that application.
+
+ - `compose /decompose`: Given a placed application graph instance (or
+   multiple), clear any compiled binaries and generated source files composed
+   for that application.
+
+ - `compose /degenerate`: Given a placed application graph instance (or
+   multiple), clear any generated source files composed for that application.
+
  - `compose /generate`: Given a placed application graph instance (or
    multiple), generates translation units (source code) from the loaded XML, to
    be compiled into application binaries (both for normal devices and
