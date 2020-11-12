@@ -1424,13 +1424,11 @@ section. Valid attributes:
 
  - `P` (must occur at most once): Default property definitions overriding type
    defaults. Define using syntax that is valid in C++14 initialiser lists
-   (e.g. `field=value,anotherfield=anothervalue`, or `value,anothervalue` for
-   each property field in order).
+   (e.g. `value,anothervalue` for each property field in order).
 
  - `S` (must occur at most once): Default initial state definitions overriding
    type defaults. Define using syntax that is valid in C++14 initialiser lists
-   (e.g. `field=value,anotherfield=anothervalue`, or `value,anothervalue` for
-   each state field in order).
+   (e.g. `value,anothervalue` for each state field in order).
 
 **Graphs/GraphInstance/EdgeInstances** (`:EdgeInstances:`)
 
@@ -1472,16 +1470,15 @@ section. Valid attributes:
  - `P` (must occur at most once): Default property definitions overriding type
    defaults for the input pin on the receiving device, if the receiving device
    is a normal device. Define using syntax that is valid in C++14 initialiser
-   lists (e.g. `field=value,anotherfield=anothervalue`, or `value,anothervalue`
-   for each property field in order). This attribute must be undefined if the
-   receiving device is a supervisor device.
+   lists (e.g. `value,anothervalue` for each property field in order). This
+   attribute must be undefined if the receiving device is a supervisor device.
 
  - `S` (must occur at most once): Default initial state definitions overriding
    type defaults for the input pin on the receiving device, if the receiving
    device is a normal device. Define using syntax that is valid in C++14
-   initialiser lists (e.g. `field=value,anotherfield=anothervalue`, or
-   `value,anothervalue` for each state field in order). This attribute must be
-   undefined if the receiving device is a supervisor device.
+   initialiser lists (e.g. `value,anothervalue` for each state field in
+   order). This attribute must be undefined if the receiving device is a
+   supervisor device.
 
 # Appendix A: Ring Test Example (XML)
 
