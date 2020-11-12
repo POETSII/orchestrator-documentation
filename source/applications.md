@@ -1110,8 +1110,12 @@ SupervisorOutPin:`)
 Included to maintain a consistent structure for pins - only contains an
 `OnReceive` element and nothing else.
 
-This element must occur at most once in each `:DeviceType:` section. No
-attributes are valid.
+This element must occur at most once in each `:DeviceType:` section. Valid
+attributes:
+
+ - `messageTypeId` (must occur exactly once): Defines the type of message to be
+   sent by this pin. Must match with the `id` attribute of a message type
+   defined in the `MessageTypes` section.
 
 **Graphs/GraphType/DeviceTypes/DeviceType/SupervisorOutPin/OnSend**
 
@@ -1119,7 +1123,7 @@ Contains code that may populate an outbound message to the supervisor, and may
 change the state of the device.
 
 This element must occur exactly once in each `:SupervisorInPin:` section. No
-attributed are valid.
+attributes are valid.
 
 **Graphs/GraphType/DeviceTypes/DeviceType/InputPin** (`:InputPin:`)
 
