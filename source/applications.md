@@ -826,7 +826,8 @@ behaviours. Code in these sections should be written in C++14, and make no
 assumptions of included non-standard libraries or functions that are not
 introduced in this documentation. Table 1 shows the variables exposed to each
 `CDATA` section. Table 2 explains what each variable introduced in Table 1
-represents.
+represents. Aside from these variables, avoid declaring variables with the `__`
+prefix to avoid collisions with (internal) Softswitch data structures.
 
 +------------------------------------------+----------------------------------+
 | Containing Element                       | Provided Variables               |
