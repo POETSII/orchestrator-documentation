@@ -130,7 +130,7 @@ application.
 
 Supervisor devices^[Note that "Supervisor" in the context of POETS is not
 related to supervisors in the context of UNIX-likes; the concepts are
-completely different.] are an optional component of a POETS application, which
+completely unrelated.] are an optional component of a POETS application, which
 allow application writers to define behaviours at a centralised point. Unlike
 normal devices which run on POETS hardware, supervisor devices run on the host
 machine, making them suitable for file I/O and heavier compute
@@ -206,8 +206,7 @@ connected to that type - these will both be populated as we progress through
 this example.
 
 Within the `GraphType`, we can define the behaviour for the members of the
-ring - the type of devices that are going to propagate our data around the
-ring.
+ring - the type of devices that are going to propagate data around the ring.
 
 ~~~ {.xml}
 ...
@@ -237,7 +236,7 @@ uint8_t id;
 
 This declares a property of all ring elements, which should be defined when the
 ring is instantiated later. Note that this property is defined in a `:CDATA:`
-section, written in C++11. This property will be readable by other code
+section, written in C++14. This property will be readable by other code
 sections (for ring elements) via `deviceProperties->id`.
 
 With a way to identify devices in code, we can define startup logic. We make
@@ -268,13 +267,13 @@ return deviceState->sendMessage;
 ...
 ~~~
 
-A state field `sendMessage` is introduced here, with an initial value of
-zero. This field will be read by another handler later, to determine whether a
-message is to be sent or not. The code in the `:OnInit:` handler is run by each
-device when the application starts. This handler sets the `sendMessage` field
-in the state to one (so that a message will be sent later). The `:OnInit:`
-handler also returns one on device zero, causing the `ReadyToSend` handler to
-be invoked.
+A state field `sendMessage` is introduced, with an initial value of zero. This
+field will be read by another handler later (`ReadyToSend`), to determine
+whether a message is to be sent or not. The code in the `:OnInit:` handler is
+run by each device when the application starts. This handler sets the
+`sendMessage` field in the state to one (so that a message will be sent
+later). The `:OnInit:` handler also returns one on device zero, causing the
+`ReadyToSend` handler to be invoked.
 
 The `ReadyToSend` handler is responsible for determining whether messages
 should be sent, and which output pins should be used to send that message. To
@@ -531,78 +530,99 @@ any more messages. The full supervisor type definition is:
 ~~~ {.xml}
 ...
       <SupervisorType id="" SupervisorInPin="tracker">
+        <!-- There is one supervisor device type in a given application. This
+             particular supervisor is written assuming there is only one
+             instance for simplicity.
+        -->
         <Code><![CDATA[
 #include <stdio.h>  /* For writing an output file */
-
+#include <vector>  /* Defines the type for `messagesPerDevice` */
+        ]]></Code>
+        <State><![CDATA[
 /* Holds state information to ensure each ring member has seen the packet an
  * appropriate number of times. */
-uint8_t messagesPerDevice[graphProperties->numDevices];
-for (uint8_t index = 0; index < graphProperties->numDevices; index++)
-{
-    messagesPerDevice[index] = 0;
-}
+std::vector<uint8_t> messagesPerDevice;
 
 /* Ominous. */
 bool failed = false;
 bool finished = false;
-        ]]></Code>
+
+/* Output file. */
+FILE* resultFile;
+        ]]></State>
+        <OnInit><![CDATA[
+supervisorState->messagesPerDevice = \
+    std::vector<uint8_t>(graphProperties->numDevices, 0);
+supervisorState->resultFile = fopen("ring_test_output", "w");
+        ]]></OnInit>
         <SupervisorInPin id="tracker" messageTypeId="exfiltration">
           <OnReceive><![CDATA[
 /* If the application has failed, don't act on any more messages. */
-if (!failed)
+if (!supervisorState->failed)
 {
     /* Failure condition: once we've finished, we fail if we receive any more
      * messages. Also, fail if we receive a message that has done too many
      * laps. Note that this does not fail if the messages are received out of
      * order - POETS guarantees delivery, not ordering. */
-    if (message->lap > graphProperties->maxLaps or finished)
+    if (message->lap > graphProperties->maxLaps or supervisorState->finished)
     {
-        failed = true;
-        FILE* resultFile = fopen("ring_test_output", "a");
-        fprintf(resultFile, "0");
-        fclose(resultFile);
+        supervisorState->failed = true;
+        fprintf(supervisorState->resultFile, "0");
     }
 
     /* If we've not failed, track the message, and check the finishing
      * condition. */
     else
     {
-        messagesPerDevice[message->sourceId] += 1;
+        supervisorState->messagesPerDevice.at(message->sourceId) += 1;
 
         /* Check the finishing condition. */
-        finished = true;
-        for (uint8_t index = 0; index < graphProperties->numDevices; index++)
+        supervisorState->finished = true;
+        for (std::vector<uint8_t>::size_type index = 0;
+             index < graphProperties->numDevices; index++)
         {
-            if (messagesPerDevice[index] != graphProperties->maxLaps)
+            if (supervisorState->messagesPerDevice.at(index) !=
+                graphProperties->maxLaps + 1)
             {
-                finished = false;
+                supervisorState->finished = false;
                 break;
             }
         }
 
         /* Check the finish condition. */
-        if (finished)
+        if (supervisorState->finished)
         {
-            FILE* resultFile = fopen("ring_test_output", "a");
-            fprintf(resultFile, "1");
-            fclose(resultFile);
+            fprintf(supervisorState->resultFile, "1");
         }
     }
 }
           ]]></OnReceive>
         </SupervisorInPin>
+        <OnStop><![CDATA[
+fclose(supervisorState->resultFile);
+        ]]></OnStop>
       </SupervisorType>
 ...
 ~~~
 
-The `Code` section holds includes and variables accessible to supervisor
-handlers - in this case, the `stdio` library from C is included, two booleans
-(`failed` and `finished`) are initialised, as is an array that holds the number
-of messages received from each device (initialised to zero). The
-`SupervisorInPin` section introduces an input pin type named "`tracker`", which
-consumes a new type of "`exfiltration`" messages. The source in the `OnReceive`
-element, analogous to `OnReceive` elements for normal devices, encapsulates the
-logic the supervisor needs to execute when it receives a message.
+The `Code` section holds free code (includes, in this case) accessible to
+supervisor handlers. Here, the `stdio` library from C is included, along with
+the `vector` header from the Standard Template Library in C++. The `State`
+section is analogous to the state of normal devices. Here two booleans
+(`failed` and `finished`) are declared with a default value, an output file
+pointer (`resultFile`) is declared, and a vector that holds the number of
+messages received from each device (`messagesPerDevice`) is declared. Both
+`resultFile` and `messagesPerDevice` are given initial definitions in the
+`OnInit` section. Also note that the file is closed in the `OnStop` section,
+which is called when either the Orchestrator is closed down, or the application
+is commanded to stop by the operator (see Orchestrator Documentation Volume
+IV).
+
+The `SupervisorInPin` section introduces an input pin type named "`tracker`",
+which consumes a new type of "`exfiltration`" messages. The source in the
+`OnReceive` element, analogous to `OnReceive` elements for normal devices,
+encapsulates the logic the supervisor needs to execute when it receives a
+message.
 
 This logic requires another graph-level property to identify the number of
 normal devices in the application. This property must be initialised without a
@@ -675,7 +695,8 @@ adds a `SupervisorOutPin` to facilitate an implicit output connection with the
 supervisor, and includes the additional\
 `RTS_SUPER_IMPLICIT_SEND_FLAG` in the
 `ReadyToSend` element, to ensure all messages go to the supervisor device as
-well as the next device in the ring.
+well as the next device in the ring. The flag `RTS_SUPER_IMPLICIT_FLAG` is a
+specially-named flag to trigger a send to a supervisor device.
 
 Following this example, the `GraphType` section now matches with the complete
 XML in Appendix A.
@@ -701,24 +722,20 @@ we define the graph level property required for the supervisor:
 
 ~~~ {.xml}
 ...
-  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
-    <Properties><![CDATA[
-numDevices = 5;
-    ]]></Properties>
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type" P="5">
   </GraphInstance>
 ...
 ~~~
 
-This particular property is used by the supervisor logic to capture the number
-of devices it is supervising (to track incoming messages). Consequently, we
-instantiate exactly five devices:
+The value of `5` populates the first property declared in
+`:GraphType-Properties:` - multiple properties can be defined using C++14
+initialiser-list syntax (e.g. `5,7`). This particular property is used by the
+supervisor logic to capture the number of devices it is supervising (to track
+incoming messages). Consequently, we instantiate exactly five devices:
 
 ~~~ {.xml}
 ...
-  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
-    <Properties><![CDATA[
-numDevices = 5;
-    ]]></Properties>
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type" P="5">
     <DeviceInstances>
       <DevI id="0" type="ring_element" P="id = 0"/>
       <DevI id="1" type="ring_element" P="id = 1"/>
@@ -753,12 +770,12 @@ We then define the connections between devices:
 ...
 ~~~
 
-For information on the path syntax, see the description of the `:EdgeI:`
-element in the "Application Files" Section. Note that we do not define
-connections between the normal devices and their supervisor device, as we are
-using implicit connections to achieve this (every normal device can talk to
-their supervisor device over the implicit connection, facilitated by
-`:DeviceType - SupervisorOutPin:`.
+By way of example, this first edge instance creates an edge between the
+`sender` output pin of the device named `0`, and the `receiver` input pin of
+the device named `1`. Note that connections are not defined between normal
+devices and their supervisor device, as these connections are implicit (every
+normal device can talk to their supervisor device over the implicit connection,
+facilitated by `:DeviceType - SupervisorOutPin:`.
 
 Now we have created a fully-defined application with both a graph type
 definition (detailing the behaviour of normal devices, supervisor devices, and
@@ -768,13 +785,17 @@ the Orchestrator and run as a complete application (see the Usage
 documentation, or Orchestrator Volume IV, for further information on how to do
 this).
 
+Further examples accompany the Orchestrator, and are available at
+<https://github.com/POETSII/Orchestrator_examples>.
+
 # Writing for POETS Hardware
 
 This Section provides a brief description of the POETS hardware, sufficient for
 writing applications for the Orchestrator. For a more detailed description, see
-the Tinsel documentation (at https://github.com/poetsii/tinsel)^[Specifically,
-in README.md, visible if you scroll down past the source listing.]. Values here
-are correct as of Tinsel 0.8.
+the Tinsel documentation (at
+<https://github.com/poetsii/tinsel>)^[Specifically, in README.md, visible if
+you scroll down past the source listing.]. Values here are correct as of Tinsel
+0.8.
 
 Tinsel is the overlay architecture used on POETS hardware. The Tinsel system
 operates on a series of connected FPGA boards, and implements a subset of the
@@ -1505,9 +1526,9 @@ supervisor device writes "0", and ignores all new packets.
 <Graphs xmlns="" appname="ring_test">
   <GraphType id="ring_test_type">
     <Properties><![CDATA[
+uint8_t numDevices;   /* Defined in the graph instance section, used by the
+                       * supervisor */
 uint8_t maxLaps = 9;  /* Zero-based indexing */
-uint8_t numDevices;  /* Defined in the graph instance section, used by the
-                      * supervisor */
     ]]></Properties>
     <MessageTypes>
       <!-- Communications between normal devices use this message type. -->
@@ -1519,8 +1540,10 @@ uint8_t lap;
        -->
       <MessageType id="exfiltration"><![CDATA[
 uint8_t sourceId;
+uint8_t lap;
       ]]></MessageType>
     </MessageTypes>
+
     <DeviceTypes>
       <DeviceType id="ring_element">
         <!-- This device type defines the behaviour of all elements in the
@@ -1550,6 +1573,7 @@ uint8_t lap = 0;
 uint8_t sendMessage = 0;
             ]]>
         </State>
+
         <SupervisorOutPin messageTypeId="exfiltration">
           <OnSend><![CDATA[
 /* Define the fields in the message. */
@@ -1561,6 +1585,7 @@ message->lap = deviceState->lap;
 deviceState->sendMessage = 0;
           ]]></OnSend>
         </SupervisorOutPin>
+
         <InputPin name="receiver" messageTypeId="ring_propagate">
           <OnReceive><![CDATA[
 /* Only device zero increments the lap counter. Remember - this field in the
@@ -1573,6 +1598,7 @@ if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
 else deviceState->sendMessage = 0;
           ]]></OnReceive>
         </InputPin>
+
         <OutputPin name="sender" messageTypeId="ring_propagate">
           <OnSend><![CDATA[
 /* Define the fields in the message. */
@@ -1606,6 +1632,7 @@ if (deviceProperties->id == 0) deviceState->sendMessage = 1;
 return deviceState->sendMessage;
         ]]></OnInit>
       </DeviceType>
+
       <SupervisorType id="" SupervisorInPin="tracker">
         <!-- There is one supervisor device type in a given application. This
              particular supervisor is written assuming there is only one
@@ -1613,77 +1640,81 @@ return deviceState->sendMessage;
         -->
         <Code><![CDATA[
 #include <stdio.h>  /* For writing an output file */
-
+#include <vector>  /* Defines the type for `messagesPerDevice` */
+        ]]></Code>
+        <State><![CDATA[
 /* Holds state information to ensure each ring member has seen the packet an
  * appropriate number of times. */
-uint8_t messagesPerDevice[graphProperties->numDevices];
-for (uint8_t index = 0; index < graphProperties->numDevices; index++)
-{
-    messagesPerDevice[index] = 0;
-}
+std::vector<uint8_t> messagesPerDevice;
 
 /* Ominous. */
 bool failed = false;
 bool finished = false;
-        ]]></Code>
-        <SupervisorInPin id="tracker" messageTypeId="only">
+
+/* Output file. */
+FILE* resultFile;
+        ]]></State>
+        <OnInit><![CDATA[
+supervisorState->messagesPerDevice = \
+    std::vector<uint8_t>(graphProperties->numDevices, 0);
+supervisorState->resultFile = fopen("ring_test_output", "w");
+        ]]></OnInit>
+        <SupervisorInPin id="tracker" messageTypeId="exfiltration">
           <OnReceive><![CDATA[
 /* If the application has failed, don't act on any more messages. */
-if (!failed)
+if (!supervisorState->failed)
 {
     /* Failure condition: once we've finished, we fail if we receive any more
      * messages. Also, fail if we receive a message that has done too many
      * laps. Note that this does not fail if the messages are received out of
      * order - POETS guarantees delivery, not ordering. */
-    if (message->lap > graphProperties->maxLaps or finished)
+    if (message->lap > graphProperties->maxLaps or supervisorState->finished)
     {
-        failed = true;
-        FILE* resultFile = fopen("ring_test_output", "a");
-        fprintf(resultFile, "0");
-        fclose(resultFile);
+        supervisorState->failed = true;
+        fprintf(supervisorState->resultFile, "0");
     }
 
     /* If we've not failed, track the message, and check the finishing
      * condition. */
     else
     {
-        messagesPerDevice[message->sourceId] += 1;
+        supervisorState->messagesPerDevice.at(message->sourceId) += 1;
 
         /* Check the finishing condition. */
-        finished = true;
-        for (uint8_t index = 0; index < graphProperties->numDevices; index++)
+        supervisorState->finished = true;
+        for (std::vector<uint8_t>::size_type index = 0;
+             index < graphProperties->numDevices; index++)
         {
-            if (messagesPerDevice[index] != graphProperties->maxLaps)
+            if (supervisorState->messagesPerDevice.at(index) !=
+                graphProperties->maxLaps + 1)
             {
-                finished = false;
+                supervisorState->finished = false;
                 break;
             }
         }
 
         /* Check the finish condition. */
-        if (finished)
+        if (supervisorState->finished)
         {
-            FILE* resultFile = fopen("ring_test_output", "a");
-            fprintf(resultFile, "1");
-            fclose(resultFile);
+            fprintf(supervisorState->resultFile, "1");
         }
     }
 }
           ]]></OnReceive>
         </SupervisorInPin>
+        <OnStop><![CDATA[
+fclose(supervisorState->resultFile);
+        ]]></OnStop>
       </SupervisorType>
     </DeviceTypes>
   </GraphType>
-  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type">
-    <Properties><![CDATA[
-numDevices = 5;
-    ]]></Properties>
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type" P="5">
     <DeviceInstances>
-      <DevI id="0" type="ring_element" P="id = 0"/>
-      <DevI id="1" type="ring_element" P="id = 1"/>
-      <DevI id="2" type="ring_element" P="id = 2"/>
-      <DevI id="3" type="ring_element" P="id = 3"/>
-      <DevI id="4" type="ring_element" P="id = 4"/>
+      <DevI id="0" type="ring_element" P="0"/>
+      <DevI id="1" type="ring_element" P="1"/>
+      <DevI id="2" type="ring_element" P="2"/>
+      <DevI id="3" type="ring_element" P="3"/>
+      <DevI id="4" type="ring_element" P="4"/>
     </DeviceInstances>
     <EdgeInstances>
       <EdgeI path="1:receiver-0:sender"/>
