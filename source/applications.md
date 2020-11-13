@@ -993,7 +993,6 @@ Graphs
 ----OnSupervisorIdle
 ----OnStop
 -GraphInstance
---Properties
 --DeviceInstances
 ---DevI
 --EdgeInstances
@@ -1030,8 +1029,8 @@ attributes:
 Defines graph-level properties (constant throughout execution), which can be
 accessed by code fragments through the `graphProperties` structure
 pointer. Members of the structure pointed to by `graphProperties` are defined
-as `CDATA`. These properties may be overriden in the graph instance definition
-(`:GraphInstance-Properties:`).
+as `CDATA`. These properties may be overriden using the `P` attribute in the
+graph instance definition (`:GraphInstance:`).
 
 This element must occur at most once in each `:GraphType:` section. No
 attributes are valid.
@@ -1389,6 +1388,10 @@ attributes:
    from, to determine the behaviour of device and pin types. Corresponds to the
    `id` attribute of a `:GraphType:` element.
 
+ - `P` (must occur at most once): Property definitions overriding graph-level
+   type defaults. Define using syntax that is valid in C++14 initialiser lists
+   (e.g. `value,anothervalue` for each property field in order).
+
 **Graphs/GraphInstance/Properties** (`:GraphInstance-Properties:`)
 
 Overrides graph-level properties defined by the graph type used by this
@@ -1422,13 +1425,13 @@ section. Valid attributes:
  - `type` (must occur exactly once): The type of this device, corresponding to
    the value of the `id` field of a `:DeviceType:` element.
 
- - `P` (must occur at most once): Default property definitions overriding type
-   defaults. Define using syntax that is valid in C++14 initialiser lists
+ - `P` (must occur at most once): Property definitions overriding device-level
+   type defaults. Define using syntax that is valid in C++14 initialiser lists
    (e.g. `value,anothervalue` for each property field in order).
 
- - `S` (must occur at most once): Default initial state definitions overriding
-   type defaults. Define using syntax that is valid in C++14 initialiser lists
-   (e.g. `value,anothervalue` for each state field in order).
+ - `S` (must occur at most once): Initial state definitions overriding
+   device-level type defaults. Define using syntax that is valid in C++14
+   initialiser lists (e.g. `value,anothervalue` for each state field in order).
 
 **Graphs/GraphInstance/EdgeInstances** (`:EdgeInstances:`)
 
@@ -1467,18 +1470,17 @@ section. Valid attributes:
      `:SupervisorType - SupervisorOutPin:` that exists for the type of
      `<DeviceFrom>`.
 
- - `P` (must occur at most once): Default property definitions overriding type
+ - `P` (must occur at most once): Property definitions overriding type defaults
+   for the input pin on the receiving device, if the receiving device is a
+   normal device. Define using syntax that is valid in C++14 initialiser lists
+   (e.g. `value,anothervalue` for each property field in order). This attribute
+   must be undefined if the receiving device is a supervisor device.
+
+ - `S` (must occur at most once): Initial state definitions overriding type
    defaults for the input pin on the receiving device, if the receiving device
    is a normal device. Define using syntax that is valid in C++14 initialiser
-   lists (e.g. `value,anothervalue` for each property field in order). This
+   lists (e.g. `value,anothervalue` for each state field in order). This
    attribute must be undefined if the receiving device is a supervisor device.
-
- - `S` (must occur at most once): Default initial state definitions overriding
-   type defaults for the input pin on the receiving device, if the receiving
-   device is a normal device. Define using syntax that is valid in C++14
-   initialiser lists (e.g. `value,anothervalue` for each state field in
-   order). This attribute must be undefined if the receiving device is a
-   supervisor device.
 
 # Appendix A: Ring Test Example (XML)
 
