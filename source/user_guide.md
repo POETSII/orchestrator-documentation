@@ -499,6 +499,10 @@ sequence. This syntax is accepted for all commands where an application graph
 instance is accepted as a parameter. For the sake of brevity, we adopt this
 last notation going forward.
 
+Also note that, in the current iteration of the Orchestrator, multiple graph
+instances cannot be deployed (or executed) at the same time. This will change
+in a future version of the Orchestrator.
+
 #### Mapping Application Graph Instances to Hardware (Placement))
 
 With a typelinked application graph instance (from XML), and a hardware graph
