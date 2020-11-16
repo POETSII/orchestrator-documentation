@@ -256,8 +256,8 @@ When starting the Orchestrator, you may also encounter a pair of messages
 similar to:
 
 ~~~ {.bash}
-POETS> 11:50:38.02:  20(I) The microlog for the command 'load /engine = "/local/orchestrator-common/hdf.uif"' will be written to '../Output/Microlog/Microlog_2020_10_02T11_50_38p0.plog'.
-POETS> 11:50:38.02: 140(I) Topology loaded from file ||/local/orchestrator-common/hdf.uif||.
+POETS> 11:50:38.02:  20(I) The microlog for the command 'load /engine = "../Config/POETSHardwareOneBox.ocfg"' will be written to '../Output/Microlog/Microlog_2020_10_02T11_50_38p0.plog'.
+POETS> 11:50:38.02: 140(I) Topology loaded from file ||../Config/POETSHardwareOneBox.ocfg||.
 ~~~
 
 in which case, the developer that has set up this machine has installed a
