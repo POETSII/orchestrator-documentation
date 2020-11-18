@@ -315,7 +315,7 @@ can have three forms:
  - `APP::GRAPH`, which performs the operation on exactly one application graph
    instance.
 
-Operator commands:
+Operator commands, in more detail than in volume IV:
 
  - `placement /ALGORITHM = APPLICATIONNAME`: Performs the `ALGORITHM` algorithm
    to place the application named `APPLICATIONNAME` onto the hardware

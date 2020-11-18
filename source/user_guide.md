@@ -761,8 +761,54 @@ argument, and these paths are relative to the `bin` directory.
 
 ## Place (`place`)
 
-Place commands operate on the placement subsystem of the Orchestrator. See the
-placement documentation for a comprehensive list of commands.
+Place commands operate on the placement subsystem of the Orchestrator, which is
+responsible for mapping applications to the compute hardware. See the placement
+documentation for a more detailed description of the commands that follow.
+
+ - `placement /app`: Synonym for `placement \bucket`.
+
+ - `placement /bucket`: Given a typelinked application graph (or multiple),
+   places it onto the hardware by filling each thread in sequence.
+
+ - `placement /constraint`: Given a constraint type and a set of arguments,
+   imposes a system-wide hard constraint onto future placed applications:
+   Currently-supported constraints include:
+
+   - `placement /constraint = "MaxDevicesPerThread", ARG`: Defines an upper
+     limit on the number of devices that the placer will place on any thread in
+     the engine. A default limit of 256 is imposed here.
+
+   - `placement /constraint = "MaxThreadsPerCore", ARG`: Defines an upper limit
+     on the number of threads that the placer will place devices on within any
+     core in the hardware model. By default, the entire hardware model is used
+     for placement.
+
+ - `placement /dump`: Given a typelinked application graph (or multiple), dumps
+   information about the placement of that application to the default output
+   path (presently `Output/Placement`), including the mapping, when the
+   application was placed, what algorithm was used to place it, its placement
+   "score", the maximum local hardware loading, and a "cost" of communication
+   between all device pairs, amongst other things.
+
+ - `placement /gc`: Given a typelinked application graph (or multiple), places
+   it using a gradient-less climbing algorithm (with a random initial
+   condition). This is similar to `placement \sa`, but only accepts superior
+   mappings.
+
+ - `placement /rand`: Given a typelinked application graph (or multiple),
+   places it by mapping devices to threads at random.
+
+ - `placement /sa`: Given a typelinked application graph (or multiple), places
+   it using simulated annealing (with a random initial condition). The number
+   of iterations can be defined at compile time (and will later be more easily
+   configurable).
+
+ - `placement /unplace`: Given a typelinked application graph (or multiple),
+   removes placement information for that application (effectively undoing a
+   placement operation).
+
+ - `placement /reset`: Completely clears all placement information and loaded
+   constraints.
 
 ## Recall (`recall`)
 
