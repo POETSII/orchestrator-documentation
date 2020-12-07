@@ -508,8 +508,8 @@ in a future version of the Orchestrator.
 #### Mapping Application Graph Instances to Hardware (Placement))
 
 With a typelinked application graph instance (from XML), and a hardware graph
-(loaded automatically, in this case), the Orchestrator can map the former onto
-the latter. Command:
+(loaded automatically by the Orchestrator, in this case), the Orchestrator can
+map the former onto the latter. Command:
 
 ~~~ {.bash}
 place /bucket = *
