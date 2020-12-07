@@ -423,7 +423,8 @@ Rank 03,               Mothership:CommonBase, created 10:28:19 Apr 16 2020
 
 In this case, the Root, RTCL, LogServer, and Mothership components of the
 Orchestrator have been started. Note that all components of the Orchestrator
-exist on the same MPI communicator.
+exist on the same MPI communicator. More information about these processes is
+written to the command's microlog.
 
 #### Loading an Application, and Type-Linking (XML)
 
@@ -862,7 +863,8 @@ Lower-level system commands.
 
  - `system /time`: Logs the date and time.
 
- - `system /show`: Displays a terse list of running MPI processes.
+ - `system /show`: Displays a terse list of running MPI processes, and writes
+   more detailed information to the microlog.
 
 ## Test (`test`)
 
