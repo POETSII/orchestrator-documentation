@@ -9,7 +9,7 @@
 #    - fvextra (you can get this from https://github.com/gpoore/fvextra.git)
 
 BUILDER := "pandoc"
-BUILDER_FLAGS := "--toc --number-sections --highlight-style tango"
+BUILDER_FLAGS := "--toc --number-sections --highlight-style tango --metadata author="Compiled: `date --iso-8601=date`. Revision: `git rev-parse --short HEAD`""
 TEXT_SOURCES_DIR := source
 TEXT_TARGETS_DIR := build
 
