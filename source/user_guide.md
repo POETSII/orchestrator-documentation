@@ -879,9 +879,13 @@ For information.
 
 ## Unload (`unload`)
 
- - `unload /app`: Given a loaded application graph instance, or a loaded
-   application, (or `*`, denoting all applications), removes information about
-   that item/those items from the Orchestrator. Clears placement information
-   and composer information.
+ - `unload /app`: Given a loaded application graph instance (or multiple),
+   removes information about that item/those items from the
+   Orchestrator. Clears placement information and composer information.
 
  - `unload /engine`: Clears the hardware model and all placement information.
+
+## Untypelink (`untypelink`)
+
+ - `untypelink /app`: Given an application graph instance (or multiple),
+   removes all typelinks associated with them, if any are defined.
