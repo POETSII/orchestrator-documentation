@@ -15,8 +15,8 @@ between the implemented placement system, and the design in this document:
  - The documentation does not introduce the loading of placement configurations
    (`placement \load`). This operator commands is presently unsupported.
 
- - The simulated annealing implementation (accessible via `placement \sa=TASK`)
-   and the smart-random implementation (accessible via `placement \rand=TASK`)
+ - The simulated annealing implementation (accessible via `placement \sa=GI`)
+   and the smart-random implementation (accessible via `placement \rand=GI`)
    place devices as advertised, but applications compiled and run using
    placements from those algorithms are not guaranteed to complete (pending
    issue #157, which concerns a softswitch fix)
@@ -346,7 +346,9 @@ Operator commands, in more detail than in volume IV:
      hardware, line by line. Each record is of the form
      "`<DEVICENAME>\t<THREADNAME>`" (where `<THREADNAME>` is
      hierarchical). This information is dumped to
-     `placement_task_to_hardware_<APPLICATIONNAME>_<ISO8601DT>.txt`.
+     `placement_gi_to_hardware_<APPLICATIONNAME>_<ISO8601DT>.txt`. The reverse
+     map is dumped to
+     `placement_hardware_to_gi_<APPLICATIONNAME>_<ISO8601DT>.txt`.
 
    - Diagnostic information from the algorithm object, dumped to\
      `placement_diagnostics_<APPLICATIONNAME>_<ISO8601DT>.txt`. This
@@ -368,7 +370,7 @@ Operator commands, in more detail than in volume IV:
        (supplied by the `MsgT_t`s in the application), line by line. Each
        record is of the form `<DEVICENAME>\t<DEVICENAME>\t<COST>`, and is
        dumped to\
-       `placement_task_edges_<APPLICATIONNAME>_<ISO8601DT>.txt`.
+       `placement_gi_edges_<APPLICATIONNAME>_<ISO8601DT>.txt`.
 
    I'd prefer it if the operator could specify paths on the command line, but I
    can't see an elegant way of doing this using the command infrastructure we
@@ -872,7 +874,7 @@ TYPE,ARGS` operator command. The available constraint `TYPE`s are:
    other applications have been placed).
 
 # Appendix E: Comprehensive List of Algorithms
-Algorithms are run on a loaded task using the `placement /ALGORITHM =
+Algorithms are run on a loaded graph instance using the `placement /ALGORITHM =
 APPLICATIONNAME` operator command. All algorithms are aware of all constraints
 (hopefully). Algorithms will not place devices on cores that already have
 devices from other applications placed upon them. The available `ALGORITHM`s
