@@ -453,7 +453,7 @@ Once your application file is loaded, type-link your graph instance to your
 graph type by commanding:
 
 ~~~ {.bash}
-tlink /app = "ring_test::ring_test_instance"
+tlink /app = "ring_test"::"ring_test_instance"
 ~~~
 
 where:
@@ -477,7 +477,7 @@ absolute paths to files and directories.
 In the above example, we commanded
 
 ~~~ {.bash}
-tlink /app = "ring_test::ring_test_instance"
+tlink /app = "ring_test"::"ring_test_instance"
 ~~~
 
 which uniquely type-links the `ring_test_instance` graph instance loaded from
