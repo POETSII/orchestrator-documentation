@@ -554,9 +554,8 @@ compose /app = *
 This creates a directory structure in the `build` path defined in the
 Orchestrator configuration. The code fragments defined in the task XML are
 generated here, and are compiled using the RISCV compiler in the POETS
-Engine. Compilation may produce warnings or errors, which... <!>
-
-What does the Orchestrator print? <!>
+Engine. Compilation may produce warnings or errors, which are written to the
+microlog of the command.
 
 #### Loading binaries into devices for execution, and running the application
 
