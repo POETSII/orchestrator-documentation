@@ -445,7 +445,9 @@ POETS> 14:06:47.57:  65(I) Application file ../ring_test.xml loaded in 7565 ms.
 Application files consist of (zero or more) application graph types
 (`GraphType` element in the XML), and (zero or more) application graph
 instances (`GraphInstance` element in the XML). When the file is loaded, graph
-types and graph instances are not linked.
+types and graph instances are not linked. Type-linking permits multiple graph
+instances to be linked to a graph type, so definitions can be shared across
+different configurations (e.g. size) of a "problem type".
 
 Once your application file is loaded, type-link your graph instance to your
 graph type by commanding:
