@@ -750,6 +750,11 @@ argument, and these paths are relative to the `bin` directory.
 
  - `path /log`: Given a path to a file, sets the default path to log to.
 
+ - `path /mout`: Sets the root directory for supervisors to (optionally) store
+   user files to.
+
+ - `path /mshp`: Sets the path to store Mothership deployment files to.
+
  - `path /place`: Sets default path to store placement information to.
 
  - `path /reset`: Resets pathing information from configuration.
@@ -758,8 +763,6 @@ argument, and these paths are relative to the `bin` directory.
    compiled binaries to.
 
  - `path /ulog`: Sets default path to store micrologs to.
-
- - `path /mshp`: Sets default path to store Mothership deployment files to.
 
 ## Place (`place`)
 

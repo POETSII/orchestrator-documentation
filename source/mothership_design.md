@@ -233,6 +233,10 @@ no other information about the application yet.
 |                 |                       | process as *gracefully* as        |
 |                 |                       | possible.                         |
 +-----------------+-----------------------+-----------------------------------+
+| `PATH`          | 0. `std::string`      | Defines the path root for         |
+|                 |    `userOutRoot`      | directory creation. See the       |
+|                 |                       | SupervisorAPI section.            |
++-----------------+-----------------------+-----------------------------------+
 | `SYST`, `KILL`  | None                  | Stops processing of further       |
 |                 |                       | messages and packets, and shuts   |
 |                 |                       | down the Mothership process as    |
@@ -429,7 +433,8 @@ Notes:
 
  - Applications can stop themselves in two ways - either a normal device sends
    a `P_CNC_KILL` packet to the Mothership, or the supervisor calls the `void
-   Super::end()` API method (documented in the Supervisor API section).
+   Super::stop_application()` API method (documented in the Supervisor API
+   section).
 
  - There is no `P_CNC_INIT`. This opcode was used in the barrier-breaking
    packet for normal devices. It is replaced by `P_CNC_BARRIER`.
@@ -643,17 +648,21 @@ these functions (where `Super` is a namespace):
  - `std::string Super::get_output_directory(std::string suffix="")`: Returns
    the absolute path of a directory on the disk of the machine hosting the
    Mothership. This path has the form
-   `/home/$USER/<REMOTE_SAFEDIR>/<APPNAME>_<DATETIME_ISO8601><SUFFIX>`, where:
+   `/home/$USER/<REMOTE_SAFEDIR>/<APPNAME>/<DATETIME_ISO8601><SUFFIX>`, where:
 
    - `<REMOTE_SAFEDIR>` is defined in the Orchestrator configuration by field
      `remote_safedir` in the `[default_paths]` section, or is overridden by the
-     Orchestrator operator.
+     Orchestrator operator. It is held in Mothership::userOutDir, and is
+     populated by `PATH` messages.
 
    - `<APPNAME>` is the name of the application.
 
    - `<DATETIME_ISO8601>` is a datetime.
 
    - `<SUFFIX>` is the `suffix` passed as argument (default empty).
+
+   If an error occurs, this function Posts a message to the Logserver and
+   returns an empty string.
 
 `SupervisorAPI` is a "bridge class" used by both the Mothership, and by
 Supervisors. It has the following fields:
@@ -665,6 +674,11 @@ Supervisors. It has the following fields:
    manage it without first reading about it here.
 
  - `std::string appName`: The name of the application.
+
+ - `std::string (*get_output_directory)(Mothership* mship, std::string appName,
+   std::string suffix)`: A function pointer provisioned by the Mothership when
+   the supervisor is loaded. This is called by the `get_output_directory` API
+   call.
 
  - `void (*post)(Mothership*, std::string)`: A function pointer provisioned by
    the Mothership when the supervisor is loaded. This is called by the
