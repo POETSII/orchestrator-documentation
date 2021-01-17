@@ -323,7 +323,7 @@ no other information about the application yet.
 | `PKTS`          | 0. `std::vector<`     | Queues a series of destination-   |
 |                 |    `std::pair<`       | hardware-address and packet pairs |
 |                 |    `uint32_t,`        | into the backend.                 |
-|                 |    `P_Pkt_t> packets` |                                   |
+|                 |    `P_Pkt_t>> packets`|                                   |
 +-----------------+-----------------------+-----------------------------------+
 | `DUMP`          | 0. `std::string path` | Dumps Mothership process state    |
 |                 |                       | to a file at `path`.              |
