@@ -684,6 +684,11 @@ Supervisors. It has the following fields:
    the Mothership when the supervisor is loaded. This is called by the
    `post` API call.
 
+ - `void (*push_packets)(Mothership* mship, std::vector<std::pair<uint32_t,
+   P_Pkt_t> >& packets)`: A function pointer provisioned by the Mothership when
+   the supervisor is loaded. Used by non-user-facing logic to send packets from
+   the supervisor device into the compute fabric.
+
  - `void (*stop_application)(Mothership*, std::string)`: A function pointer
    provisioned by the Mothership when the supervisor is loaded. This is called
    by the `stop_application` API call.
