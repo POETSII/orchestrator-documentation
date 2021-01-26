@@ -212,6 +212,7 @@ a thread.<BR ALIGN="TEXT"/>
 + logging : LogPacketManager<BR ALIGN="LEFT"/>
 + superdb : SuperDB<BR ALIGN="LEFT"/>
 + threading : ThreadComms<BR ALIGN="LEFT"/>
++ userOutDir: string<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + Mothership(int, char*, string, string)<BR ALIGN="LEFT"/>
