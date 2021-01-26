@@ -1,6 +1,211 @@
 % Orchestrator Documentation Volume II: Application Definition
 
-# Overview
+# Introduction
+
+The "big picture" of the design intention and capabilities of a POETS system is
+provided in Volume I of the Orchestrator documentation. This document describes
+the practical details of preparing a POETS application. The middleware used to
+control the system is known as the Orchestrator, and the command portfolio
+supported by the Orchestrator, which allows applications to be loaded, is
+described in the User Guide (Volume IV). The (developer facing) internals
+details are described in Volume III.
+
+Recall that the central idea of POETS is that it is capable of delivering
+orders of magnitude wallclock speedup for certain classes of problems. It does
+nothing, in principle, that cannot be done by a single-thread equivalent
+process. **As with anything, if the system is taken outside its intended design
+envelope, the behaviour may degrade to the point that it is slower than a
+conventional counterpart.**
+
+The target audience for this document is the developers of domain-specific
+applications and front ends, who are already sympathetic to the motivation
+behind POETS. That said, getting the best from the system involves a complex -
+and possibly counter intuitive - operating protocol and application definition.
+
+---
+
+The first few sections of this document explain the basis of event-based
+processing as implemented by POETS. They explain *why* the steps outlined in
+subsequent sections are necessary and *how* they interact. If you are already
+comfortable with this rationale, you can skip to the final few sections which
+describe the details of application definition minutiae at the syntactic level
+if that's all you need.
+
+---
+
+## Disambiguation
+
+A historical mismatch in terminology: From the user/developer point of view,
+the POETS-Orchestrator system consists of two networks: the MPI 'conventional'
+network, where the processes execute on conventional X86 architectures, and the
+POETS network, where the devices communicate via the bespoke hardware network.
+
+MPI processes communicate with arbitrarily sized **messages**, and POETS
+devices communicate via fixed size **packets**.
+
+Parallel development and poor management combine to get us into a situation
+where the definition of a packet from the user/language design perspective is
+called a **MessageType**, and the packet itself is sometimes called a
+message. It's too embedded to change now.
+
+In the Concepts and Architectural Concerns section, packets are called packets,
+but in the XML fragments provided as examples, and in the description of the
+application language (XML), they are messages. It's usually obvious from
+context what is being referred to, and when it isn't, when we remember, we try
+to disambiguate by calling the latter POETS::message. Supervisor devices -
+which broker the interface between the two networks - have handlers that react
+to messages from the MPI network and handlers that react to packets from
+devices. They are different, and usually qualified "message handler" and
+"packet handler" as necessary. When we remember.
+
+# Concepts and Architectural Concerns
+
+## Event Based Compute in the Abstract
+
+This section describes the POETS perspective of event-based processing, the
+assumed knowledge base of the reader, and the system itself, again from the
+perspective of an application writer creating an application for use on the
+POETS hardware. Assumed knowledge includes C++ and the notion of classes and
+data/method encapsulation.
+
+### The Idealisation
+
+In the abstract, a POETS **application** is defined principally as a directed
+**graph**: {devices, pins, of X edges} - see Figure 1. Devices communicate
+between themselves, using application-defined behaviour, by sending **packets**
+along the edges of the graph.
+
+![Typed graph components](images/missing.png)
+
+When a packet arrives at an input pin, a handler is invoked. This has visibility of:
+
+ - The packet content (payload and sending device/pin identifiers)
+ - The pin state
+ - The state of the device that owns the pin
+
+The behaviour of the handler is defined as part of the application, by the application writer. It may (or may not):
+
+ - Alter the state of the device/pins.
+ - Cause output pin(s) on the device to emit packets of their own.
+
+Different output pins may emit different packets, but a packet sent from a
+given output pin will be copied to all the edges attached to that pin. The intended operational envelope for POETS assumes that:
+
+ - There are a **large** number ($\mathcal{O}$(millions)) of devices, but $\lt2^{32}$.
+ - Their **behaviour** - user-defined C-code - is simple and short.
+ - Communication between them is brokered by *small* fixed size (64 byte) packets.
+ - The devices, pins, and packets are strongly typed, and there are a *low*
+   number ($<100$) of distinct types.
+ - There are $\le32$ pins on a device.
+ - There are $\lt2^{32}$ edges on an individual pin, and $\lt2^{32}$ edges in total.
+
+### Temporal Behaviour
+
+Building on the abstraction described in the previous section, here we allow
+physical limitations to impact on the behaviour.
+
+#### Network Congestion and Pushback
+
+The physical realisation of the underlying hardware communications network is
+almost completely hidden from the user, but it is a physical entity and finite
+in size (albeit extremely large). It is possibly helpful to think of it as a
+large (but finite) communication pool, in the CSP sense of the term. As with
+any finite network, if packets are injected at a rate higher than the network
+is drained, something must give. The POETS network addresses this problem by
+enforcing conditional acceptance at the hardware level. In other words, the
+network will only accept a packet if it has capacity to buffer it. The
+implication is that - after some finite time - it will be delivered. If the
+network is unable to accept a packet, this information is pushed back to the
+point that is most capable of reacting sensibly to it.
+
+Between the user-defined handler behaviour and the underlying hardware sits a
+thin layer of software called the Softswitch (described later). The behaviour
+of the Softswitch is defined by the POETS system architects and is not
+accessible to the user. Relevant here is the behaviour of the Softswitch if it
+receives pushback from the hardware: it will continuously attempt to send the
+packet (until the hardware accepts it) whilst at the same time refusing to
+accept incoming packets, causing pushback to the devices incident upon it. This
+behaviour will (fairly, we intend) effectively throttle the network until it
+can be drained. Processing behaviour is not affected, it just slows down.
+
+#### Wallclock Time
+
+In general, a handler will be single threaded, although this is not enforced
+(see intended operation envelope above). The handlers are small segments of
+sequential code, which are mapped to arbitrarily separated physical threads by
+the POETS system. Whilst the user can control this mapping (see later section
+on placement), for canonical use cases this mapping is irrelevant. There is no
+notion of synchronised wallclock time built into POETS at a low level, but real
+time can be injected into devices by **supervisors**, which are described
+later.
+
+#### Packet Transitivity
+
+From the above, two points are of relevance to the application designer:
+
+ - POETS guarantees packet delivery in a finite time, but it does not guarantee
+   transitivity: packets can "overtake" each other in transit.
+ - Timestamps attached to data should be interpreted very carefully, as the
+   time skew between devices is never predictable.
+
+### Component Types: Graphs, Devices, Pins, and Packets
+
+Applications and their components parts are strongly typed. An application
+consists of two principal components: a **topology graph** (describing the
+interconnectivity of the devices, see Figure 1), and a type tree, shown in
+Figure 2.
+
+![Application Type Tree](images/missing.png)
+
+An application consists of a fully-linked graph: a topology graph linked to a
+type tree. A type tree may contain multiple (named) graph types. A graph type
+may contain multiple device types, multiple packet types, and optionally one
+supervisor type (see later). Device types have associated child pin types. The
+shielding and scope of typenames up to this point is what one would expect in a
+conventional tree-based definition.
+
+The entire tree is specified by the user: graph types contain device types,
+which contain pin types. At this level, everything is identified by simple
+string A packet type name is associated with each pin type, which defines the
+data layout of the packets that may enter/exit the pin (dotted links in Figure
+2). POETS requires that the type of the packet associated with the pins on each
+end of an edge are the same.
+
+Each component type may have **data areas** (including the aforementioned
+device and pin states) and a portfolio of **handlers** associated with it: these
+are fragments of C++11, which will later be assembled and compiled into an
+executable Softswitch by POETS[^gpu].
+
+[^gpu]: There is a strong - but entirely coincidental - similarity between the
+    definition dataflow here and that employed in programming GPUs.
+
+### Graph Topology and Supervisors
+
+The application graph is an abstract graph, as shown in Figure 1. The intention
+is that the interplay of packets and device/pin functionality combine to
+produce a "solution" as an emergent property of the active graph. This by
+itself is of limited utility without any mechanism of data setup or
+exfiltration. This capability is provided by the **supervisor** (or
+**supervisor device**). This is defined (from the application writer's
+perspective) as an abstract type, and is instantiated by POETS without control
+or visibility for the user. Every POETS device is implicitly connected to a
+supervisor device, and it is the supervisor that brokers communication to the
+overseer POETS infrastructure.
+
+To understand this more clearly, we must pre-empt the next section and describe
+a little of the physical embodiment of the application graph. In the abstract,
+the POETS application graph consists of an arbitrary graph, defined by the
+user. This is mapped onto a fixed architecture that supports/implements the
+behaviour defined by the application. This architecture is hierarchical in
+nature, and described in detail in the next section, but the relevant point is
+that the mapping is performed automatically, and the user has no visibility of
+the mapping or any partitioning of the application graph necessary to support
+the application graph.
+
+
+# Application Language (XML)
+
+## Overview
 
 Applications are consumed by the Orchestrator, and perform computation desired
 by the user on POETS. Applications in POETS are described as graphs, where
@@ -20,13 +225,13 @@ introducing the semantics of acceptable XML. Tags surrounded by colons, like
 `:GraphType:`, relate a concept to an appropriate XML chunk, and they
 correspond to elements defined the "Application Files" Section.
 
-# Applications as Graphs
+## Applications as Graphs
 
 Event-based computing is appropriate for problems that can be decomposed into a
 discrete mesh. This often manifests as a spatial discretisation[^dis], though
 any domain that **remains constant with respect to the execution of the
 application** is suitable. This decomposition results in connected "regions" of
-the problem, which can be represented as a graph[^formal]. Figure 1 shows an
+the problem, which can be represented as a graph[^formal]. Figure N shows an
 example of this, where:
 
 ![A graph representation of an application. Computation is performed by
@@ -74,7 +279,7 @@ macroscale behaviour. There exists no notion of global application state, as
 devices only operate on information visible to them, or that they request from
 neighbouring devices.
 
-## Types and Instances
+### Types and Instances
 
 As an application can contain many normal devices, a typing system
 (`:GraphType:`) exists to define properties, initial state, code, and pin types
@@ -126,7 +331,7 @@ A graph can also define properties (`:GraphType-Properties:`) and code
 (`:GraphType-SharedCode:`) common to all devices and pins in the
 application.
 
-## Supervisor Devices
+### Supervisor Devices
 
 Supervisor devices^[Note that "Supervisor" in the context of POETS is not
 related to supervisors in the context of UNIX-likes; the concepts are
@@ -163,7 +368,7 @@ output pin (`:DeviceType - SupervisorOutPin:`). Being "implicit", this
 connection does not need to be defined in the edge instance (`:EdgeI:`) section
 of the application definition.
 
-# Example: Ring Test
+## Example: Ring Test
 
 This Section presents an example application, which is arrived at from a
 high-level description of the intended behaviour. This is not intended to be as
@@ -186,7 +391,7 @@ has completed $N$ laps, it writes a success value (1) to a file. If the
 supervisor sees that the message has looped too many times, it writes a failure
 value (0) to a file.
 
-## Towards a Normal Device Type
+### Towards a Normal Device Type
 
 To begin, we define the skeletal structure of the XML:
 
@@ -493,7 +698,7 @@ We now have a device type definition, which is capable of receiving messages
 from the prior devices in the ring, and "forwarding" them to the next devices
 in the ring.
 
-## Introducing the Supervisor Device Type
+### Introducing the Supervisor Device Type
 
 The application brief requires a file to be written, whose contents depend on
 the behaviour of the system. A supervisor device is well-positioned to do this,
@@ -701,7 +906,7 @@ specially-named flag to trigger a send to a supervisor device.
 Following this example, the `GraphType` section now matches with the complete
 XML in Appendix A.
 
-## Defining a Graph Instance
+### Defining a Graph Instance
 
 Given a complete `GraphType` definition, an instance of the ring test
 application can be created, which can be loaded by the Orchestrator and
@@ -788,7 +993,7 @@ this).
 Further examples accompany the Orchestrator, and are available at
 <https://github.com/POETSII/Orchestrator_examples>.
 
-# Writing for POETS Hardware
+## Writing for POETS Hardware
 
 This Section provides a brief description of the POETS hardware, sufficient for
 writing applications for the Orchestrator. For a more detailed description, see
@@ -828,19 +1033,19 @@ The Orchestrator will inform you during application composition if any of these
 conditions is violated by the application (or its placement). If so, the
 Orchestrator will refuse to build it.
 
-# Application Files
+## Application Files
 
 This Section outlines how each of the features described in the "Applications
 as Graphs" Section manifest as an application file (XML), which is consumed by
 the Orchestrator. The Orchestrator accepts only application files encoded in
 ASCII.
 
-## Mark's Questions for Graeme
+### Mark's Questions for Graeme
 
  - Do SupervisorInPins and SupervisorOutPins (on both normal and supervisor
    devices) have message types associated with them?
 
-## Source Code Fragments (`:CDATA:`)
+### Source Code Fragments (`:CDATA:`)
 
 Application XML supports the use of `CDATA` sections to define various system
 behaviours. Code in these sections should be written in C++14, and make no
@@ -972,7 +1177,7 @@ Table: Variables exposed to code written in `CDATA` sections.
 
 Table: Explanation of variables exposed to `CDATA` code.
 
-## Expected Semantic Structure
+### Expected Semantic Structure
 
 This Section introduces the meaning behind each element of the XML tree. The
 order of elements on each level is free to vary without compromising the
@@ -1467,7 +1672,7 @@ attributes are valid.
 **Graphs/GraphInstance/EdgeInstances/EdgeI** (`:EdgeI:`)
 
 Defines a single edge, as well as the pins connecting either side of that edge
-(see Figure 1).
+(see Figure N).
 
 This element may occur any number of times in each `EdgeInstances`
 section. Valid attributes:
