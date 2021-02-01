@@ -192,7 +192,7 @@ mutexes):
 
  - The four above methods are also defined for the `MPIApplicationQueue` queue
    (using `PMsg_p` messages), for `BackendOutputQueue` (using
-   `std::pair<uint32_t, P_Pkt_t>` addressed packets), for `BackendInputQueue`
+   `P_Addr_Pkt_t` addressed packets), for `BackendInputQueue`
    (using `P_Pkt_t` packets), and for `DebugInputQueue` (using `P_Debug_Pkt_t`
    debug packets, see the Debugging section).
 
@@ -321,9 +321,8 @@ no other information about the application yet.
 |                 |    `P_Pkt_t> packets` |                                   |
 +-----------------+-----------------------+-----------------------------------+
 | `PKTS`          | 0. `std::vector<`     | Queues a series of destination-   |
-|                 |    `std::pair<`       | hardware-address and packet pairs |
-|                 |    `uint32_t,`        | into the backend.                 |
-|                 |    `P_Pkt_t>> packets`|                                   |
+|                 |    `P_Addr_Pkt_t`     | hardware-address and packet       |
+|                 |    `> packets`        | structs                           |
 +-----------------+-----------------------+-----------------------------------+
 | `DUMP`          | 0. `std::string path` | Dumps Mothership process state    |
 |                 |                       | to a file at `path`.              |
@@ -684,8 +683,8 @@ Supervisors. It has the following fields:
    the Mothership when the supervisor is loaded. This is called by the
    `post` API call.
 
- - `void (*push_packets)(Mothership* mship, std::vector<std::pair<uint32_t,
-   P_Pkt_t> >& packets)`: A function pointer provisioned by the Mothership when
+ - `void (*push_packets)(Mothership* mship, std::vector<P_Addr_Pkt_t>& packets)`
+   : A function pointer provisioned by the Mothership when
    the supervisor is loaded. Used by non-user-facing logic to send packets from
    the supervisor device into the compute fabric.
 
