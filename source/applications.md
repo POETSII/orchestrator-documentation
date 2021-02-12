@@ -77,19 +77,22 @@ along the edges of the graph.
 
 ![Typed graph components](images/missing.png)
 
-When a packet arrives at an input pin, a handler is invoked. This has visibility of:
+When a packet arrives at an input pin, a handler is invoked. This has
+visibility of:
 
  - The packet content (payload and sending device/pin identifiers)
  - The pin state
  - The state of the device that owns the pin
 
-The behaviour of the handler is defined as part of the application, by the application writer. It may (or may not):
+The behaviour of the handler is defined as part of the application, by the
+application writer. It may (or may not):
 
  - Alter the state of the device/pins.
  - Cause output pin(s) on the device to emit packets of their own.
 
 Different output pins may emit different packets, but a packet sent from a
-given output pin will be copied to all the edges attached to that pin. The intended operational envelope for POETS assumes that:
+given output pin will be copied to all the edges attached to that pin. The
+intended operational envelope for POETS assumes that:
 
  - There are a **large** number ($\mathcal{O}$(millions)) of devices, but $\lt2^{32}$.
  - Their **behaviour** - user-defined C-code - is simple and short.
@@ -201,6 +204,13 @@ nature, and described in detail in the next section, but the relevant point is
 that the mapping is performed automatically, and the user has no visibility of
 the mapping or any partitioning of the application graph necessary to support
 the application graph.
+
+Figure 3 illustrates these ideas. The application (arbitrary) device graph is
+mapped to an a-priori fixed core/thread graph. Subsets of this graph are
+overseen (connected to) instances of the supervisor, the behaviour of which is
+defined by the user. As with packet transit non- transitivity, this introduces
+a subtlety in the behaviour of the overall system: supervisors have state, but
+it this is not coherent across an application.
 
 
 # Application Language (XML)
