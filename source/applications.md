@@ -212,6 +212,160 @@ defined by the user. As with packet transit non- transitivity, this introduces
 a subtlety in the behaviour of the overall system: supervisors have state, but
 it this is not coherent across an application.
 
+ - For example, a supervisor knows which devices it is responsible for, and may
+   count exfiltrated data packets, so that it may take action when every
+   subordinate device has reported. This counter will reside in the supervisor
+   state, but in the course of execution, the various supervisor instances
+   may - will - have different values of this counter at a given wallclock
+   moment.
+
+There is no reason why the user cannot enforce coherence (via the message
+backplane) if they choose, but that is strictly application-specific behaviour,
+and subject to latency-induced skew from the message backplane.
+
+![Information movement within the system](images/missing.png)
+
+### Type Linking
+
+Type linking refers to the act of tying together an application graph and a
+type tree - see Figure 4. This is done explicitly by a command, and the reason
+for this separation of activity is purely pragmatic: (useful) application
+graphs will typically be enormous, and will take considerable time to
+load. Type trees, on the other hand, will be small and easy to load/unload (see
+design envelope in section 2.1). The use case where explicit manual typelinking
+is helpful is as follows: the user loads a graph (slow) and a type tree (fast),
+typelinks and performs some experiment. The results are not
+satisfactory/useful. The user can then unlink the tree (fast), load an
+additional tree (fast), re-typelink (fast) and repeat the analysis, without
+having to load/unload the graph (slow).
+
+![Typelinking: an application graph linked to a type tree](images/missing.png)
+
+![Orchestrator coarse structure](images/missing.png)
+
+![Hardware model](images/missing.png)
+
+## The POETS Platform
+
+The POETS hardware platform consists of an MPI universe, running on
+conventional x86 machines, closely coupled to a bespoke network of
+hyperthreaded RISC-V machines, instantiated on a set of FPGA platforms. Figure
+5 shows the MPI perspective. The software running in the MPI universe is
+collectively known as the Orchestrator.
+
+The responsibilities of the Orchestrator are command and control of the system;
+loading user- defined applications, assembling (composing) them,
+cross-compiling and loading the RISC-V memory, and overseeing initialisation,
+execution, termination and data exfiltration.
+
+### The Abstract Compute Stack
+
+The physical compute stack that supports the application is shown in Figure 5,
+and an abstract representation in Figure 6.
+
+The **P_engine** is the name given to the set of FPGAs hosting the RISC-V cores
+and the communication infrastructure. Each engine contains a set of
+**P_boards** (contained in the **P_boxes**[^hierarchy] of Figure 5). The boards
+are configured as a **fixed** graph. Each board contains a set of mailboxes;
+each mailbox addresses a set of cores; each core is hyperthreaded, and each
+thread runs one instance of a sequential binary called a **SoftSwitch**.
+
+[^hierarchy]: A P_box is a historical term for a level in the physical
+    hierarchy. It plays no part in the functioning of the system.
+
+
+### Serialisation at the Leaf
+
+The SoftSwitch binary is built and cross-compiled by the Orchestrator. It
+consists of a skeleton, with placeholders populated with the code fragments
+contained within the application.
+
+The abstract POETS graph (Figure 1) and compute model has devices reacting to
+incident packets as and when they arrive; in principle, in this model, it is
+possible for every device in an application to be active simultaneously. In
+reality, execution of even the simplest set of instructions takes finite time,
+and at the finest level of granularity, a thread can only do one thing at a
+time. POETS attempts to implement the massive potential parallelism of the
+compute model by providing an abundance of threads, and in applications where
+the number of devices is less than the number of physical threads, makes a
+pretty good job of it. Two factors combine to disrupt this idealisation:
+
+ - The number of physical threads is fixed and finite a priori, and is
+   (usually) never enough.
+
+ - The number of devices is at the behest of the user, and is (usually)
+   ridiculously big anyway.
+
+To reconcile these conflicting trends, the placement system can map multiple
+devices to a single thread - effectively serialising their behaviour. If the
+reality has the device execution windows not overlapping, this will have
+minimal effect on the overall behaviour of the system.  If the reality has the
+devices executing in parallel, this enforced serialisation may have an effect
+on the overall behaviour of the system.
+
+Whilst it is possible to both control the placement and thread occupancy of the
+compute elements (see placement system documentation) and monitor the real time
+SoftSwitch behaviour (see SoftSwitch instrumentation documentation), this is a
+subtlety which can require careful handling.
+
+### Fairness
+
+The SoftSwitch is a binary image (program) that runs on each thread. It is
+assembled by the Orchestrator from a boiler-plate skeleton and code fragments
+supplied by the user that define the behaviour of the individual devices. The
+main goal is to bridge the gap between the compute model idealisation (devices
+react instantaneously to incoming packets) and reality (every instruction in
+every code fragment takes a finite time to execute). Even in the canonical
+situation where a SoftSwitch holds only one device, the thread has no ability
+to predict when multiple packets may impinge simultaneously (incoming packet
+reactions must be serialised) or what to do about multiple consequent
+broadcasts from the same device.
+
+To address these issues, the primary design goal of the SoftSwitch is
+fairness. At the highest level, the design targets are to
+
+ - Drain the network of packets as fast as possible, to help maximise global
+   throughput.
+ - Prevent any single device from 'hogging' softswitch cycles, in terms of (i)
+   incoming packet processing (ii) core processing and (iii) sending packets.
+
+#### Hardware Interface
+
+The SoftSwitch encapsulates the interface between the software and the
+hardware. In the most simple form, the interface consists effectively of four
+function invocations:
+
+ - Can I send a packet?
+ - Send a packet.
+ - Are there any incoming packets for me to read?
+ - Read incoming packet.
+
+These are hidden from the user, but ultimately all instructions in the device
+definitions resolve down to these four calls. They are only visible to the
+SoftSwitch, so using them incorrectly (e.g. attempting to send a packet when
+the system has explicitly forbidden it) is not possible.
+
+#### The SoftSwitch
+
+The outline functionality of the SoftSwitch is shown in Figure 7. Recall that
+one SoftSwitch - created by the Orchestrator - executes on each hardware
+thread. It is a blocking spinner, pausing on the bottom (hardware) **wait** in
+the figure. **OnInit** *et al* are composed from code fragments supplied by the
+user. The precise behaviour of the implied switch clause preceding the
+**OnRecv**, **OnIdle** and **OnSend** bundles (these are abstract concepts
+here) can be altered by (user accessible - see SoftSwitch documentation)
+Orchestrator switches. Each bundle is effectively a queue in its own right;
+broadly, the user can dictate whether each queue is popped only once with each
+SoftSwitch loop or exhausted. Other control options are also available.
+
+Performance monitors (mainly in the form of loop cycle counters) are available
+at the points I in the figure. Details of their utility and access are in the
+SoftSwitch documentation (Experience has shown that these are extremely useful
+in performance tuning and debugging.)
+
+![Abstract SoftSwitch model](images/missing.png)
+
+## Event-Driven Compute Meets Reality
 
 # Application Language (XML)
 
