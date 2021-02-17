@@ -27,16 +27,16 @@ and possibly counter intuitive - operating protocol and application definition.
 The first few sections of this document explain the basis of event-based
 processing as implemented by POETS. They explain *why* the steps outlined in
 subsequent sections are necessary and *how* they interact. If you are already
-comfortable with this rationale, you can skip to the final few sections which
-describe the details of application definition minutiae at the syntactic level
-if that's all you need.
+comfortable with this rationale, you can skip to the Application Language
+section, which describes the details of application definition minutiae at the
+syntactic level if that's all you need.
 
 ---
 
 ## Disambiguation
 
-A historical mismatch in terminology: From the user/developer point of view,
-the POETS-Orchestrator system consists of two networks: the MPI 'conventional'
+A historical mismatch in terminology: From the developer point of view, the
+POETS-Orchestrator system consists of two networks: the MPI 'conventional'
 network, where the processes execute on conventional X86 architectures, and the
 POETS network, where the devices communicate via the bespoke hardware network.
 
@@ -44,7 +44,7 @@ MPI processes communicate with arbitrarily sized **messages**, and POETS
 devices communicate via fixed size **packets**.
 
 Parallel development and poor management combine to get us into a situation
-where the definition of a packet from the user/language design perspective is
+where the definition of a packet from the application writer's perspective is
 called a **MessageType**, and the packet itself is sometimes called a
 message. It's too embedded to change now.
 
@@ -94,14 +94,17 @@ Different output pins may emit different packets, but a packet sent from a
 given output pin will be copied to all the edges attached to that pin. The
 intended operational envelope for POETS assumes that:
 
- - There are a **large** number ($\mathcal{O}$(millions)) of devices, but $<2^{32}$.
- - Their **behaviour** - user-defined C-code - is simple and short.
+ - There are a **large** number ($\mathcal{O}$(millions)) of devices, but
+   $<2^{32}$.
+ - Their **behaviour** - application-writer-defined C-code - is simple and
+   short.
  - Communication between them is brokered by **small** fixed size (64 byte)
    packets.
  - The devices, pins, and packets are strongly typed, and there are a *low*
    number ($<100$) of distinct types.
  - There are $\le32$ pins on a device.
- - There are $<2^{32}$ edges on an individual pin, and $<2^{32}$ edges in total.
+ - There are $<2^{32}$ edges on an individual pin, and $<2^{32}$ edges in
+   total.
 
 ### Temporal Behaviour
 
@@ -122,27 +125,27 @@ implication is that - after some finite time - it will be delivered. If the
 network is unable to accept a packet, this information is pushed back to the
 point that is most capable of reacting sensibly to it.
 
-Between the user-defined handler behaviour and the underlying hardware sits a
-thin layer of software called the Softswitch (described later). The behaviour
-of the Softswitch is defined by the POETS system architects and cannot be
-modified by the user, but is configurable. Relevant here is the default
-behaviour of the Softswitch if it receives pushback from the hardware: it will
-continuously attempt to send the packet (until the hardware accepts it) whilst
-at the same time refusing to accept incoming packets, causing pushback to the
-devices incident upon it. This behaviour will (fairly, we intend) effectively
-throttle the network until it can be drained. Processing behaviour is not
-affected, it just slows down.
+Between the application-writer-defined handler behaviour and the underlying
+hardware sits a thin layer of software called the Softswitch (described
+later). The behaviour of the Softswitch is defined by the POETS system
+architects and cannot be modified by the application writer, but is
+configurable. Relevant here is the default behaviour of the Softswitch if it
+receives pushback from the hardware: it will continuously attempt to send the
+packet (until the hardware accepts it) whilst at the same time refusing to
+accept incoming packets, causing pushback to the devices incident upon it. This
+behaviour will (fairly, we intend) effectively throttle the network until it
+can be drained. Processing behaviour is not affected, it just slows down.
 
 #### Wallclock Time
 
 In general, a handler will be single threaded, although this is not enforced
 (see intended operation envelope above). The handlers are small segments of
 sequential code, which are mapped to arbitrarily separated physical threads by
-the POETS system. Whilst the user can control this mapping (see later section
-on placement), for canonical use cases this mapping is irrelevant. There is no
-notion of synchronised wallclock time built into POETS at a low level, but real
-time can be "injected" into devices by **supervisors**, which are described
-later.
+the POETS system. Whilst the Orchestrator operator can control this mapping
+(see later section on placement), for canonical use cases this mapping is
+irrelevant. There is no notion of synchronised wallclock time built into POETS
+at a low level, but real time can be "injected" into devices by
+**supervisors**, which are described later.
 
 From the above, two points are of relevance to the application designer:
 
@@ -162,8 +165,6 @@ multiple packet types, and optionally one supervisor type (see later). Device
 types have associated input and output pin types. The shielding and scope of
 typenames up to this point is what one would expect in a conventional
 tree-based definition. This entire tree is specified by the application writer.
-
-![Application Type Tree](images/app_concepts/app_concepts_02.pdf)
 
 At this level, all types are identified by simple `name` string. A packet type
 name is associated with each pin type, which defines the data layout of the
@@ -192,33 +193,35 @@ or visibility for the user. Every POETS device is implicitly connected to a
 supervisor device, and it is the supervisor that brokers communication to the
 overseer POETS infrastructure.
 
+![Application Type Tree](images/app_concepts/app_concepts_02.pdf)
+
 To understand this more clearly, we must pre-empt the next section and describe
 a little of the physical embodiment of the application graph. In the abstract,
 the POETS application graph consists of an arbitrary graph, defined by the
-user. This is mapped onto a fixed architecture that supports/implements the
-behaviour defined by the application. This architecture is hierarchical in
-nature, and described in detail in the POETS Platform section, but the relevant
-point is that the mapping is performed automatically, and the user has no
-visibility of the mapping, nor of any partitioning of the application graph
-necessary to support the application graph.
+application-writer. This is mapped onto a fixed architecture that
+supports/implements the behaviour defined by the application. This architecture
+is hierarchical in nature, and described in detail in the POETS Platform
+section, but the relevant point is that the mapping is performed automatically,
+and the user has no visibility of the mapping, nor of any partitioning of the
+application graph necessary to support the application graph.
+
+![Information movement within the system](images/app_concepts/app_concepts_03.pdf)
 
 Figure 3 illustrates these ideas. The application (arbitrary) device graph is
 mapped to an a-priori fixed core/thread graph. Subsets of this graph are
 overseen (connected to) instances of the supervisor, the behaviour of which is
-defined by the user. As with packet transit non-transitivity, this introduces a
-subtlety in the behaviour of the overall system: supervisors have state, but it
-this is not coherent across an application. By way of example, a supervisor
-knows which devices it is responsible for, and may count exfiltrated data
-packets, so that it may take action when every subordinate device has
-reported. This counter will reside in the supervisor state, but in the course
-of execution, the various supervisor instances will have different values of
-this counter at a given wallclock moment.
+defined by the application-writer. As with packet transit non-transitivity,
+this introduces a subtlety in the behaviour of the overall system: supervisors
+have state, but it this is not coherent across an application. By way of
+example, a supervisor knows which devices it is responsible for, and may count
+exfiltrated data packets, so that it may take action when every subordinate
+device has reported. This counter will reside in the supervisor state, but in
+the course of execution, the various supervisor instances will have different
+values of this counter at a given wallclock moment.
 
-There is no reason why the user cannot enforce coherence (via the message
-backplane) if they choose, but that is strictly application-specific behaviour,
-and subject to latency-induced skew from the message backplane.
-
-![Information movement within the system](images/app_concepts/app_concepts_03.pdf)
+There is no reason why the application-writer cannot enforce coherence (via the
+message backplane) if they choose, but that is strictly application-specific
+behaviour, and subject to latency-induced skew from the message backplane.
 
 ### Type Linking
 
@@ -228,18 +231,21 @@ documentation), and the reason for this separation of activity is purely
 pragmatic: useful application graphs will typically be enormous, and will take
 considerable time to load. Type trees, on the other hand, will be small and
 easy to load/unload (see the design envelope in the Idealisation section). The
-use case where explicit manual typelinking is helpful is as follows: the user
-loads a graph (slow) and a type tree (fast), typelinks and performs some
-experiment. The results are not satisfactory/useful. The user can then unlink
-the tree (fast), load an additional tree (fast), re-typelink (fast) and repeat
-the analysis, without having to load/unload the graph (slow).
+use case where explicit manual typelinking is helpful is as follows: the
+Orchestrator operator loads a graph (slow) and a type tree (fast), typelinks
+and performs some experiment. The results are not satisfactory/useful. The
+Orchestrator operator can then unlink the tree (fast), load an additional tree
+(fast), re-typelink (fast) and repeat the analysis, without having to
+load/unload the graph (slow).
 
 ![Typelinking: an application graph linked to a type
 tree](images/app_concepts/app_concepts_04.pdf)
 
-![Orchestrator coarse structure](images/app_concepts/app_concepts_05.pdf)
+![Orchestrator coarse structure. Each grey box is an x86
+machine.](images/app_concepts/app_concepts_05.pdf)
 
-![Hardware model](images/app_concepts/app_concepts_06.pdf)
+![Software (Softswitch and up) running on hardware (tile
+down).](images/app_concepts/app_concepts_06.pdf)
 
 ## The POETS Platform
 
@@ -260,17 +266,17 @@ Figure 6 shows an abstract representation of the compute stack. The
 FPGAs hosting the RISC-V cores and the communication infrastructure, and the
 set of x86 hosts. Each engine contains a set of **P_boards** (compute FPGA
 boards, contained in the **P_boxes**[^hierarchy] of Figure 5). The boards are
-configured as a **fixed** graph. Each board contains a set of mailboxes; each
-mailbox addresses a set of cores; each core is multithreaded, and each thread
-runs one instance of a sequential binary called a **SoftSwitch**. Each
-SoftSwitch hosts multiple (or one) compute devices.
+configured as a **fixed** graph. Each board contains a graph of mailboxes, each
+mailbox addresses a set of cores, each core is multithreaded, and each thread
+runs one instance of a sequential binary called a **Softswitch**. Each
+Softswitch hosts multiple (or just one) compute devices.
 
 [^hierarchy]: A P_box is a historical term for a level in the physical
     hierarchy. It plays no part in the functioning of the system.
 
 ### Serialisation at the Leaf
 
-The SoftSwitch binary is built and cross-compiled by the Orchestrator. It
+The Softswitch binary is built and cross-compiled by the Orchestrator. It
 consists of a skeleton, with placeholders populated with the code fragments
 contained within the application.
 
@@ -284,11 +290,10 @@ compute model by providing an abundance of threads, and in applications where
 the number of devices is less than the number of physical threads, makes a
 pretty good job of it. Two factors combine to disrupt this idealisation:
 
- - The number of physical threads is fixed and finite a priori, and is
-   (usually) never enough.
+ - The number of physical threads is fixed, and small.
 
- - The number of devices is at the behest of the user, and is (usually)
-   ridiculously big anyway.
+ - The number of devices is at the behest of the application-writer, and is
+   usually large.
 
 To reconcile these conflicting trends, the placement system can map multiple
 devices to a single thread - effectively serialising their behaviour. If the
@@ -299,23 +304,23 @@ on the overall behaviour of the system.
 
 Whilst it is possible to both control the placement and thread occupancy of the
 compute elements (see placement system documentation) and monitor the real time
-SoftSwitch behaviour (see SoftSwitch instrumentation documentation), this is a
-subtlety which can require careful handling.
+Softswitch behaviour (see Softswitch instrumentation documentation), this is a
+subtlety which requires careful handling.
 
 ### Fairness
 
-The SoftSwitch is a binary image (program) that runs on each thread. It is
+The Softswitch is a binary image (program) that runs on each thread. It is
 assembled by the Orchestrator from a boiler-plate skeleton and code fragments
-supplied by the user that define the behaviour of the individual devices. The
-main goal is to bridge the gap between the compute model idealisation (devices
-react instantaneously to incoming packets) and reality (every instruction in
-every code fragment takes a finite time to execute). Even in the canonical
-situation where a SoftSwitch holds only one device, the thread has no ability
-to predict when multiple packets may impinge simultaneously (incoming packet
-reactions must be serialised) or what to do about multiple consequent
-broadcasts from the same device.
+supplied by the application-writer that define the behaviour of the individual
+devices. The main goal is to bridge the gap between the compute model
+idealisation (devices react instantaneously to incoming packets) and reality
+(every instruction in every code fragment takes a finite time to execute). Even
+in the canonical situation where a Softswitch holds only one device, the thread
+has no ability to predict when multiple packets may impinge simultaneously
+(incoming packet reactions must be serialised) or what to do about multiple
+consequent broadcasts from the same device.
 
-To address these issues, the primary design goal of the SoftSwitch is
+To address these issues, the primary design goal of the Softswitch is
 fairness. At the highest level, the design targets are to
 
  - Drain the network of packets as fast as possible, to help maximise global
@@ -325,39 +330,40 @@ fairness. At the highest level, the design targets are to
 
 #### Hardware Interface
 
-The SoftSwitch encapsulates the interface between the software and the
+The Softswitch encapsulates the interface between the software and the
 hardware. In the most simple form, the interface consists effectively of four
-function invocations:
+function invocations, each of which interact the hardware[^hostlink]:
 
  - Can I send a packet?
  - Send a packet.
  - Are there any incoming packets for me to read?
  - Read incoming packet.
 
-These are hidden from the user, but ultimately all instructions in the device
-definitions resolve down to these four calls. They are only visible to the
-SoftSwitch, so using them incorrectly (e.g. attempting to send a packet when
-the system has explicitly forbidden it) is not possible.
+[^hostlink]: The interaction of the Softswitch with the Tinsel hardware backend
+    is facilitated by the HostLink.
 
-#### The SoftSwitch
+These are hidden from the application-writer, but ultimately all instructions
+in the device definitions resolve down to these four calls. They are only
+visible to the Softswitch, so using them incorrectly (e.g. attempting to send a
+packet when the system has explicitly forbidden it) is not possible.
 
-The outline functionality of the SoftSwitch is shown in Figure 7. Recall that
-one SoftSwitch - created by the Orchestrator - executes on each hardware
+#### The Softswitch
+
+The outline functionality of the Softswitch is shown in Figure 7. Recall that
+one Softswitch (created by the Orchestrator) executes on each hardware
 thread. It is a blocking spinner, pausing on the bottom (hardware) **wait** in
 the figure. **OnInit** *et al* are composed from code fragments supplied by the
-user. The precise behaviour of the implied switch clause preceding the
+application-writer (see the Application Language section). The precise
+behaviour of the implied switch clause controlling the invocation of the
 **OnRecv**, **OnIdle** and **OnSend** bundles (these are abstract concepts
-here) can be altered by (user accessible - see SoftSwitch documentation)
-Orchestrator switches. Each bundle is effectively a queue in its own right;
-broadly, the user can dictate whether each queue is popped only once with each
-SoftSwitch loop or exhausted. Other control options are also available.
+here) can be altered by Orchestrator switches.
 
 Performance monitors (mainly in the form of loop cycle counters) are available
-at the points I in the figure. Details of their utility and access are in the
-SoftSwitch documentation (Experience has shown that these are extremely useful
+at the points "I" in the figure. Details of their utility and access are in the
+Softswitch documentation (Experience has shown that these are extremely useful
 in performance tuning and debugging.)
 
-![Abstract SoftSwitch model](images/app_concepts/app_concepts_07.pdf)
+![Abstract Softswitch model](images/app_concepts/app_concepts_08.pdf)
 
 ## Event-Driven Compute Meets Reality
 
@@ -389,7 +395,7 @@ Event-based computing is appropriate for problems that can be decomposed into a
 discrete mesh. This often manifests as a spatial discretisation[^dis], though
 any domain that **remains constant with respect to the execution of the
 application** is suitable. This decomposition results in connected "regions" of
-the problem, which can be represented as a graph[^formal]. Figure N shows an
+the problem, which can be represented as a graph[^formal]. Figure 8 shows an
 example of this, where:
 
 ![A graph representation of an application. Computation is performed by
@@ -1830,7 +1836,7 @@ attributes are valid.
 **Graphs/GraphInstance/EdgeInstances/EdgeI** (`:EdgeI:`)
 
 Defines a single edge, as well as the pins connecting either side of that edge
-(see Figure N).
+(see Figure 8).
 
 This element may occur any number of times in each `EdgeInstances`
 section. Valid attributes:
