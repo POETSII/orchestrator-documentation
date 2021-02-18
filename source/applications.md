@@ -348,18 +348,18 @@ on the overall behaviour of the system[^occupancy].
 
 ### The Softswitch, and Fairness
 
-The Softswitch is a binary executable that runs on each thread. Its source is
-programmatically assembled by the Orchestrator from a boiler-plate skeleton,
-and code fragments supplied by the application-writer that define the behaviour
-of the individual devices. It is then compiled by the Orchestrator (manually,
-after the application is loaded, but before it is deployed). **The purpose of
-the Softswitch is to bridge the gap between the compute model idealisation
-(devices react instantaneously to incoming packets) and reality (every
-instruction in every code fragment takes a finite time to execute).** Even in
-the canonical situation where a Softswitch holds only one device, the thread
-has no ability to predict when multiple packets may impinge simultaneously
-(incoming packet reactions must be serialised) or what to do about multiple
-consequent broadcasts from the same device.main goal
+The Softswitch is a **serial** binary executable that runs on each thread. Its
+source is programmatically assembled by the Orchestrator from a boiler-plate
+skeleton, and code fragments supplied by the application-writer that define the
+behaviour of the individual devices. It is then compiled by the Orchestrator
+(manually, after the application is loaded, but before it is deployed). **The
+purpose of the Softswitch is to bridge the gap between the compute model
+idealisation (devices react instantaneously to incoming packets) and reality
+(every instruction in every code fragment takes a finite time to execute).**
+Even in the canonical situation where a Softswitch holds only one device, the
+thread has no ability to predict when multiple packets may impinge
+simultaneously (incoming packet reactions must be serialised) or what to do
+about multiple consequent broadcasts from the same device.main goal
 
 To address these issues, the primary design goal of the Softswitch is
 fairness. At the highest level, the design targets are to:
@@ -392,7 +392,7 @@ and may hold many devices. It is a blocking spinner, pausing on the bottom
 (hardware) **wait** in the figure. **OnInit** *et al* are composed from code
 fragments supplied by the application-writer (see the Application Language
 Section). The precise behaviour of the implied switch clause controlling the
-invocation of the **OnRecv**, **OnIdle** and **OnSend** bundles (these are
+invocation of the **OnRecieve**, **OnIdle** and **OnSend** bundles (these are
 abstract concepts here) can be altered by Orchestrator switches. Performance
 monitors (mainly in the form of loop cycle counters) are available at the
 points "I" in the figure. Details of their utility and access are in the
@@ -413,11 +413,55 @@ these effects:
 ![Abstract Softswitch model. `On*` blocks represent code supplied by the
 application writer. Consuming packets is preferred over sending, in order to
 drain the network as quickly as possible. See the Softswitch documentation for
-a more detailed explanation.](images/app_concepts/app_concepts_08.pdf)
+a more detailed explanation, and for a similar model incorporating more
+possible device behaviours.](images/app_concepts/app_concepts_08.pdf)
 
-## Defining Device and Pin Behaviours
+### Defining Device and Pin Behaviours
 
+Device instances (devices) Input and output pin instances have defined
+behaviour via their type definition, introduced by typelinking. These
+behaviours manifest as code fragments (in POETS/Orchestrator, these are
+C++14). Note these fragments are not translation units or even functions: they
+are "pasted" into the Softswitch source prior to compilation. We use the term
+"invoke" (as opposed to "execute" or "call") to highlight this difference.
 
+This section introduces these behaviours at a high-level, in a shallow,
+Softswitch-sympathetic manner. See the "Expected Semantic Structure" Section
+for a comprehensive, detailed definition of these behaviours, and how they are
+incorporated into application files (also introduced later). See the Softswitch
+documentation for precise definitions on how these behaviours are coupled.
+
+Pin behaviours:
+
+ - `OnRecieve`: Invoked when a packet is received on an input pin.
+
+ - `OnSend`: Invoked just before a when a packet is to be sent on an output
+   pin, but just after a device has decided it "wants" to send a packet.
+
+Device behaviours:
+
+ - `OnInit`: Invoked when the application starts. Note that the Softswitch will
+   execute the `OnInit` behaviour for each device it manages in sequence.
+
+ - `OnStop`: Invoked when the application is stopped by the Orchestrator, or by
+   the Supervisor. Note that the Softswitch will execute the `OnStop` behaviour
+   for each device it manages in sequence.
+
+ - `OnIdle`: Invoked when there is nothing to receive, and nothing to send. The
+   Softswitch will execute the `OnIdle` behaviour for each devices it manages
+   in sequence, until either a packet can be received, or the
+   application-writer-supplied fragment returns non-zero (indicating that the
+   device may "want" to send a packet).
+
+A common point in these behaviours is the notion of a device "wanting" to send
+a packet. This "wanting" behaviour is controlled by another device behaviour,
+represented by the "Do I **want** to send" box in Figure 6:
+
+ - `OnReadyToSend`: Invoked when there are no packets to receive, but after
+   either an `OnRecv` handler or `OnIdle` handler (returning non-zero) has been
+   invoked. This behaviour defines which output pins to send on.
+
+#### Properties and State
 
 # Application Language (XML)
 
