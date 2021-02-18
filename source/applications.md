@@ -399,8 +399,8 @@ points "I" in the figure. Details of their utility and access are in the
 Softswitch documentation (Experience has shown that these are extremely useful
 in performance tuning and debugging.)
 
-Key points - performant applications
-must be robustly written to be immune to these temporal effects:
+Key points - performant applications must be robustly written to account for
+these effects:
 
  - While devices are understood as parallel, independently-executed compute
    units in the abstract, the reality is that **devices are serialised on a
