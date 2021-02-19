@@ -441,7 +441,9 @@ Pin behaviours:
 Device behaviours:
 
  - `OnInit`: Invoked when the application starts. Note that the Softswitch will
-   execute the `OnInit` behaviour for each device it manages in sequence.
+   execute the `OnInit` behaviour for each device it manages in sequence. This
+   behaviour may return a non-zero unsigned value to indicate that the device
+   may "want" to send a packet.
 
  - `OnStop`: Invoked when the application is stopped by the Orchestrator, or by
    the Supervisor. Note that the Softswitch will execute the `OnStop` behaviour
@@ -450,18 +452,54 @@ Device behaviours:
  - `OnIdle`: Invoked when there is nothing to receive, and nothing to send. The
    Softswitch will execute the `OnIdle` behaviour for each devices it manages
    in sequence, until either a packet can be received, or the
-   application-writer-supplied fragment returns non-zero (indicating that the
-   device may "want" to send a packet).
-
-A common point in these behaviours is the notion of a device "wanting" to send
-a packet. This "wanting" behaviour is controlled by another device behaviour,
-represented by the "Do I **want** to send" box in Figure 6:
-
- - `OnReadyToSend`: Invoked when there are no packets to receive, but after
-   either an `OnRecv` handler or `OnIdle` handler (returning non-zero) has been
-   invoked. This behaviour defines which output pins to send on.
+   application-writer-supplied fragment returns a non-zero unsigned value
+   (indicating that the device may "want" to send a packet).
 
 #### Properties and State
+
+As with behaviours, device instances and pin instances may have available "data
+space" accessible from their behaviours, defined by their type
+definition. These data spaces are [^nooutputdata]:
+
+ - **Input Pin Properties**: Data that is constant with respect to the
+   execution of the application, and that is read-accessible by the `OnReceive`
+   behaviour of an input pin.
+
+ - **Input Pin State**: Data that may change while an application is running,
+   at the behest of input pin behaviour. This state can be written to, or read
+   from, the `OnReceive` behaviour of an input pin.
+
+ - **Device Properties**: As with input pin properties, but is read-accessible
+   by all device and input/output pin handlers.
+
+ - **Device State**: As with input pin state, but can be written to, or read
+   from, all device and input/output pin handlers.
+
+ - **Graph Properties**: As with device properties, but are the same across all
+   devices in the application (and is only read-accessible). Exists as a
+   convenience mechanism.
+
+[^nooutputdata]: Note that an output pin has no properties or state associated
+    with it. Output pin behaviours can still read from device properties, and
+    can still read/write device state.
+
+The existence of these data spaces allows handlers of devices to interact, and
+are primarily used to identify whether a handler "wants" one or more packets to
+be sent, as well as the payload of those packets.
+
+#### "Wanting" to send (`ReadyToSend`)
+
+A common point in device and pin behaviours is the notion of a device "wanting"
+to send a packet. This "wanting" behaviour is controlled by an `OnReadyToSend`
+behaviour, represented by the "Do I **want** to send" box in Figure 6. The
+`OnReadyToSend` of a device is invoked when there are no packets to receive,
+but after either an `OnRecv` handler, or `OnIdle` or `OnInit` handler returning
+a non-zero unsigned value has been invoked. This behaviour defines which output
+pins to send on, as a function of device properties and state. Note that,
+unlike all other pin and device behaviours, **this behaviour cannot modify
+state data**, though this behaviour can read from it.
+
+### Defining Supervisor Behaviours
 
 # Application Language (XML)
 
