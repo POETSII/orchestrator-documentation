@@ -615,8 +615,9 @@ Mothership, as well as external devices elsewhere. They are:
 
     - `int (*init)()`: Called when the application is started.
 
-    - `int (*call)(PMsg_p, PMsg_p)`: The entry point for all incoming
-      supervisor packets while the application is running.
+    - `int (*call)(std::vector<P_Pkt_t>&, std::vector<P_Addr_Pkt_t>&)`: The
+      entry point for all incoming supervisor packets while the application is
+      running.
 
     - `SupervisorApi* (*getApi)()`: Used to provision the Supervisor API (see
       below).
