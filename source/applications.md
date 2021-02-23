@@ -776,8 +776,12 @@ Included to maintain a consistent structure for pins - only contains an
 implicit Supervisor input pins do not need to be connected in the edge instance
 section of the XML, and do not have properties or state associated with them.
 
-This element must occur at most once in each `:DeviceType:` section. No
-attributes are valid.
+This element must occur at most once in each `:DeviceType:` section. Valid
+attributes:
+
+ - `messageTypeId` (must occur exactly once): Defines the type of message to be
+   received by this pin. Must match with the `id` attribute of a message type
+   defined in the `MessageTypes` section.
 
 **Graphs/GraphType/DeviceTypes/DeviceType/SupervisorInPin/OnReceive**
 
@@ -985,7 +989,7 @@ value. Valid attributes:
    all implicit connections.
 
  - `messageTypeId` (must occur exactly once): Defines the type of message to be
-   sent by this pin. Must match with the `id` attribute of a message type
+   received by this pin. Must match with the `id` attribute of a message type
    defined in the `MessageTypes` section.
 
 **Graphs/GraphType/DeviceTypes/SupervisorType/SupervisorInPin/OnReceive**
