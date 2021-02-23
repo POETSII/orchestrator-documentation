@@ -91,33 +91,32 @@ shows an example of this, where:
  - The major set of nodes (hollow black circles) represent "Devices", which
    each capture the behaviour of a node in the discretised problem. A device
    could represent a vertex in the finite-difference mesh, an element in a
-   finite-element discretisation, or even a collection of vertices or
-   elements.
+   finite-element discretisation, or even a collection of vertices or elements.
 
  - The set of edges (black arrows) capture a "communication mode" between two
    devices. Devices communicate between themselves, using application-defined
    behaviour, by sending **packets** along these edges.
 
- - The minor set of nodes (hollow red circles and filled red circles)
-   represent "Pins". Input pins alter the behaviour of messages sent along the
-   edges associated with them, which is useful to assign "weights" to
-   communications along an edge. Each edge is associated with one input pin and
-   one output pin. Each input/output pin can have multiple input/output edges
-   connected to/from it.
+ - The minor set of nodes (hollow red circles and filled red circles) represent
+   "Pins". Input pins alter the behaviour of messages sent along the edges
+   associated with them, which is useful to assign "weights" to communications
+   along an edge. Each edge is associated with one input pin and one output
+   pin. Each input/output pin can have multiple input/output edges connected
+   to/from it.
 
 ![Typed graph components. A graph representation of an application. Computation
 is performed by "Normal Devices", and communication is facilitated by "Pins"
 and "Edges".](images/app_concepts/app_concepts_01.pdf)
 
-When a packet arrives at an input pin, a **handler** is invoked. This has
+When a packet arrives at an input pin, a **behaviour** is invoked. This has
 visibility of:
 
  - The packet content.
  - The state of the input pin.
  - The state of the device that owns the pin.
 
-The behaviour of the handler is defined as part of the application, by the
-application writer. It may (or may not):
+These behaviours are defined as part of the application, by the application
+writer. It may (or may not):
 
  - Alter the state of the device/pins.
  - Cause output pin(s) on the device to emit packets of their own.
@@ -128,8 +127,7 @@ operational envelope for POETS assumes that:
 
  - There are a **large** number ($\mathcal{O}$(millions)) of devices, but
    $<2^{32}$.
- - Their **behaviour** - application-writer-defined C++ code - is simple and
-   short.
+ - Their **logic** - application-writer-defined C++ code - is simple and short.
  - Communication between them is brokered by **small** fixed size (64 byte)
    packets.
  - The devices, pins, and packets are strongly typed, and there are a *low*
@@ -138,10 +136,10 @@ operational envelope for POETS assumes that:
  - There are $<2^{32}$ edges on an individual pin, and $<2^{32}$ edges in
    total.
 
-### Temporal Behaviour
+### Temporal Idiosynchrases
 
 Building on the abstraction described in the previous Section, here we allow
-physical limitations to impact on the behaviour.
+physical limitations to impact on the progress of the application.
 
 #### Network Congestion and Pushback
 
@@ -157,26 +155,26 @@ implication is that - after some finite time - it will be delivered. If the
 network is unable to accept a packet, this information is pushed back to the
 point that is most capable of reacting sensibly to it.
 
-Between the application-writer-defined handler behaviour and the underlying
-hardware sits a thin layer of software called the Softswitch (described
-later). The behaviour of the Softswitch is defined by the POETS system
-architects and cannot be modified by the application writer, but is
-configurable. Relevant here is the default behaviour of the Softswitch if it
-receives pushback from the hardware: it will continuously attempt to send the
-packet (until the hardware accepts it) whilst at the same time refusing to
-accept incoming packets, causing pushback to the devices incident upon it. This
-behaviour will (fairly, we intend) effectively throttle the network until it
-can be drained. Processing behaviour is not affected, it just slows down.
+Between the application-writer-defined behaviours and the underlying hardware
+sits a thin layer of software called the Softswitch (described later). The
+operation of the Softswitch is defined by the POETS system architects and
+cannot be modified by the application writer, but is configurable. Relevant
+here is the default operation of the Softswitch if it receives pushback from
+the hardware: it will continuously attempt to send the packet (until the
+hardware accepts it) whilst at the same time refusing to accept incoming
+packets, causing pushback to the devices incident upon it. This behaviour will
+(fairly, we intend) effectively throttle the network until it can be
+drained. Processing behaviour is not affected, it just slows down.
 
 #### Wallclock Time
 
-In general, a handler will be single threaded, although this is not enforced
-(see intended operation envelope above). The handlers are small segments of
-sequential code, which are mapped to arbitrarily separated physical threads by
-the POETS system. Whilst the Orchestrator operator can control this mapping,
-for canonical use cases this mapping is irrelevant. There is no notion of
-synchronised wallclock time built into POETS at a low level, but real time can
-be "injected" into devices by **supervisors**, which are described later.
+In general, a device's behaviour will be single threaded, although this is not
+enforced (see intended operation envelope above). These behaviours are small
+segments of sequential code, which are mapped to arbitrarily separated physical
+threads by the POETS system. Whilst the Orchestrator operator can control this
+mapping, for canonical use cases this mapping is irrelevant. There is no notion
+of synchronised wallclock time built into POETS at a low level, but real time
+can be "injected" into devices by **supervisors**, which are described later.
 
 From the above, two points are of relevance to the application designer:
 
@@ -204,9 +202,9 @@ requires that the type of the packet associated with the pins on each end of an
 edge are the same.**
 
 Each component type may have **data areas** (including the aforementioned
-device and pin states) and a portfolio of **handlers** associated with it: these
-are fragments of C++14, which will later be assembled and compiled into an
-executable Softswitch by POETS[^gpu].
+device and pin states) and a portfolio of **behaviours** associated with it:
+these are fragments of C++14, which will later be assembled and compiled into
+an executable Softswitch by POETS[^gpu].
 
 [^gpu]: There is a strong - but entirely coincidental - similarity between the
     definition dataflow here and that employed in programming GPUs.
@@ -261,7 +259,7 @@ Figure 4 illustrates this idea. The application (arbitrary) device graph is
 mapped to an a-priori fixed hardware graph. Subsets of this graph are overseen
 by (connected to) separate instances of the supervisor, the behaviour of which
 is defined by the application-writer. As with packet transit non-transitivity,
-this introduces a subtlety in the behaviour of the overall system: supervisors
+this introduces a subtlety in the operation of the overall system: supervisors
 have local state which is not coherent across an application. A supervisor
 knows which devices it is responsible for, and may count exfiltrated data
 packets, so that it may take action when every subordinate device has
@@ -335,15 +333,15 @@ pretty good job of it. Two factors combine to disrupt this idealisation:
    usually large.
 
 To reconcile these conflicting trends, the placement system can map multiple
-devices to a single thread - effectively serialising their behaviour. If the
+devices to a single thread - effectively serialising their execution. If the
 reality has the device execution windows not overlapping, this will have
-minimal effect on the overall behaviour of the system. If the reality has the
+minimal effect on the overall operation of the system. If the reality has the
 devices executing in parallel, this enforced serialisation may have an effect
-on the overall behaviour of the system[^occupancy].
+on the overall operation of the system[^occupancy].
 
 [^occupancy]: Whilst it is possible to both control the placement and thread
     occupancy of the compute elements (see the Placement documentation) and
-    monitor the real time Softswitch behaviour (see the Softswitch
+    monitor Softswitch operation in real time (see the Softswitch
     documentation), this is a subtlety which requires careful handling.
 
 ### The Softswitch, and Fairness
@@ -391,7 +389,7 @@ one Softswitch (created by the Orchestrator) executes on each hardware thread,
 and may hold many devices. It is a blocking spinner, pausing on the bottom
 (hardware) **wait** in the figure. **OnInit** *et al* are composed from code
 fragments supplied by the application-writer (see the Application Language
-Section). The precise behaviour of the implied switch clause controlling the
+Section). The precise sequencing of the implied switch clause controlling the
 invocation of the **OnRecieve**, **OnIdle** and **OnSend** bundles (these are
 abstract concepts here) can be altered by Orchestrator switches. Performance
 monitors (mainly in the form of loop cycle counters) are available at the
@@ -420,7 +418,7 @@ possible device behaviours.](images/app_concepts/app_concepts_08.pdf)
 
 Device instances (devices) Input and output pin instances have defined
 behaviour via their type definition, introduced by typelinking. These
-behaviours manifest as code fragments (in POETS/Orchestrator, these are
+**behaviours** manifest as code fragments (in POETS/Orchestrator, these are
 C++14). Note these fragments are not translation units or even functions: they
 are "pasted" into the Softswitch source prior to compilation. We use the term
 "invoke" (as opposed to "execute" or "call") to highlight this difference.
@@ -470,10 +468,10 @@ definition. These data spaces are [^nooutputdata]:
    from, the `OnReceive` behaviour of an input pin.
 
  - **Device Properties**: As with input pin properties, but is read-accessible
-   by all device and input/output pin handlers.
+   by all device and input/output pin behaviours.
 
  - **Device State**: As with input pin state, but can be written to, or read
-   from, all device and input/output pin handlers.
+   from, all device and input/output pin behaviours.
 
  - **Graph Properties**: As with device properties, but are the same across all
    devices in the application (and is only read-accessible). Exists as a
@@ -483,21 +481,21 @@ definition. These data spaces are [^nooutputdata]:
     with it. Output pin behaviours can still read from device properties, and
     can still read/write device state.
 
-The existence of these data spaces allows handlers of devices to interact, and
-are primarily used to identify whether a handler "wants" one or more packets to
+The existence of these data spaces allows behaviours of devices to interact, and
+are primarily used to identify whether a behaviour "wants" one or more packets to
 be sent, as well as the payload of those packets.
 
-#### "Wanting" to send (`ReadyToSend`)
+#### "Wanting" to send (`:ReadyToSend:`)
 
 A common point in device and pin behaviours is the notion of a device "wanting"
 to send a packet. This "wanting" behaviour is controlled by an `OnReadyToSend`
 behaviour, represented by the "Do I **want** to send" box in Figure 6. The
 `OnReadyToSend` of a device is invoked when there are no packets to receive,
-but after either an `OnRecv` handler, or `OnIdle` or `OnInit` handler returning
+but after either an `OnRecv` behaviour, or `OnIdle` or `OnInit` behaviour returning
 a non-zero unsigned value has been invoked. This behaviour defines which output
 pins to send on, as a function of device properties and state. Note that,
 unlike all other pin and device behaviours, **this behaviour cannot modify
-state data**, though this behaviour can read from it.
+state data**, though it can read from state data.
 
 ### Defining Supervisor Behaviours
 
@@ -700,7 +698,7 @@ attributes are valid.
 **Graphs/GraphType/SharedCode** (`:GraphType-SharedCode:`)
 
 Contains code common to all devices in an application. Useful for defining
-constants and free functions for use in handler `CDATA` sections.
+constants and free functions for use in behaviour `CDATA` sections.
 
 This element must occur at most once in each `:GraphType:` section. No
 attributes are valid.
@@ -765,7 +763,7 @@ attributes are valid.
 **Graphs/GraphType/DeviceTypes/DeviceType/SharedCode**
 
 Contains code common to all normal devices in an application. Useful for
-defining constants and free functions for use in handler `CDATA` sections.
+defining constants and free functions for use in behaviour `CDATA` sections.
 
 This element must occur at most once in each `:DeviceType:` section. No
 attributes are valid.
@@ -774,7 +772,9 @@ attributes are valid.
 SupervisorInPin:`)
 
 Included to maintain a consistent structure for pins - only contains an
-`OnSend` element and nothing else.
+`OnReceive` element and nothing else. Note that unlike traditional input pins,
+implicit Supervisor input pins do not need to be connected in the edge instance
+section of the XML, and do not have properties or state associated with them.
 
 This element must occur at most once in each `:DeviceType:` section. No
 attributes are valid.
@@ -791,7 +791,9 @@ attributed are valid.
 SupervisorOutPin:`)
 
 Included to maintain a consistent structure for pins - only contains an
-`OnReceive` element and nothing else.
+`OnSend` element and nothing else. Note that unlike traditional output pins,
+implicit Supervisor output pins do not need to be connected in the edge instance
+section of the XML.
 
 This element must occur at most once in each `:DeviceType:` section. Valid
 attributes:
@@ -884,13 +886,13 @@ state of the device cannot be modified in this block. Execution of this block
 is dependent on the softswitch used, though the default softswitch executes
 this block:
 
- - After a message has been received and handled by the handler code in
+ - After a message has been received and handled by the behaviour code in
    `InputPin/OnReceive` or `SupervisorInPin/OnReceive`.
 
- - After the handler code in `OnDeviceIdle` executes and returns a non-zero
+ - After the behaviour code in `OnDeviceIdle` executes and returns a non-zero
    unsigned value.
 
- - After the handler code in `OnInit` executes and returns a non-zero unsigned
+ - After the behaviour code in `OnInit` executes and returns a non-zero unsigned
    value.
 
 This element must occur at most once in each `:DeviceType:` section. No
@@ -961,9 +963,9 @@ attributes are valid.
 
 **Graphs/GraphType/DeviceTypes/SupervisorType/Code**
 
-Contains code common to all handler code for supervisor devices in an
+Contains code common to all behaviour code for supervisor devices in an
 application. Useful for defining constants and free functions for use in
-handler `CDATA` sections.
+behaviour `CDATA` sections.
 
 This element must occur at most once in each `:SupervisorType:` section. No
 attributes are valid.
@@ -1046,7 +1048,7 @@ attributes are valid.
 (`:SupervisorType - OnStop:`)
 
 Contains code that is executed by the supervisor device when the application is
-stopped by the operator (root). Note that this handler is not executed in the
+stopped by the operator (root). Note that this behaviour is not executed in the
 event of an application crash or an "unrecoverable" Orchestrator state.
 
 This element must occur at most once in each `:SupervisorType:` section. No
@@ -1173,7 +1175,7 @@ that are not introduced in this documentation.
 ### Reserved Names
 
 To avoid conflicts with the Softswitch and underlying hardware, user-supplied
-handlers and code must not define or use any variable names or preprocessor
+behaviours and code must not define or use any variable names or preprocessor
 defines that begin with:
 
  - `P_`
@@ -1215,8 +1217,7 @@ uint32_t numberOfOctopodes;
 const char* lemon = "fruit";
 ~~~
 
-Then a handler could read/write state in one of its handlers
-(e.g. `DeviceType/OnInit`):
+Then a behaviour could read/write state: (e.g. `DeviceType/OnInit`):
 
 ~~~ {.c}
 if (DEVICESTATE(lemon) == "fruit")  // Reading
@@ -1368,21 +1369,23 @@ calls for convenience operations:
 # Example: Ring Test
 
 This Section presents an example application, which is arrived at from a
-high-level description of the intended behaviour. This is not intended to be as
-detailed as the comprehensive description presented in the "Application Files"
-Section, but should be sufficient to educate the reader in writing simple
-applications. A listing of the complete application, with additional comments,
-is presented at the end of this section. For further information about elements
-presented in this example, consult the "Application Files" Section. We
-recommend the reader to follow along in their favourite text editor as concepts
-are introduced, to see how components of the XML file connect together.
+high-level description of the desired behaviour. This example guides potential
+application-writers in formulating simple applications. A listing of the
+complete application, with additional comments, is presented at the end of this
+section. We recommend the reader to follow along in their favourite text editor
+as concepts are introduced, to see how components of the XML file connect
+together. We also recommend that, as new XML sections are introduced, the
+reader follows along from the reference in the "Application Language" Section
+(the tagging system introduced in that Section is used here).  Further
+examples, demonstrating both simpler and more complicated examples, are
+available at <https://github.com/POETSII/Orchestrator_examples>.
 
 The desired application, "Ring Test", is similar to the ring oscillator device
 in electrical engineering, in which "NOT" gates are connected in a ring to
 oscillate the voltage state of a circuit. In the ring test, a message is to be
 passed around a ring of devices multiple times. Each time the message is
 received at a destination, the receiver informs the supervisor of the progress
-of the message. After ten (=$N$) "laps" of the ring, the message is dropped and
+of the message. After $N=10$) "laps" of the ring, the message is dropped and
 the application is complete. When the supervisor is informed that the message
 has completed $N$ laps, it writes a success value (1) to a file. If the
 supervisor sees that the message has looped too many times, it writes a failure
@@ -1390,7 +1393,7 @@ value (0) to a file.
 
 ## Towards a Normal Device Type
 
-To begin, we define the skeletal structure of the XML:
+We begin from a skeletal structure:
 
 ~~~ {.xml}
 <?xml version="1.0"?>
@@ -1403,12 +1406,14 @@ To begin, we define the skeletal structure of the XML:
 ~~~
 
 Here, no `xmlns` is used, and the application name is defined as
-`ring_test`. An empty graph type is created, and an empty graph instance is
-connected to that type - these will both be populated as we progress through
-this example.
+`ring_test`. An empty graph type (`:GraphType:`) is created, and an empty graph
+instance (`:GraphInstance`) is connected to that type via the `graphTypeId`
+attribute. Both the graph type and graph instance sections will be populated as
+we progress through this example.
 
 Within the `GraphType`, we can define the behaviour for the members of the
-ring - the type of devices that are going to propagate data around the ring.
+ring, which manifest as devices. These devices are going to propagate data
+around the ring.
 
 ~~~ {.xml}
 ...
@@ -1421,9 +1426,9 @@ ring - the type of devices that are going to propagate data around the ring.
 ...
 ~~~
 
-It is convenient at this point to define an identifier for the ring members -
-one of them is going to have to start the application by sending a message
-later, and it will be relevant for supervisor communications:
+It is convenient at this point to define an identifier property `id` for the
+ring members - one of them is going to have to start the application by sending
+a message later, and it will be relevant for supervisor communications:
 
 ~~~ {.xml}
 ...
@@ -1436,13 +1441,15 @@ uint8_t id;
 ...
 ~~~
 
-This declares a property of all ring elements, which should be defined when the
-ring is instantiated later. Note that this property is defined in a `:CDATA:`
-section, written in C++14. This property will be readable by other code
-sections (for ring elements) via `deviceProperties->id`.
+Fields defined in the Properties element of a device type
+(`:DeviceType-Properties:`) are read-accessible to devices of that type. This
+declares a property of all ring elements, which we will define when the ring is
+instantiated later. Note that this property is defined in a `:CDATA:` section,
+written in C++14. This property will be readable by other code sections (for
+ring elements) via the `DEVICEPROPERTIES(id)` macro.
 
 With a way to identify devices in code, we can define startup logic. We make
-device zero be the first to send a message:
+device "zero" be the first to send a message:
 
 ~~~ {.xml}
 ...
@@ -1451,33 +1458,34 @@ device zero be the first to send a message:
 /* An identifier for this device, useful for supervisor communications. */
 uint8_t id;
       ]]></Properties>
+      <OnInit><![CDATA[
+/* Device zero starts things off by telling the ReadyToSend behaviour to send a
+ * message. No other device does this. */
+if (DEVICEPROPERTIES(id) == 0) DEVICESTATE(sendMessage) = 1;
+
+/* A return of one invokes ReadyToSend (in the default softswitch), whereas a
+ * return of zero does not. */
+return DEVICESTATE(sendMessage);
+      ]]></OnInit>
       <State><![CDATA[
 /* When a message is received, this field is populated either with one (true)
 * or zero (false). */
 uint8_t sendMessage = 0;
       ]]></State>
-      <OnInit><![CDATA[
-/* Device zero starts things off by telling the ReadyToSend handler to send a
- * message. No other device does this. */
-if (deviceProperties->id == 0) deviceState->sendMessage = 1;
-
-/* A return of one invokes ReadyToSend (in the default softswitch), whereas a
- * return of zero does not. */
-return deviceState->sendMessage;
-      ]]></OnInit>
     </DeviceType>
 ...
 ~~~
 
-A state field `sendMessage` is introduced, with an initial value of zero. This
-field will be read by another handler later (`ReadyToSend`), to determine
-whether a message is to be sent or not. The code in the `:OnInit:` handler is
-run by each device when the application starts. This handler sets the
-`sendMessage` field in the state to one (so that a message will be sent
-later). The `:OnInit:` handler also returns one on device zero, causing the
-`ReadyToSend` handler to be invoked.
+A state field `sendMessage` is introduced in the `:DeviceType-State:` section,
+with an initial value of zero. State fields are like property fields, but are
+read-write accessible. This field will be read by another behaviour later
+(`ReadyToSend`), to determine whether a message is to be sent (1) or not
+(0). The code in the `:OnInit:` behaviour is run by each device when the
+application starts. This behaviour sets the `sendMessage` field in the state to
+one (so that a message will be sent later). The `:OnInit:` behaviour also returns
+one on device zero, causing the `ReadyToSend` behaviour to be invoked.
 
-The `ReadyToSend` handler is responsible for determining whether messages
+The `ReadyToSend` behaviour is responsible for determining whether messages
 should be sent, and which output pins should be used to send that message. To
 do this, it reads the state of the device, as follows:
 
@@ -1492,17 +1500,18 @@ uint8_t sendMessage = 0;
       ]]></State>
       ...
       <ReadyToSend><![CDATA[
-if (deviceState->sendMessage == 1) *readyToSend |= RTS_FLAG_sender;
+if (DEVICESTATE(sendMessage) == 1) RTS(sender);
       ]]></ReadyToSend>
     </DeviceType>
 ...
 ~~~
 
-The `ReadyToSend` handler here checks whether another handler "wants a message
-to be sent". If so, it sets a flag (`RTS_FLAG_sender`) in the `readyToSend`
-structure. This flag is checked after the `ReadyToSend` handler is invoked, and
-causes a message to be sent. In order to send a message in this way, an output
-pin with the name "`sender`" must be defined for this type, as follows:
+The `ReadyToSend` behaviour here checks whether another behaviour "wants a
+message to be sent" (see the "Wanting to send" Section). If so, it sets a flag
+using the `RTS` macro. This flag is checked after the `ReadyToSend` behaviour
+is invoked, and causes a message to be sent on the "`sender`" output pin. In
+order to send a message in this way, an output pin with the name "`sender`"
+must be defined for this type, as follows:
 
 ~~~ {.xml}
 ...
@@ -1519,29 +1528,29 @@ uint8_t sendMessage = 0;
       <OutputPin name="sender" messageTypeId="ring_propagate">
         <OnSend><![CDATA[
 /* Define the fields in the message. */
-message->lap = deviceState->lap;
+MSG(lap) = DEVICESTATE(lap);
 
 /* Since we're sending a message, reset this field so that we don't send
  * another one. */
-deviceState->sendMessage = 0;
+DEVICESTATE(sendMessage) = 0;
         ]]></OnSend>
       </OutputPin>
       ...
       <ReadyToSend><![CDATA[
-if (deviceState->sendMessage == 1) *readyToSend |= RTS_FLAG_sender;
+if (DEVICESTATE(sendMessage) == 1) RTS(sender);
       ]]></ReadyToSend>
     </DeviceType>
 ...
 ~~~
 
 Note that the `name` attribute on the output pin is "`sender`", which
-corresponds to the suffix of the flag "`RTS_FLAG_sender`" used in the
-`ReadyToSend` element. This is essential to ensure that the correct pin is
-selected to send the message. Output pins define an `OnSend` handler - in this
-case, the handler clears the `sendMessage` state set by `OnInit` (or another
-handler, later on). It also defines the `lap` field in the payload of the
-outgoing message from the state - to facilitate this, the state of ring element
-devices is expanded to include a `lap` field.
+corresponds to the argument to the "`RTS(sender)`" macro, called in the
+`ReadyToSend` beheaviour. This is essential to ensure that the correct pin is
+selected to send the message. Output pins define an `OnSend` behaviour - in
+this case, the behaviour clears the `sendMessage` state set by `OnInit` (or
+another behaviour, later on). It also defines the `lap` field in the payload of
+the outgoing message from the state - to facilitate this, the state of ring
+element devices is expanded to include a `lap` field.
 
 Like pins and devices, all messages must have a defined type. The element
 introducing the "`sender`" output pin also has attribute `messageTypeId` with
@@ -1568,7 +1577,7 @@ uint8_t lap;
 Again, a `:CDATA:` section is introduced to hold the field for the payload.
 
 To complete the device definition, we require an input pin to receive
-communications from output pins:
+communications from the `"sender"` output pins of other devices:
 
 ~~~ {.xml}
 ...
@@ -1577,12 +1586,12 @@ communications from output pins:
         <OnReceive><![CDATA[
 /* Only device zero increments the lap counter. Remember - this field in the
  * state is later propagated into the message. */
-deviceState->lap = message->lap;
-if (deviceProperties->id == 0) deviceState->lap += 1;
+DEVICESTATE(lap) = MSG(lap);
+if (DEVICEPROPERTIES(id) == 0) DEVICESTATE(lap) += 1;
 
 /* Don't send a message if the incoming message has completed its tenth lap. */
-if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
-else deviceState->sendMessage = 0;
+if (DEVICESTATE(lap) <= GRAPHPROPERTIES(maxLaps)) DEVICESTATE(sendMessage) = 1;
+else DEVICESTATE(sendMessage) = 0;
         ]]></OnReceive>
       </InputPin>
       ...
@@ -1593,17 +1602,18 @@ else deviceState->sendMessage = 0;
 When a `"ring_propagate"` message is received on this input pin, the `"lap"`
 state of the device is updated with the contents of the message. Only device
 zero is permitted to increment the lap (as it is the origin point of the
-message). Like the `OnInit` handler, this `OnReceive` handler sets the
-`"sendMessage"` state of the device for the `ReadyToSend` handler (which is
+message). Like the `OnInit` behaviour, this `OnReceive` behaviour sets the
+`"sendMessage"` state of the device for the `ReadyToSend` behaviour (which is
 called after `OnReceive`).
 
 Note that the output pin name "`sender`" and the input pin name "`receiver`"
 are not special - as long as their names are used consistently throughout the
 XML where they are required.
 
-Lastly, this handler requires the definition of a global `maxLaps` property,
-which determines when the application should stop. This is defined on the graph
-level, and will be accessible by all code fragments in the application:
+Lastly, this behaviour requires the definition of a "global" `maxLaps`
+property, which determines when the application should stop. This is defined on
+the graph level, and will be accessible by all code fragments in the
+application:
 
 ~~~ {.xml}
 <?xml version="1.0"?>
@@ -1653,35 +1663,35 @@ uint8_t sendMessage = 0;
           <OnReceive><![CDATA[
 /* Only device zero increments the lap counter. Remember - this field in the
  * state is later propagated into the message. */
-deviceState->lap = message->lap;
-if (deviceProperties->id == 0) deviceState->lap += 1;
+DEVICESTATE(lap) = MSG(lap);
+if (DEVICEPROPERTIES(id) == 0) DEVICESTATE(lap) += 1;
 
 /* Don't send a message if the incoming message has completed its tenth lap. */
-if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
-else deviceState->sendMessage = 0;
+if (DEVICESTATE(lap) <= GRAPHPROPERTIES(maxLaps)) DEVICESTATE(sendMessage) = 1;
+else DEVICESTATE(sendMessage) = 0;
           ]]></OnReceive>
         </InputPin>
         <OutputPin name="sender" messageTypeId="ring_propagate">
           <OnSend><![CDATA[
 /* Define the fields in the message. */
-message->lap = deviceState->lap;
+MSG(lap) = DEVICESTATE(lap);
 
 /* Since we're sending a message, reset this field so that we don't send
  * another one. */
-deviceState->sendMessage = 0;
+DEVICESTATE(sendMessage) = 0;
           ]]></OnSend>
         </OutputPin>
         <ReadyToSend><![CDATA[
-if (deviceState->sendMessage == 1) *readyToSend |= RTS_FLAG_sender;
+if (DEVICESTATE(sendMessage) == 1) RTS(sender);
         ]]></ReadyToSend>
         <OnInit><![CDATA[
-/* Device zero starts things off by telling the ReadyToSend handler to send a
+/* Device zero starts things off by telling the ReadyToSend behaviour to send a
  * message. No other device does this. */
-if (deviceProperties->id == 0) deviceState->sendMessage = 1;
+if (DEVICEPROPERTIES(id) == 0) DEVICESTATE(sendMessage) = 1;
 
 /* A return of one invokes ReadyToSend (in the default softswitch), whereas a
  * return of zero does not. */
-return deviceState->sendMessage;
+return DEVICESTATE(sendMessage);
         ]]></OnInit>
       </DeviceType>
     </DeviceTypes>
@@ -1699,8 +1709,8 @@ in the ring.
 
 The application brief requires a file to be written, whose contents depend on
 the behaviour of the system. A supervisor device is well-positioned to do this,
-as it runs on the host machine, and can communicate with the other normal
-devices in the application.
+as it can interact with the filesystem on the host machine, and can communicate
+with the other normal devices in the application.
 
 Starting from the output of the previous Section, we introduce a supervisor
 device type alongside the ring element normal device type:
@@ -1709,8 +1719,15 @@ device type alongside the ring element normal device type:
 <?xml version="1.0"?>
 <Graphs xmlns="" appname="ring_test">
   <GraphType id="ring_test_type">
+    <Properties>
+    ...
+    </Properties>
+    <MessageTypes>
+    ...
+    </MessageTypes>
     <DeviceTypes>
       <DeviceType id="ring_element">
+      ...
       </DeviceType>
       <SupervisorType id="" SupervisorInPin="tracker">
       </SupervisorType>
@@ -1753,62 +1770,62 @@ bool finished = false;
 FILE* resultFile;
         ]]></State>
         <OnInit><![CDATA[
-supervisorState->messagesPerDevice = \
-    std::vector<uint8_t>(graphProperties->numDevices, 0);
-supervisorState->resultFile = fopen("ring_test_output", "w");
+SUPSTATE(messagesPerDevice) = \
+    std::vector<uint8_t>(GRAPHPROPERTIES(numDevices), 0);
+SUPSTATE(resultFile) = fopen("ring_test_output", "w");
         ]]></OnInit>
         <SupervisorInPin id="tracker" messageTypeId="exfiltration">
           <OnReceive><![CDATA[
 /* If the application has failed, don't act on any more messages. */
-if (!supervisorState->failed)
+if (!SUPSTATE(failed))
 {
     /* Failure condition: once we've finished, we fail if we receive any more
      * messages. Also, fail if we receive a message that has done too many
      * laps. Note that this does not fail if the messages are received out of
      * order - POETS guarantees delivery, not ordering. */
-    if (message->lap > graphProperties->maxLaps or supervisorState->finished)
+    if (MSG(lap) > GRAPHPROPERTIES(maxLaps) or SUPSTATE(finished))
     {
-        supervisorState->failed = true;
-        fprintf(supervisorState->resultFile, "0");
+        SUPSTATE(failed) = true;
+        fprintf(SUPSTATE(resultFile), "0");
     }
 
     /* If we've not failed, track the message, and check the finishing
      * condition. */
     else
     {
-        supervisorState->messagesPerDevice.at(message->sourceId) += 1;
+        SUPSTATE(messagesPerDevice).at(MSG(sourceId)) += 1;
 
         /* Check the finishing condition. */
-        supervisorState->finished = true;
+        SUPSTATE(finished) = true;
         for (std::vector<uint8_t>::size_type index = 0;
-             index < graphProperties->numDevices; index++)
+             index < GRAPHPROPERTIES(numDevices); index++)
         {
-            if (supervisorState->messagesPerDevice.at(index) !=
-                graphProperties->maxLaps + 1)
+            if (SUPSTATE(messagesPerDevice).at(index) !=
+                GRAPHPROPERTIES(maxLaps) + 1)
             {
-                supervisorState->finished = false;
+                SUPSTATE(finished) = false;
                 break;
             }
         }
 
         /* Check the finish condition. */
-        if (supervisorState->finished)
+        if (SUPSTATE(finished))
         {
-            fprintf(supervisorState->resultFile, "1");
+            fprintf(SUPSTATE(resultFile), "1");
         }
     }
 }
           ]]></OnReceive>
         </SupervisorInPin>
         <OnStop><![CDATA[
-fclose(supervisorState->resultFile);
+fclose(SUPSTATE(resultFile));
         ]]></OnStop>
       </SupervisorType>
 ...
 ~~~
 
 The `Code` section holds free code (includes, in this case) accessible to
-supervisor handlers. Here, the `stdio` library from C is included, along with
+supervisor behaviours. Here, the `stdio` library from C is included, along with
 the `vector` header from the Standard Template Library in C++. The `State`
 section is analogous to the state of normal devices. Here two booleans
 (`failed` and `finished`) are declared with a default value, an output file
@@ -1821,7 +1838,7 @@ is commanded to stop by the operator (see Orchestrator Documentation Volume
 IV).
 
 The `SupervisorInPin` section introduces an input pin type named "`tracker`",
-which consumes a new type of "`exfiltration`" messages. The source in the
+which consumes a (new type of) "`exfiltration`" messages. The source in the
 `OnReceive` element, analogous to `OnReceive` elements for normal devices,
 encapsulates the logic the supervisor needs to execute when it receives a
 message.
@@ -1856,7 +1873,7 @@ changes are necessary:
 uint8_t sourceId;
 uint8_t lap;
       ]]></MessageType>
-      <MessageType id="only"><![CDATA[
+      <MessageType id="ring_propagate"><![CDATA[
 uint8_t lap;
       ]]></MessageType>
     </MessageTypes>
@@ -1866,22 +1883,22 @@ uint8_t lap;
         <SupervisorOutPin messageTypeId="exfiltration">
           <OnSend><![CDATA[
 /* Define the fields in the message. */
-message->sourceId = deviceProperties->id;
-message->lap = deviceState->lap;
+MSG(sourceId) = DEVICEPROPERTIES(id);
+MSG(lap) = DEVICESTATE(lap);
 
 /* Since we're sending a message, reset this field so that we don't send
  * another one. */
-deviceState->sendMessage = 0;
+DEVICESTATE(sendMessage) = 0;
           ]]></OnSend>
         </SupervisorOutPin>
         ...
         <ReadyToSend><![CDATA[
-/* If the input handler determined that we should send a message, do so to the
+/* If the input behaviour determined that we should send a message, do so to the
  * next normal device in the ring, and to our supervisor device. */
-if (deviceState->sendMessage == 1)
+if (DEVICESTATE(sendMessage) == 1)
 {
-    *readyToSend |= RTS_FLAG_sender;
-    *readyToSend |= RTS_SUPER_IMPLICIT_SEND_FLAG;
+    RTS(sender);
+    RTSSUP();
 }
         ]]></ReadyToSend>
 
@@ -1894,11 +1911,9 @@ if (deviceState->sendMessage == 1)
 
 The above change defines the payload for the new "`exfiltration`" message type,
 adds a `SupervisorOutPin` to facilitate an implicit output connection with the
-supervisor, and includes the additional\
-`RTS_SUPER_IMPLICIT_SEND_FLAG` in the
+supervisor, and includes the additional `RTSSUP` macro call in the
 `ReadyToSend` element, to ensure all messages go to the supervisor device as
-well as the next device in the ring. The flag `RTS_SUPER_IMPLICIT_FLAG` is a
-specially-named flag to trigger a send to a supervisor device.
+well as the next device in the ring.
 
 Following this example, the `GraphType` section now matches with the complete
 XML at the end of this section.
@@ -1939,11 +1954,11 @@ incoming messages). Consequently, we instantiate exactly five devices:
 ...
   <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type" P="5">
     <DeviceInstances>
-      <DevI id="0" type="ring_element" P="id = 0"/>
-      <DevI id="1" type="ring_element" P="id = 1"/>
-      <DevI id="2" type="ring_element" P="id = 2"/>
-      <DevI id="3" type="ring_element" P="id = 3"/>
-      <DevI id="4" type="ring_element" P="id = 4"/>
+      <DevI id="0" type="ring_element" P="0"/>
+      <DevI id="1" type="ring_element" P="1"/>
+      <DevI id="2" type="ring_element" P="2"/>
+      <DevI id="3" type="ring_element" P="3"/>
+      <DevI id="4" type="ring_element" P="4"/>
     </DeviceInstances>
   </GraphInstance>
 ...
@@ -1953,7 +1968,7 @@ Each device instance has a different value for its `id` property (defined in
 the `P` element). Note that the `id` attribute of each `DevI` element can be
 any alphanumeric, as long as they are unique. Each device instance is of the
 `"ring_element"` device type. Note that we do not need to instantiate a
-supervisor device, as the Orchestrator does so as the application is handled.
+supervisor device, as the Orchestrator does this.
 
 We then define the connections between devices:
 
@@ -2064,12 +2079,12 @@ uint8_t sendMessage = 0;
         <SupervisorOutPin messageTypeId="exfiltration">
           <OnSend><![CDATA[
 /* Define the fields in the message. */
-message->sourceId = deviceProperties->id;
-message->lap = deviceState->lap;
+MSG(sourceId) = DEVICEPROPERTIES(id);
+MSG(lap) = DEVICESTATE(lap);
 
 /* Since we're sending a message, reset this field so that we don't send
  * another one. */
-deviceState->sendMessage = 0;
+DEVICESTATE(sendMessage) = 0;
           ]]></OnSend>
         </SupervisorOutPin>
 
@@ -2077,46 +2092,46 @@ deviceState->sendMessage = 0;
           <OnReceive><![CDATA[
 /* Only device zero increments the lap counter. Remember - this field in the
  * state is later propagated into the message. */
-deviceState->lap = message->lap;
-if (deviceProperties->id == 0) deviceState->lap += 1;
+DEVICESTATE(lap) = MSG(lap);
+if (DEVICEPROPERTIES(id) == 0) DEVICESTATE(lap) += 1;
 
 /* Don't send a message if the incoming message has completed its tenth lap. */
-if (deviceState->lap <= graphProperties->maxLaps) deviceState->sendMessage = 1;
-else deviceState->sendMessage = 0;
+if (DEVICESTATE(lap) <= GRAPHPROPERTIES(maxLaps)) DEVICESTATE(sendMessage) = 1;
+else DEVICESTATE(sendMessage) = 0;
           ]]></OnReceive>
         </InputPin>
 
         <OutputPin name="sender" messageTypeId="ring_propagate">
           <OnSend><![CDATA[
 /* Define the fields in the message. */
-message->lap = deviceState->lap;
+MSG(lap) = DEVICESTATE(lap);
 
 /* Since we're sending a message, reset this field so that we don't send
  * another one. */
-deviceState->sendMessage = 0;
+DEVICESTATE(sendMessage) = 0;
           ]]></OnSend>
         </OutputPin>
-        <!-- This handler is invoked after a message is received, and after
+        <!-- This behaviour is invoked after a message is received, and after
              OnInit (if it returns nonzero).
         -->
         <ReadyToSend><![CDATA[
-/* If the input handler determined that we should send a message, do so to the
+/* If the input behaviour determined that we should send a message, do so to the
  * next normal device in the ring, and to our supervisor device. */
-if (deviceState->sendMessage == 1)
+if (DEVICESTATE(sendMessage) == 1)
 {
-    *readyToSend |= RTS_FLAG_sender;
-    *readyToSend |= RTS_SUPER_IMPLICIT_SEND_FLAG;
+    RTS(sender);
+    RTSSUP();
 }
         ]]></ReadyToSend>
         <!-- Initialisation logic. -->
         <OnInit><![CDATA[
-/* Device zero starts things off by telling the ReadyToSend handler to send a
+/* Device zero starts things off by telling the ReadyToSend behaviour to send a
  * message. No other device does this. */
-if (deviceProperties->id == 0) deviceState->sendMessage = 1;
+if (DEVICEPROPERTIES(id) == 0) DEVICESTATE(sendMessage) = 1;
 
 /* A return of one invokes ReadyToSend (in the default softswitch), whereas a
  * return of zero does not. */
-return deviceState->sendMessage;
+return DEVICESTATE(sendMessage);
         ]]></OnInit>
       </DeviceType>
 
@@ -2142,48 +2157,48 @@ bool finished = false;
 FILE* resultFile;
         ]]></State>
         <OnInit><![CDATA[
-supervisorState->messagesPerDevice = \
-    std::vector<uint8_t>(graphProperties->numDevices, 0);
-supervisorState->resultFile = fopen("ring_test_output", "w");
+SUPSTATE(messagesPerDevice) = \
+    std::vector<uint8_t>(GRAPHPROPERTIES(numDevices), 0);
+SUPSTATE(resultFile) = fopen("ring_test_output", "w");
         ]]></OnInit>
         <SupervisorInPin id="tracker" messageTypeId="exfiltration">
           <OnReceive><![CDATA[
 /* If the application has failed, don't act on any more messages. */
-if (!supervisorState->failed)
+if (!SUPSTATE(failed))
 {
     /* Failure condition: once we've finished, we fail if we receive any more
      * messages. Also, fail if we receive a message that has done too many
      * laps. Note that this does not fail if the messages are received out of
      * order - POETS guarantees delivery, not ordering. */
-    if (message->lap > graphProperties->maxLaps or supervisorState->finished)
+    if (MSG(lap) > GRAPHPROPERTIES(maxLaps) or SUPSTATE(finished))
     {
-        supervisorState->failed = true;
-        fprintf(supervisorState->resultFile, "0");
+        SUPSTATE(failed) = true;
+        fprintf(SUPSTATE(resultFile), "0");
     }
 
     /* If we've not failed, track the message, and check the finishing
      * condition. */
     else
     {
-        supervisorState->messagesPerDevice.at(message->sourceId) += 1;
+        SUPSTATE(messagesPerDevice).at(MSG(sourceId)) += 1;
 
         /* Check the finishing condition. */
-        supervisorState->finished = true;
+        SUPSTATE(finished) = true;
         for (std::vector<uint8_t>::size_type index = 0;
-             index < graphProperties->numDevices; index++)
+             index < GRAPHPROPERTIES(numDevices); index++)
         {
-            if (supervisorState->messagesPerDevice.at(index) !=
-                graphProperties->maxLaps + 1)
+            if (SUPSTATE(messagesPerDevice).at(index) !=
+                GRAPHPROPERTIES(maxLaps) + 1)
             {
-                supervisorState->finished = false;
+                SUPSTATE(finished) = false;
                 break;
             }
         }
 
         /* Check the finish condition. */
-        if (supervisorState->finished)
+        if (SUPSTATE(finished))
         {
-            fprintf(supervisorState->resultFile, "1");
+            fprintf(SUPSTATE(resultFile), "1");
         }
     }
 }
@@ -2258,15 +2273,15 @@ to these variable synonyms.
 |                        | `DeviceType`. The names of these flags are the     |
 |                        | names of each `OutputPin` as defined by their      |
 |                        | `name` attribute, prefixed with "`RTS_FLAG_`". At  |
-|                        | the beginning of the `readyToSend` handler, each   |
+|                        | the beginning of the `readyToSend` behaviour, each |
 |                        | of these flags is lowered, and can be raised using |
 |                        | the `|=` operator. For each flag, if it is raised  |
-|                        | after the handler has been executed, a message is  |
+|                        | after the behaviour has been executed, a message is|
 |                        | sent sent over that `OutputPin`. To send a message |
 |                        | over the implicit supervisor output pin, raise the |
 |                        | flag "`RTS_SUPER_IMPLICIT_SEND_FLAG`". The order   |
-|                        | in which handlers are executed are undefined,      |
-|                        | except that the implicit supervisor handler is     |
+|                        | in which behaviours are executed are undefined,    |
+|                        | except that the implicit supervisor behaviour is   |
 |                        | invoked last.                                      |
 +------------------------+----------------------------------------------------+
 | `supervisorProperties` | The target structure defines one field for each    |
@@ -2313,6 +2328,12 @@ Application:
 : Defined by the user, applications perform computation and output information
   using the POETS compute system. See the Applications as Graphs Section.
 
+Behaviour:
+
+: A set of instructions, provided by the application writer as C++14 source
+  code, to be invoked in response to an event occuring. See all terms ending
+  in "(behaviour)".
+
 Device:
 
 : A "unit of compute", responsible for taking part in an application. Devices
@@ -2340,14 +2361,12 @@ Edge (instance):
 
 Handler:
 
-: A set of instructions, provided by the application writer as C++14 source
-  code, to be executed in response to an event occuring. See all terms ending
-  in "(handler)".
+: Synonym for Behaviour
 
 Input Pin:
 
 : A pin, attached to a device, and the receiving end of one or more
-  edges. Messages received by this pin are handled by its "OnReceive" handler,
+  edges. Messages received by this pin are handled by its "OnReceive" behaviour,
   which may draw from the properties and state of the input pin.
 
 Message:
@@ -2362,33 +2381,33 @@ Normal Device:
 : A device that participates in an application as part of the underlying POETS
   compute fabric.
 
-OnInit (handler):
+OnInit (behaviour):
 
 : See the definition provided in Appendix A.
 
-OnDeviceIdle(handler):
+OnDeviceIdle(behaviour):
 
 : See the definition provided in Appendix A.
 
-OnReceive (handler):
+OnReceive (behaviour):
 
-: A handler, called in response to a message being received on a pin, which
+: A behaviour, called in response to a message being received on a pin, which
   changes the state of the device that owns the pin that owns this
-  handler. Once a message is received, messages may be sent (according to the
-  behaviour of the ReadyToSend handler.
+  behaviour. Once a message is received, messages may be sent (according to the
+  behaviour of the ReadyToSend behaviour.
 
-OnSend (handler):
+OnSend (behaviour):
 
-: A handler, called when a message has been sent (as instructed by the
-  ReadyToSend handler). This handler populates the content of the outgoing
+: A behaviour, called when a message has been sent (as instructed by the
+  ReadyToSend behaviour). This behaviour populates the content of the outgoing
   message, and may change the state of the device that owns the pin that owns
-  this handler.
+  this behaviour.
 
 Output Pin:
 
 : A pin, attached to a device, and the sending end of one or more
   edges. Messages sent by this pin are populated by its "OnSend"
-  handler. Output pins have no properties or state.
+  behaviour. Output pins have no properties or state.
 
 Pin:
 
@@ -2402,11 +2421,11 @@ Properties (graph, device, input pin):
   level. Properties can be accessed through the structures introduced in the
   Source Code Fragments (:CDATA:) Section. See also **State**.
 
-ReadyToSend (handler):
+ReadyToSend (behaviour):
 
-: A handler, called in response to a message being received, or a non-zero
-  return value from OnInit or OnDeviceIdle handlers. Determines, from the state
-  of the device, which output pins are to be "activated" for sending
+: A behaviour, called in response to a message being received, or a non-zero
+  return value from OnInit or OnDeviceIdle behaviours. Determines, from the
+  state of the device, which output pins are to be "activated" for sending
   messages. Also see the definition in Appendix A.
 
 State (device, pin):
