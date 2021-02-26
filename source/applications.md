@@ -30,9 +30,9 @@ subsequent sections are necessary and *how* they interact. If you are already
 comfortable with this rationale, you can skip to the Application Language
 Section, which describes the details of application definition minutiae at the
 syntactic level if that's all you need. If you prefer to learn by example, and
-to follow concepts are introduced, you can skip to the "Example: Ring Test"
-section, and search the document for more information on concepts as they are
-introduced.
+to follow concepts as they are introduced, you can skip to the "Example: Ring
+Test" section, and search the document for more information on concepts as they
+are introduced.
 
 ---
 
@@ -130,10 +130,10 @@ operational envelope for POETS assumes that:
  - Their **logic** - application-writer-defined C++ code - is simple and short.
  - Communication between them is brokered by **small** fixed size (64 byte)
    packets.
- - The devices, pins, and packets are strongly typed, and there are a *low*
+ - The devices, pins, and packets are strongly typed, and there are a low
    number ($<100$) of distinct types.
- - There are $\le32$ pins on a device.
- - There are $<2^{32}$ edges on an individual pin, and $<2^{32}$ edges in
+ - There are $\le32$ output pins, and $\le256$ input pins, on a device.
+ - There are $<2^{24}$ edges on an individual input pin, and $<2^{32}$ edges in
    total.
 
 ### Temporal Idiosynchrases
@@ -290,7 +290,7 @@ rudimentary level.
 
 The POETS hardware platform consists of a bespoke network of multithreaded
 RISC-V cores, instantiated on a set of FPGA platforms, which are contained
-within networked conventional x86 machines. The Orchestrator software interacts
+within networked conventional machines. The Orchestrator software interacts
 with these machines, which are connected together in a single MPI universe. The
 responsibilities of the Orchestrator are command and control of the system;
 loading user-defined applications, assembling (composing) them, cross-compiling
@@ -302,12 +302,12 @@ termination, and data exfiltration.
 Figure 5 shows an abstract representation of the compute stack. The
 **P_engine** (POETS Engine) is the name given to the combination of the set of
 FPGAs hosting the RISC-V cores and the communication infrastructure, and the
-set of x86 hosts. Each engine contains a set of **P_boards** (compute FPGA
-boards, contained in the **P_boxes**[^hierarchy]). The boards are configured as
-a **fixed** graph. Each board contains a graph of mailboxes, each mailbox
-addresses a set of cores, each core is multithreaded, and each thread runs one
-instance of a sequential binary called a **Softswitch**. Each Softswitch hosts
-multiple (or just one) compute devices.
+set of conventional hosts. Each engine contains a set of **P_boards** (compute
+FPGA boards, contained in the **P_boxes**[^hierarchy]). The boards are
+configured as a **fixed** graph. Each board contains a graph of mailboxes, each
+mailbox addresses a set of cores, each core is multithreaded, and each thread
+runs one instance of a sequential binary called a **Softswitch**. Each
+Softswitch hosts multiple (or just one) compute devices.
 
 [^hierarchy]: A P_box is a historical term for a level in the physical
     hierarchy. It plays no part in the functioning of the system.
@@ -369,15 +369,14 @@ fairness. At the highest level, the design targets are to:
 
 The Softswitch interfaces between the application-writer's device code, and the
 compute hardware. In the most simple form, the interface consists effectively
-of four function invocations, each of which interact the hardware[^hostlink]:
+of four function invocations, each of which interact the hardware[^idle]:
 
- - Can I send a packet?
- - Send a packet.
  - Are there any incoming packets for me to read?
  - Read incoming packet.
+ - Can I send a packet?
+ - Send a packet.
 
-[^hostlink]: The interaction of the Softswitch with the Tinsel hardware backend
-    is facilitated by the HostLink.
+[^idle]: Excluding idling behaviour.
 
 These are hidden from the application-writer, but ultimately all instructions
 in the device definitions resolve down to these four calls. They are only
@@ -427,14 +426,15 @@ This section introduces these behaviours at a high-level, in a shallow,
 Softswitch-sympathetic manner. See the "Expected Semantic Structure" Section
 for a comprehensive, detailed definition of these behaviours, and how they are
 incorporated into application files (also introduced later). See the Softswitch
-documentation for precise definitions on how these behaviours are coupled.
+documentation for precise definitions on how these behaviours are coupled. The
+behaviour of the default (non-buffering) Softswitch is described here.
 
 Pin behaviours:
 
  - `OnRecieve`: Invoked when a packet is received on an input pin.
 
- - `OnSend`: Invoked just before a when a packet is to be sent on an output
-   pin, but just after a device has decided it "wants" to send a packet.
+ - `OnSend`: Invoked just before a packet is to be sent on an output pin, but
+   just after a device has decided it "wants" to send a packet.
 
 Device behaviours:
 
@@ -448,10 +448,11 @@ Device behaviours:
    for each device it manages in sequence.
 
  - `OnIdle`: Invoked when there is nothing to receive, and nothing to send. The
-   Softswitch will execute the `OnIdle` behaviour for each devices it manages
-   in sequence, until either a packet can be received, or the
-   application-writer-supplied fragment returns a non-zero unsigned value
-   (indicating that the device may "want" to send a packet).
+   Softswitch will execute the `OnIdle` behaviour for each device it manages in
+   sequence, until either a packet can be received, or `OnIdle` has been
+   executed for all hosted devices. If any of the `OnIdle`
+   application-writer-supplied fragments returned a non-zero unsigned value,
+   that indicates the device may "want" to send a packet.
 
 #### Properties and State
 
@@ -490,12 +491,12 @@ be sent, as well as the payload of those packets.
 A common point in device and pin behaviours is the notion of a device "wanting"
 to send a packet. This "wanting" behaviour is controlled by an `OnReadyToSend`
 behaviour, represented by the "Do I **want** to send" box in Figure 6. The
-`OnReadyToSend` of a device is invoked when there are no packets to receive,
-but after either an `OnRecv` behaviour, or `OnIdle` or `OnInit` behaviour returning
-a non-zero unsigned value has been invoked. This behaviour defines which output
-pins to send on, as a function of device properties and state. Note that,
-unlike all other pin and device behaviours, **this behaviour cannot modify
-state data**, though it can read from state data.
+`OnReadyToSend` of a device is invoked after either an `OnRecv` or `OnSend`
+behaviour, or `OnIdle` or `OnInit` behaviour returning a non-zero unsigned
+value has been invoked. This behaviour defines which output pins to send on, as
+a function of device properties and state. Note that, unlike all other pin and
+device behaviours, **this behaviour cannot modify state data**, though it can
+read from state data.
 
 ### Defining Supervisor Behaviours
 
@@ -561,7 +562,7 @@ RISCV32IMF instruction set profile. **This subset notably omits integer divison
 instructions** (as the ALU doesn't support them). See the Tinsel documentation
 for the full set of forbidden instructions.
 
-Each board consists of two 4GB DDR3 DRAMs and four 8MB QDRII+ SRAMs, which are
+Each board consists of two 2GB DDR3 DRAMs and four 8MB QDRII+ SRAMs, which are
 shared evenly throughout the POETS Engine. The Softswitch (see
 "softswitch.pdf") only makes use of these DRAMs to store properties, state, and
 connections information at present. Consequently, **data space is limited**,
@@ -570,7 +571,7 @@ connection information (though this has yet to become an issue in Orchestrator
 applications).
 
 Instruction memory is stored in on-chip RAM (8kB) shared between core pairs. As
-such, **all threads across each pair of cores shares the same instruction
+such, **all threads across each pair of cores share the same instruction
 memory**. Put another way, this means that a given "neighbouring" pair of cores
 in the POETS Engine can have only one type of device placed upon it (but can
 have many instances of those types). This provides an intrisic communications
@@ -611,54 +612,99 @@ semantic integrity of an application definition file. The XML tree structure
 for a semantically-valid input file follows, where each line corresponds to an
 element:
 
-~~~
-Graphs
-+GraphType
-|+Properties
-|+SharedCode
-|+MessageTypes
-||+MessageType
-|+DeviceTypes
-| +DeviceType
-| |+Properties
-| |+State
-| |+SharedCode
-| |+SupervisorInPin
-| ||+OnReceive
-| |+SupervisorOutPin
-| ||+OnSend
-| |+InputPin
-| ||+Properties
-| ||+State
-| ||+OnReceive
-| |+OutputPin
-| ||+OnSend
-| |+ReadyToSend
-| |+OnInit
-| |+OnDeviceIdle
-| +SupervisorType
-|  +Properties
-|  +State
-|  +Code
-|  +SupervisorInPin
-|  |+OnReceive
-|  +SupervisorOutPin
-|  |+OnSend
-|  +OnInit
-|  +OnSupervisorIdle
-|  +OnStop
-+GraphInstance
- +DeviceInstances
- |+DevI
- +EdgeInstances
-  +EdgeI
-~~~
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Root   | ...               | ...             | ...            | ...                  | Leaf      |
++========+===================+=================+================+======================+===========+
+| Graphs |                   |                 |                |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         |                 |                |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | *Properties*    |                |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | *SharedCode*    |                |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | *MessageTypes*  |                |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | MessageTypes    | **MessageType**|                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     |                |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | **DeviceType** |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | *Properties*         |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | *State*              |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | *SharedCode*         |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | *SupervisorInPin*    |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | SupervisorInPin      | OnReceive |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | *SupervisorOutPin*   |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | SupervisorOutPin     | OnSend    |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | **InputPin**         |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | InputPin             | *Properties*|
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | InputPin             | *State*   |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | InputPin             | OnReceive |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | **OutputPin**        |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | OutputPin            | OnSend    |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | *ReadyToSend*        |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | *OnInit*             |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | DeviceType     | *OnDeviceIdle*       |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     |*SupervisorType*|                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | *Properties*         |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | *State*              |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | *Code*               |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | **SupervisorInPin**  |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | SupervisorInPin      | OnReceive |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | **SupervisorOutPin** |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | SupervisorOutPin     | OnSend    |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | *OnInit*             |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | *OnSupervisorIdle*   |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | DeviceTypes     | SupervisorType | *OnStop*             |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | **GraphInstance** |                 |                |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphInstance     | DeviceInstances |                |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphInstance     | DeviceInstances | **DevI**       |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphInstance     | EdgeInstances   |                |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphInstance     | EdgeInstances   | **EdgeI**      |                      |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
 
-Some elements may occur multiple times, or not at all, at the
-application-writer's behest. An explanation of each of these elements
-follows. Some notable elements are accompanied by a tag (e.g. `:Graphs:`), to
-link with other elements of this document. Some elements refer to macros -
-these macros are described in the "Application Programming Interface" section.
+Table: Valid XML elements and their nesting. **Emboldened** elements may appear any
+number of times. *Emphasised* elements may appear exactly zero or one time.
+
+Some elements may occur multiple times (**emboldened** in Table 1), or not at
+all (*emphasised* in Table 1), at the application-writer's behest. An
+explanation of each of these elements follows. Some notable elements are
+accompanied by a tag (e.g. `:Graphs:`), to link with other elements of this
+document. Some elements refer to macros - these macros are described in the
+"Application Programming Interface" section.
 
 **Graphs** (`:Graphs:`)
 
@@ -1079,15 +1125,6 @@ attributes:
    type defaults. Define using syntax that is valid in C++14 initialiser lists
    (e.g. `value,anothervalue` for each property field in order).
 
-**Graphs/GraphInstance/Properties** (`:GraphInstance-Properties:`)
-
-Overrides graph-level properties defined by the graph type used by this
-instance (`:GraphType-Properties:`). These overrides are defined as
-(`:CDATA:`).
-
-This element must occur at most once in each `GraphInstance` section. No
-attributes are valid.
-
 **Graphs/GraphInstance/DeviceInstances** (`:DeviceInstances:`)
 
 Contains elements that instantiate every normal device in an application. If
@@ -1207,9 +1244,9 @@ list of legacy variables.
 
 ### Accessibility Macros and Functions
 
-Table 1 lists all macros and functions used to access device properties, state,
-incoming/outgoing packets, to set pins for sending, and various other
-functions. Table 2 explains where each macro can be used. Many of the macros
+Tables 2, 3, and 4 lists all macros and functions used to access device properties,
+state, incoming/outgoing packets, to set pins for sending, and various other
+functions. Table 5 explains where each macro can be used. Many of the macros
 below access internal state variables, which are commonly referenced in legacy
 code. These internal state variables are listed in Appendix A.
 
@@ -1236,28 +1273,29 @@ if (DEVICESTATE(lemon) == "fruit")  // Reading
 | `GRAPHPROPERTIES(x)`      | Access field `x` of graph properties for        |
 |                           | reading.                                        |
 +---------------------------+-------------------------------------------------+
+| `MSG(x)`                  | Access field `x` of an incoming (for reading)   |
+|                           | or outgoing (for writing) field of a packet.    |
++---------------------------+-------------------------------------------------+
+| `PKT(x)`                  | Synoynm of `MSG(x)`.                            |
++---------------------------+-------------------------------------------------+
+
+Table: Explanation of accessibility macros and functions in `CDATA` code common
+to normal devices (running in a Softswitch) and Supervisor devices.
+
++---------------------------+-------------------------------------------------+
+| Macro                     | Purpose                                         |
++===========================+=================================================+
 | `DEVICEPROPERTIES(x)`     | Access field `x` of device properties for       |
 |                           | reading.                                        |
 +---------------------------+-------------------------------------------------+
 | `DEVICESTATE(x)`          | Access field `x` of device state for reading    |
 |                           | and writing (outside of `ReadyToSend`).         |
 +---------------------------+-------------------------------------------------+
-| `SUPPROPERTIES(x)`        | Access field `x` of supervisor device           |
-|                           | properties for reading.                         |
-+---------------------------+-------------------------------------------------+
-| `SUPSTATE(x)`             | Access field `x` of supervisor device state for |
-|                           | reading and writing (outside of `ReadyToSend`). |
-+---------------------------+-------------------------------------------------+
 | `EDGEPROPERTIES(x)`       | Access field `x` of corresponding input pin     |
 |                           | properties for reading.                         |
 +---------------------------+-------------------------------------------------+
 | `EDGESTATE(x)`            | Access field `x` of corresponding input pin     |
 |                           | state for reading and writing.                  |
-+---------------------------+-------------------------------------------------+
-| `MSG(x)`                  | Access field `x` of an incoming (for reading)   |
-|                           | or outgoing (for writing) field of a packet.    |
-+---------------------------+-------------------------------------------------+
-| `PKT(x)`                  | Synoynm of `MSG(x)`.                            |
 +---------------------------+-------------------------------------------------+
 | `RTS(x)`                  | Marks the output pin named `x`, on a normal     |
 |                           | device, to send a packet when sending is        |
@@ -1273,7 +1311,42 @@ if (DEVICESTATE(lemon) == "fruit")  // Reading
 |                           | Softswitch documentation.                       |
 +---------------------------+-------------------------------------------------+
 
-Table: Explanation of accessibility macros and functions in `CDATA` code.
+Table: Explanation of accessibility macros and functions in `CDATA` for normal
+devices (running in a Softswitch), in addition to those in Table 2.
+
++---------------------------+-------------------------------------------------+
+| Macro                     | Purpose                                         |
++===========================+=================================================+
+| `SUPPROPERTIES(x)`        | Access field `x` of supervisor device           |
+|                           | properties for reading.                         |
++---------------------------+-------------------------------------------------+
+| `SUPSTATE(x)`             | Access field `x` of supervisor device state for |
+|                           | reading and writing.                            |
++---------------------------+-------------------------------------------------+
+| `REPLY(x)`                | In a Supervisor-context when a packet is        |
+|                           | received, access field `x` of an outgoing field |
+|                           | of a packet, that is going to be sent in        |
+|                           | response to the incoming packet that is         |
+|                           | currently being handled.                        |
++---------------------------+-------------------------------------------------+
+| `BCAST(x)`                | In a Supervisor-context when a packet is        |
+|                           | received, access field `x` of an outgoing field |
+|                           | of a packet, that is going to be sent in        |
+|                           | response to the incoming packet that is         |
+|                           | currently being handled, to all devices managed |
+|                           | by this supervisor.                             |
++---------------------------+-------------------------------------------------+
+| `RTSREPLY()`              | In a Supervisor context, denote that a reply    |
+|                           | packet is to be sent, analogous to the          |
+|                           | `ReadyToSend` mechanism on normal devices.      |
++---------------------------+-------------------------------------------------+
+| `RTSBCAST()`              | In a Supervisor context, denote that a broadcast|
+|                           | packet is to be sent, analogous to the          |
+|                           | `ReadyToSend` mechanism on normal devices.      |
++---------------------------+-------------------------------------------------+
+
+Table: Explanation of accessibility macros and functions in `CDATA` for
+Supervisor devices, in addition to those in Table 2.
 
 +--------------------------------------+--------------------------------------+
 | Containing Element                   | Provided Macros (variable            |
@@ -2373,12 +2446,19 @@ Input Pin:
   edges. Messages received by this pin are handled by its "OnReceive" behaviour,
   which may draw from the properties and state of the input pin.
 
-Message:
+Message (Orchestrator):
+
+: The medium of communication for processes in the Orchestrator, which is a
+  multi-process software, using MPI, that manages applications running on
+  POETS. Not to be confused with **Message (POETS)**, also known as **Packet**.
+
+Message (POETS)
 
 : A representation of a packet, used to communicate between two
   devices. Messages are lightweight, and are guaranteed to eventually arrive at
   their destination, though are not guaranteed to arrive in the order they are
-  sent. Messages may have a payload, populated by the sender.
+  sent. Messages may have a payload, populated by the sender. Not to be
+  confused with **Message (Orchestrator)**
 
 Normal Device:
 
@@ -2412,6 +2492,10 @@ Output Pin:
 : A pin, attached to a device, and the sending end of one or more
   edges. Messages sent by this pin are populated by its "OnSend"
   behaviour. Output pins have no properties or state.
+
+Packet:
+
+: See **Message (POETS)**.
 
 Pin:
 
