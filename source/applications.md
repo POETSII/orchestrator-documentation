@@ -123,7 +123,7 @@ writer. It may (or may not):
 
 Different output pins may emit different packets, but a packet sent from an
 output pin will be *copied* to all the edges attached to that pin. The intended
-operational envelope for POETS assumes that:
+operational envelope for POETS assumes that[^limits]:
 
  - There are a **large** number ($\mathcal{O}$(millions)) of devices, but
    $<2^{32}$.
@@ -135,6 +135,9 @@ operational envelope for POETS assumes that:
  - There are $\le32$ output pins, and $\le256$ input pins, on a device.
  - There are $<2^{24}$ edges on an individual input pin, and $<2^{32}$ edges in
    total.
+
+[^limits]: Limits on the numbers of devices, types, and pins are
+    Orchestrator-enforced.
 
 ### Temporal Idiosynchrases
 
@@ -160,11 +163,9 @@ sits a thin layer of software called the Softswitch (described later). The
 operation of the Softswitch is defined by the POETS system architects and
 cannot be modified by the application writer, but is configurable. Relevant
 here is the default operation of the Softswitch if it receives pushback from
-the hardware: it will continuously attempt to send the packet (until the
-hardware accepts it) whilst at the same time refusing to accept incoming
-packets, causing pushback to the devices incident upon it. This behaviour will
-(fairly, we intend) effectively throttle the network until it can be
-drained. Processing behaviour is not affected, it just slows down.
+the hardware: it will retry sending on that pin at a later time, and prioritise
+draining the network of packets first. This behaviour will (fairly, we intend)
+effectively throttle the network until it can be drained.
 
 #### Wallclock Time
 
@@ -322,10 +323,13 @@ incident packets as and when they arrive; in principle, in this model, it is
 possible for every device in an application to be active simultaneously. In
 reality, execution of even the simplest set of instructions takes finite time,
 and at the finest level of granularity, a thread can only do one thing at a
-time. POETS attempts to implement the massive potential parallelism of the
-compute model by providing an abundance of threads, and in applications where
-the number of devices is less than the number of physical threads, makes a
-pretty good job of it. Two factors combine to disrupt this idealisation:
+time[^andcores]. POETS attempts to implement the massive potential parallelism
+of the compute model by providing an abundance of threads, and in applications
+where the number of devices is less than the number of physical threads, makes
+a pretty good job of it. Two factors combine to disrupt this idealisation:
+
+[^andcores]: Under the POETS platform, cores can only "execute" one thread at a
+    time.
 
  - The number of physical threads is fixed, and small.
 
@@ -434,7 +438,7 @@ Pin behaviours:
  - `OnRecieve`: Invoked when a packet is received on an input pin.
 
  - `OnSend`: Invoked just before a packet is to be sent on an output pin, but
-   just after a device has decided it "wants" to send a packet.
+   after a device has decided it "wants" to send a packet.
 
 Device behaviours:
 
