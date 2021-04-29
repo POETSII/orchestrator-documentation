@@ -893,3 +893,6 @@ are:
    engine.
 
  - `sa`: The simulated annealing implementation described in section 5.
+
+ - `spread`: A spreading placment, where devices are distributed as evenly as
+   possible across all threads. This placement mechanism is device-type aware.
