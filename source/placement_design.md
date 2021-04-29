@@ -59,10 +59,10 @@ though many more may be contrived. With this in mind, the design requirements
  for the placement system in the Orchestrator are:
 
  - To support different algorithms, selectable at run time by the Orchestrator
-   operator. In early iterations, bucket filling and simulated annealing is
-   sufficient, but the design of the placement system should allow algorithms
-   to be added easily in future iterations to exploit properties specific to
-   the POETS placement problem (papers!).
+   operator. In early iterations, thread (bucket) filling and simulated
+   annealing is sufficient, but the design of the placement system should allow
+   algorithms to be added easily in future iterations to exploit properties
+   specific to the POETS placement problem (papers!).
 
  - To support run-time decisions about how the placement can be constrained,
    using a "walled-garden" set of constraints that can be
@@ -234,7 +234,7 @@ Possible constraints include (this is by no means an exhaustive list):
 Appendix D contains the list of supported constraints.
 
 ## Algorithms
-Algorithms represent "placement methods", like bucket filling, or simulated
+Algorithms represent "placement methods", like thread filling, or simulated
 annealing. Algorithms control the placement of devices in a given application
 onto the engine, without disrupting the placement of devices from other
 applications (recall that algorithms should act on one application and not be
@@ -298,7 +298,7 @@ in the POETS shell:
 
 ```
 POETS> placement /constraint = "MaxDevicesPerThread", 14
-POETS> placement /bucket = "APPLICATIONNAME"
+POETS> placement /tfill = "APPLICATIONNAME"
 POETS> placement /dump = "APPLICATIONNAME"
 ```
 
@@ -335,7 +335,7 @@ Operator commands, in more detail than in volume IV:
    completion of placement, along with the time taken.
 
    Appendix E contains the list of supported algorithms. `ALGORITHM` could be
-   "bucket", "sa" or something else that's implemented[^algorithmName]
+   "tfill", "sa" or something else that's implemented[^algorithmName]
 
 [^algorithmName]: Just don't call your algorithm "dump", or "place" (please).
 
@@ -479,7 +479,7 @@ test program!).
 ### Starting State
 "Random" placement is sufficient for this, but I suspect a "smart random"
 placement would be a better starting point - perhaps one which accounts for
-constraints. We could even use a bucket-fill placement as an initial state -
+constraints. We could even use a thread-filled placement as an initial state -
 it's cheap to compute.
 
 A point on random placement - core-pairs share instruction memory. As such, we
@@ -880,10 +880,9 @@ APPLICATIONNAME` operator command. All algorithms are aware of all constraints
 devices from other applications placed upon them. The available `ALGORITHM`s
 are:
 
- - `app`: See `bucket`.
+ - `app`: See `tfill`.
 
- - `bucket`: A bucket-filling placement, where the threads in the hardware
-   model are filled in sequence. This placement mechanism is device-type aware.
+ - `bucket`: See `tfill`.
 
  - `gc`: A gradientless climber implementation. Identical to `sa`, but with no
    disorder (so only superior solutions are accepted).
@@ -893,3 +892,6 @@ are:
    engine.
 
  - `sa`: The simulated annealing implementation described in section 5.
+
+ - `tfill`: A thread-filling placement, where the threads in the hardware model
+   are filled in sequence. This placement mechanism is device-type aware.
