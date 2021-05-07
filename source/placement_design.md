@@ -887,6 +887,8 @@ are:
  - `gc`: A gradientless climber implementation. Identical to `sa`, but with no
    disorder (so only superior solutions are accepted).
 
+ - `link`: See `tfill`.
+
  - `rand`: A smart-random placement, which is constraint aware, and is aware of
    the placement of other applications. Places devices randomly across the
    engine.
