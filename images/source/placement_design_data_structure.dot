@@ -228,8 +228,8 @@ The results of a placement algorithm execution.<BR ALIGN="TEXT"/>
 Does simulated annealing.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
-    BucketFilling[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>BucketFilling:Algorithm</TD></TR>
+    ThreadFilling[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>ThreadFilling:Algorithm</TD></TR>
 <TR><TD ALIGN="TEXT">
 ...<BR ALIGN="TEXT"/>
 </TD></TR>
@@ -237,7 +237,7 @@ Does simulated annealing.<BR ALIGN="TEXT"/>
 ...<BR ALIGN="TEXT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
-Does bucket filling.<BR ALIGN="TEXT"/>
+Does thread filling.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
     /* Relationship definitions (as graph edges) */
@@ -287,8 +287,8 @@ Does bucket filling.<BR ALIGN="TEXT"/>
 
     /* Inheritance */
     {edge[arrowhead="onormal", label=" (inherits)"];
-        //BucketFilling -> Algorithm;
-        Algorithm -> BucketFilling[arrowtail="onormal", dir="back"];
+        //ThreadFilling -> Algorithm;
+        Algorithm -> ThreadFilling[arrowtail="onormal", dir="back"];
         SimulatedAnnealing -> Algorithm;
         MaxDevicesPerThread -> Constraint;
         MaxDeviceDistance -> Constraint;
@@ -308,12 +308,12 @@ Does bucket filling.<BR ALIGN="TEXT"/>
 
     {rank="same";
         MaxDeviceDistance -> Constraint -> placeholder_1 -> Algorithm ->
-            BucketFilling [style="invis"];
+            ThreadFilling [style="invis"];
         rankdir="LR";
     }
 
     {edge[style="invis"];
-        BucketFilling -> SimulatedAnnealing;
+        ThreadFilling -> SimulatedAnnealing;
         MaxDeviceDistance -> MaxDevicesPerThread;
         Placer -> placeholder_1;
         placeholder_1 -> placeholder_2;

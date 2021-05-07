@@ -208,9 +208,9 @@ serviced by the first mailbox in the first board (the origin thread), allow
    respective level of the hierarchy.
 
 ## Iteration Example
-In bucket-filling placement, devices are mapped to threads in order (like
-pouring water into a succession of buckets). This placement method must respect
-the constraint that core pairs can only contain the same type of device
+In thread-filling placement, devices are mapped to threads in order (like
+"pouring" devices into threads in succession). This placement method must
+respect the constraint that core pairs can only contain the same type of device
 (because their instruction memory spaces are shared).
 
 Without using `HardwareIterator`, this can be achieved through the following
