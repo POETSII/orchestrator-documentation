@@ -621,6 +621,21 @@ Mothership, as well as external devices elsewhere. They are:
 
     - `SupervisorApi* (*getApi)()`: Used to provision the Supervisor API (see
       below).
+      
+    - `uint64_t (*getAddr)(uint32_t)`: Used to get the full symbolic address
+      of a device from its Supervisor-unique index, which is sent in the
+      `pinAddr` field of each log packet.
+      
+    - `const SupervisorDeviceInstance_t* (*getInstance)(uint32_t)`: Used to  
+      get a pointer to the `SupervisorDeviceInstance_t` struct for the device
+      identified by the specified index. A `SupervisorDeviceInstance_t` 
+      contains the address components (and temporarily the name) of a
+      device.
+      
+    - `void (*getAddrVector)(std::vector<SupervisorDeviceInstance_t>&)`: 
+      Used to populate a vector with a copy of the Supervisor's `DeviceVector`.
+      This method must be used with care as the `DeviceVector` can be very big.
+      
 
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
@@ -722,7 +737,7 @@ manifests as a series of log packets (with a `P_CNC_LOG` opcode) sent from the
 logging device to the Mothership, where multiple packets are sent for each log
 message. The `LogPacketManager` stores these packets until a complete message
 is formed, at which point the message is `Post`-ed and forgotten. Packets are
-stored on a per-compute-thread basis.
+stored on a per-device basis.
 
 # Debugging
 In addition to the acknowledgement messages that the Mothership generates while
