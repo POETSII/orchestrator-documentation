@@ -513,17 +513,17 @@ With a typelinked application graph instance (from XML), and a hardware graph
 map the former onto the latter. Command:
 
 ~~~ {.bash}
-place /bucket = *
+place /tfill = *
 ~~~
 
 The Orchestrator prints:
 
 ~~~ {.bash}
-POETS> 14:45:14.77: 309(I) Attempting to place graph instance 'test_ring_instance' using the 'buck' method...
+POETS> 14:45:14.77: 309(I) Attempting to place graph instance 'test_ring_instance' using the 'tfil' method...
 POETS> 14:45:14.77: 302(I) Graph instance 'test_ring_instance' placed successfully.
 ~~~
 
-This command invokes the bucket-filling algorithm in the placement system. Each
+This command invokes the thread-filling algorithm in the placement system. Each
 device defined in the application graph instance is one-to-many mapped to a
 thread in the POETS engine. For information about the placement performed,
 command:
@@ -618,7 +618,7 @@ Where the file `/absolute/path/to/batch/script` contains:
 ~~~ {.bash}
 load /app = +"ring_test.xml"
 tlink /app = *
-place /bucket = *
+place /tfill = *
 compose /app = *
 deploy /app = *
 initialise /app = *
@@ -770,10 +770,9 @@ Place commands operate on the placement subsystem of the Orchestrator, which is
 responsible for mapping applications to the compute hardware. See the placement
 documentation for a more detailed description of the commands that follow.
 
- - `placement /app`: Synonym for `placement \bucket`.
+ - `placement /app`: Synonym for `placement /tfill`.
 
- - `placement /bucket`: Given a typelinked application graph (or multiple),
-   places it onto the hardware by filling each thread in sequence.
+ - `placement /bucket`: Synonym for `placement /tfill`.
 
  - `placement /constraint`: Given a constraint type and a set of arguments,
    imposes a system-wide hard constraint onto future placed applications:
@@ -807,6 +806,9 @@ documentation for a more detailed description of the commands that follow.
    it using simulated annealing (with a random initial condition). The number
    of iterations can be defined at compile time (and will later be more easily
    configurable).
+
+ - `placement /tfill`: Given a typelinked application graph (or multiple),
+   places it onto the hardware by filling each thread in sequence.
 
  - `placement /unplace`: Given a typelinked application graph (or multiple),
    removes placement information for that application (effectively undoing a

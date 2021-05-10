@@ -1135,7 +1135,8 @@ Contains elements that instantiate every normal device in an application. If
 this section contains no children, no normal devices are instantiated (a
 supervisor device is still instantiated, though this is of questionable value
 outside debugging). The order of devices introduced in this section is
-preserved, which affects the result of bucket-filling placement.
+preserved, which affects the result of certain placement algorithms (thread
+filling and spreading).
 
 This element must occur exactly once in each `GraphInstance` section. No
 attributes are valid.
