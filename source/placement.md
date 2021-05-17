@@ -76,7 +76,7 @@ each of these components follows.
 ![Abridged data structure diagram, showing how placement may be conducted in
 the Orchestrator. Does not include core and device-type relationships, and
 certain constraints and
-algorithms.](images/placement_design_data_structure.png)
+algorithms.](images/placement_data_structure.png)
 
 ## Placer
 The `Placer` encapsulates placement behaviour in the Orchestrator. The
