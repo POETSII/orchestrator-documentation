@@ -1,0 +1,12 @@
+Stuff to do:
+
+ - Add PlaceArgs to figure 1 (or split figure 1 into two smaller figures).
+
+ - PlaceArgs section
+
+ - Add argument commands to "How the Operator Interacts with the Placement
+   System".
+
+ - "So, you want to add a new algorithm?"
+
+ - "So, you want to add a new constraint?"

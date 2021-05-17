@@ -1,13 +1,12 @@
 % Design of the Orchestrator Placement System
 
 # Placement Overview and Design Requirements
-This document defines the design of the placement system in the
-Orchestrator. The "placement problem" has been well explored in the literature,
-though there is novelty in POETS placement, as the hardware model is
-hierarchical in nature, thus resulting in an unusual search
-codomain[^programmableRouting]. Placing an application (formally, an
-application graph instnace) requires knowledge of the hardware model, as well
-as the structure and properties of the application.
+This document adheres to the placement system in the Orchestrator. The
+"placement problem" has been well explored in the literature, though there is
+novelty in POETS placement, as the hardware model is hierarchical in nature,
+thus resulting in an unusual search codomain[^programmableRouting]. Placing an
+application (formally, an application graph instnace) requires knowledge of the
+hardware model, as well as the structure and properties of the application.
 
 [^programmableRouting]: With programmable routing in the pipeline, it's become
     a lot more publishable.
@@ -354,7 +353,7 @@ Operator commands, in more detail than in volume IV:
    the placer, with a set of arguments. Appendix B contains the list of
    supported constraints.
 
-# Implementing Simulated Annealing
+# Simulated Annealing (`sa`)
 Simulated annealing is a search method that allows, in the general case,
 exploration of a solution space and selection of a guaranteed local optimum,
 with some concession for global search. This method transitions from
