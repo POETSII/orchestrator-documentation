@@ -1,20 +1,5 @@
 % Design of the Orchestrator Placement System
 
-# Orchestrator State (2021-05-17)
-This document presents the design of the placement system, though the present
-implementation of the Orchestrator does not exactly meet these
-features[^dateThough]. What follows is a comprehensive list of differences
-between the implemented placement system, and the design in this document:
-
-[^dateThough]: As of the date in the title of this section.
-
- - The Orchestrator has no mechanism for consuming constraint files. The
-   `placement /constraint` operator command is the only mechanism for
-   introducing constraints at run-time.
-
- - The documentation does not introduce the loading of placement configurations
-   (`placement /load`). This operator commands is presently unsupported.
-
 # Placement Overview and Design Requirements
 This document defines the design of the placement system in the
 Orchestrator. The "placement problem" has been well explored in the literature,
@@ -351,6 +336,10 @@ Operator commands, in more detail than in volume IV:
 
    Writes an error to the operator if no application with name
    `APPLICATIONNAME` has been placed.
+
+ - `placement /load`: This exists, but do not use it without reading the source
+   (and the dire warnings of the consequences of its misuse). It's a prototype
+   placement loading mechanism for reading from dumps.
 
  - `dump /place`: Equivalent to `placement /dump = *`.
 
