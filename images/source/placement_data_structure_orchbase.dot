@@ -1,0 +1,177 @@
+digraph G {
+    fontname="Inconsolata";
+    fontsize=11;
+    margin=0;
+    nodesep=0.3;
+    rankdir="UD";
+    ranksep=0.2;
+
+    /* Class definitions (as graph nodes) */
+    node[color="#005500",
+         fillcolor="#DBFFDE:#A8FF8F",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0,
+         shape="rect",
+         style="filled"];
+
+    /* Class definitions (as graph nodes). */
+    OrchBase[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>OrchBase</TD></TR>
+<TR><TD ALIGN="LEFT">
++ pE : P_engine*<BR ALIGN="LEFT"/>
++ pPlacer : Placer*<BR ALIGN="LEFT"/>
+ ...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+"Base class" of<BR ALIGN="TEXT"/>
+the Orchestrator.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Apps_t[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Apps_t</TD></TR>
+<TR><TD ALIGN="LEFT">
++ Apps_t::Apps_m : Apps_t*<BR ALIGN="LEFT"/>
++ GraphI_v : vector&lt;GraphI_t*&gt;<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Table of loaded applications.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    P_engine[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>P_engine</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Encapsulates the hardware model.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    GraphI_t[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>GraphI_t</TD></TR>
+<TR><TD ALIGN="TEXT">
++ G : pdigraph&lt;nodeType=DevI_t*,<BR ALIGN="LEFT"/>
+               edgeType=MsgT_t*,<BR ALIGN="LEFT"/>
+               pinType=PinI_t*&gt;<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds the graph<BR ALIGN="TEXT"/>
+of devices.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    P_thread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>P_thread</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Represents a thread in<BR ALIGN="TEXT"/>
+the hardware model.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    DevI_t[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>DevI_t</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Represents a device<BR ALIGN="TEXT"/>
+in a task.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    node[color="#000055",
+         fillcolor="#DEDBFF:#8FA8FF"];
+
+    Placer[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Placer</TD></TR>
+<TR><TD ALIGN="LEFT">
++ deviceToThread : map&lt;DevI_t*,<BR ALIGN="LEFT"/>
+                       P_thread*&gt;<BR ALIGN="LEFT"/>
++ engine : P_engine*<BR ALIGN="LEFT"/>
++ placedGraphs : map&lt;GraphI_t*, Algorithm*&gt;<BR ALIGN="LEFT"/>
++ threadToDevices : map&lt;P_thread*,<BR ALIGN="LEFT"/>
+                        list&lt;DevI_t*&gt;&gt;<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ place(GraphI_t*, string) : float<BR ALIGN="LEFT"/>
++ unplace(GraphI_t*) : void<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Manages placement of tasks into<BR ALIGN="TEXT"/>
+the hardware model.
+</TD></TR></TABLE>>];
+
+    /* Relationship definitions (as graph edges) */
+    edge[color="#000000",
+         fontname="Inconsolata",
+         fontsize=11];
+
+    /* Containment. */
+    {edge[arrowhead="vee"];
+        OrchBase -> Placer[label=" OrchBase->pPlacer"];
+        Apps_t -> Apps_t[label=" Apps_t::Apps_m"];
+        OrchBase -> P_engine[label=" OrchBase->pE"];
+        Placer -> P_engine[label=" Placer->engine"];
+    }
+
+    /* Containment across ellipsis nodes. */
+    {node[label="...", margin=0, color="#FFFFFF", fillcolor="#FFFFFF"];
+        ellipsis_1;
+    }
+
+    {edge[arrowhead="none"];
+        P_engine -> ellipsis_1;
+    }
+
+    {edge[arrowhead="diamond"];
+        ellipsis_1 -> P_thread;
+    }
+
+    /* One-to-many relationships in a separate block. */
+    {edge[arrowhead="diamond"];
+        Apps_t -> GraphI_t[label=" Apps_t.GraphI_v"];
+        GraphI_t -> DevI_t[label=" GraphI_t.G\n (node)"];
+
+        /* Placement! */
+        {edge[color="#AA0000", style="dashed"];
+        Placer -> P_thread[label=" Placer.threadToDevices\n Placer.deviceToThread\n (Algorithm.do_it)",
+                           constraint=false];
+        Placer -> DevI_t[label=" Placer.threadToDevices\n Placer.deviceToThread\n (Algorithm.do_it)",
+                           constraint=false];
+        }
+    }
+
+    /* Rank hackery */
+    {rank="same";
+        P_engine -> Apps_t [style="invis"];
+        rankdir="LR";
+    }
+
+    {rank="same";
+        P_thread -> Placer -> DevI_t [style="invis"];
+        rankdir="LR";
+    }
+}
