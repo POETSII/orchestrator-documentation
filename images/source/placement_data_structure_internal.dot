@@ -145,10 +145,13 @@ of a placement algorithm.<BR ALIGN="TEXT"/>
     Result[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>Result (struct)</TD></TR>
 <TR><TD ALIGN="LEFT">
++ args : map&lt;string, string&gt;<BR ALIGN="LEFT"/>
 + maxDevicesPerThread : unsigned<BR ALIGN="LEFT"/>
 + maxEdgeCost : float<BR ALIGN="LEFT"/>
++ method : string<BR ALIGN="LEFT"/>
 + score : float<BR ALIGN="LEFT"/>
-+ when : string<BR ALIGN="LEFT"/>
++ startTime : string<BR ALIGN="LEFT"/>
++ endTime : string<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 The results of a placement<BR ALIGN="TEXT"/>
