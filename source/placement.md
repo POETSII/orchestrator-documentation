@@ -313,14 +313,16 @@ Operator commands, in more detail than in volume IV:
    to place the application named `APPLICATIONNAME` onto the hardware
    model. Writes an error to the operator if:
 
-   - There is no application loaded with the name APPLICATIONNAME.
+   - There is no application loaded with the name `APPLICATIONNAME`.
 
    - There is no hardware model loaded.
 
    - The application could not fit into the hardware model.
 
-   - A application with the name APPLICATIONNAME has already been placed (tells
-     the operator to unplace the application before proceeding).
+   - A application with the name `APPLICATIONNAME` has already been placed
+     (tells the operator to unplace the application before proceeding).
+
+   - An argument has been staged, which is not valid for this algorithm.
 
    Writes warnings to the operator for each constraint that could not be
    satisfied. If there were no errors, writes to the operator confirming the
@@ -330,6 +332,18 @@ Operator commands, in more detail than in volume IV:
    `tfill`, `sa` or something else that's implemented[^algorithmName]
 
 [^algorithmName]: Just don't call your algorithm "dump", or "place" (please).
+
+ - `placement /ARGUMENT = VALUE`: Sets an argument for a the next placement
+   algorithm. Overwrites an existing definition. Writes an error to the
+   operator if:
+
+   - There is no argument with the name `ARGUMENT`.
+
+   - The `VALUE` cannot be interpreted as a value of the correct type, as shown
+     in Appendix D.
+
+   Appendix D contains the list of supported arguments, their types, and the
+   algorithms to which they can be applied.
 
  - `placement /dump = APPLICATIONNAME`: Dumps placement information for the
    application named `APPLICATIONNAME` to the `Output/Placement`

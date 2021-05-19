@@ -1,8 +1,5 @@
 Stuff to do:
 
- - Add argument commands to "How the Operator Interacts with the Placement
-   System".
-
  - "So, you want to add a new algorithm?"
 
  - "So, you want to add a new constraint?"
