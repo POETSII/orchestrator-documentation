@@ -792,3 +792,23 @@ are:
 
  - `tfill`: A thread-filling placement, where the threads in the hardware model
    are filled in sequence. This placement mechanism is device-type aware.
+
+# Appendix D: Comprehensive List of Arguments
+Arguments are staged using the `placement /ARGUMENT = VALUE` operator
+command. The following table lists arguments and their type, as defined in
+`PlaceArgs::setup()`:
+
++---------------+------------+------------------+
+| Argument name | Value type | Valid algorithms |
++===============+============+==================+
+| `inpl`        | `bool`     | `sa`, `gc`       |
++---------------+------------+------------------+
+| `iter`        | `uint`     | `sa`, `gc`       |
++---------------+------------+------------------+
+
+ - `inpl` (in-place): When applied to an annealing algorithm, defines whether
+   or not to anneal on top of an existing placement configuration.
+
+ - `iter` (number of iterations): When applied to an annealing algorithm,
+   defines the number of iterations to anneal for (includes rejected
+   transformations).

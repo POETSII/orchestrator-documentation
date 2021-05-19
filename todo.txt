@@ -7,6 +7,4 @@ Stuff to do:
 
  - "So, you want to add a new constraint?"
 
- - Add arguments to appendix D
-
  - Delete this file
