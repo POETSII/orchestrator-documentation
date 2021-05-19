@@ -23,6 +23,7 @@ digraph G {
 + deviceToThread : map&lt;DevI_t*,<BR ALIGN="LEFT"/>
                        P_thread*&gt;<BR ALIGN="LEFT"/>
 + placedGraphs : map&lt;GraphI_t*, Algorithm*&gt;<BR ALIGN="LEFT"/>
++ args : placeArgs<BR ALIGN="LEFT"/>
 + threadToDevices : map&lt;P_thread*,<BR ALIGN="LEFT"/>
                         list&lt;DevI_t*&gt;&gt;<BR ALIGN="LEFT"/>
 ...<BR ALIGN="TEXT"/>
@@ -34,7 +35,7 @@ digraph G {
 + place(GraphI_t*, string) : float<BR ALIGN="LEFT"/>
 + unplace(GraphI_t*) : void<BR ALIGN="LEFT"/>
 - check_all_devices_mapped(GraphI_t*<BR ALIGN="LEFT"/>
-                           vector&lt;DevI_t*&gt;*) : bool<BR ALIGN="LEFT"/>
+      vector&lt;DevI_t*&gt;*) : bool<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Manages placement of tasks into<BR ALIGN="TEXT"/>
@@ -43,6 +44,27 @@ the hardware model.
 
     node[color="#550000",
          fillcolor="#FFDBDE:#FFA88F"]
+
+    PlaceArgs[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>PlaceArgs</TD></TR>
+<TR><TD ALIGN="LEFT">
+- args : map&lt;string, string&gt;<BR ALIGN="LEFT"/>
+- validAlgs : map&lt;string, set&lt;string&gt;&gt;<BR ALIGN="LEFT"/>
+- validTypes : map&lt;string, string&gt;<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ copy_to(map&lt;string,string&gt;&amp;) : void<BR ALIGN="LEFT"/>
++ clear() : void<BR ALIGN="LEFT"/>
++ get_bool(string) : bool<BR ALIGN="LEFT"/>
++ get_uint(string) : unsigned<BR ALIGN="LEFT"/>
++ is_set(string) : bool<BR ALIGN="LEFT"/>
++ set(string, string) : bool<BR ALIGN="LEFT"/>
++ validate_args(string) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds and validates arguments<BR ALIGN="TEXT"/>
+for placement algorithms.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
 
     MaxDevicesPerThread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>MaxDevicesPerThread:Constraint</TD></TR>
@@ -166,6 +188,7 @@ Does thread filling.<BR ALIGN="TEXT"/>
         Constraint -> constraintCategory[label=" Constraint.category"];
         Algorithm -> Result[label=" Algorithm.result"];
         Algorithm -> Placer[label=" Algorithm->placer"];
+        Placer -> PlaceArgs[label=" Placer.args"];
     }
 
     /* One-to-many relationships in a separate block. */
