@@ -44,8 +44,8 @@ the hardware model.
     node[color="#550000",
          fillcolor="#FFDBDE:#FFA88F"]
 
-    MaxDeviceDistance[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>MaxDeviceDistance:Constraint</TD></TR>
+    MaxDevicesPerThread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>MaxDevicesPerThread:Constraint</TD></TR>
 <TR><TD ALIGN="TEXT">
 ...<BR ALIGN="TEXT"/>
 </TD></TR>
@@ -53,8 +53,8 @@ the hardware model.
 ...<BR ALIGN="TEXT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
-Constrains the maximum distance<BR ALIGN="TEXT"/>
-between two connected devices.<BR ALIGN="TEXT"/>
+Constrains the number of devices<BR ALIGN="TEXT"/>
+that can be placed on a thread.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
     Constraint[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -90,8 +90,8 @@ And more I've not<BR ALIGN="LEFT"/>
 thought up yet.<BR ALIGN="LEFT"/>
 </TD></TR></TABLE>>];
 
-    MaxDevicesPerThread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>MaxDevicesPerThread:Constraint</TD></TR>
+    MaxThreadsPerCore[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>MaxThreadsPerCore:Constraint</TD></TR>
 <TR><TD ALIGN="TEXT">
 ...<BR ALIGN="TEXT"/>
 </TD></TR>
@@ -100,7 +100,7 @@ thought up yet.<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Constrains the maximum number of<BR ALIGN="TEXT"/>
-devices that can be placed on any thread.<BR ALIGN="TEXT"/>
+threads each core can use.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
     Algorithm[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -128,7 +128,8 @@ of a placement algorithm.<BR ALIGN="TEXT"/>
 + when : string<BR ALIGN="LEFT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
-The results of a placement algorithm execution.<BR ALIGN="TEXT"/>
+The results of a placement<BR ALIGN="TEXT"/>
+algorithm execution.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
     SimulatedAnnealing[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -169,42 +170,21 @@ Does thread filling.<BR ALIGN="TEXT"/>
 
     /* One-to-many relationships in a separate block. */
     {edge[arrowhead="diamond"];
-        Placer -> Constraint[label=" Placer.constraints", dir="reverse"];
-        Placer -> Algorithm[label=" Placer.placedGraphs"];
+        Placer -> Constraint[label=" Placer.constraints", constraint="false"];
+        Placer -> Algorithm[label=" Placer.placedGraphs", constraint="false"];
     }
 
     /* Inheritance */
     {edge[arrowhead="onormal", label=" (inherits)"];
-        //ThreadFilling -> Algorithm;
-        Algorithm -> ThreadFilling[arrowtail="onormal", dir="back"];
+        ThreadFilling -> Algorithm;
         SimulatedAnnealing -> Algorithm;
+        MaxThreadsPerCore -> Constraint;
         MaxDevicesPerThread -> Constraint;
-        MaxDeviceDistance -> Constraint;
     }
 
-    /* Rank hackery
-    {rank="same";
-        SimulatedAnnealing -> ThreadFilling [style="invis"];
-        rankdir="LR";
-    }
-
-    {rank="same";
-        Algorithm -> Result [style="invis"];
-        rankdir="LR";
-    }
-
-    {rank="same";
-        Constraint -> constraintCategory [style="invis"];
-        rankdir="LR";
-    }
-
-    {rank="same";
-        MaxDeviceDistance -> MaxDevicesPerThread [style="invis"];
-        rankdir="LR";
-    }
-
+    /* Rank hackery */
     {rank="same";
         Algorithm -> Placer -> Constraint [style="invis"];
-        rankdir="UD";
-        }*/
+        rankdir="LR";
+    }
 }
