@@ -54,13 +54,26 @@ though many more may be contrived. With this in mind, the design requirements
    modifications.
 
 # Data Structures
-Figure 1 shows the data structure for the placement system. A description of
-each of these components follows.
+Figures 1 and 2 show the data structure for the placement system. A description
+of each of these components follows, but read the figure captions for an
+introduction.
 
-![Abridged data structure diagram, showing how placement may be conducted in
-the Orchestrator. Does not include core and device-type relationships, and
-certain constraints and
-algorithms.](images/placement_data_structure.png)
+![Abridged data structure diagram, showing how placement is connected to the
+wider Orchestrator. The `Placer` is central to placement in the
+Orchestrator. It holds the relation between devices (`DevI_t`s), and the
+threads they are placed on (`P_thread`), by a pair of maps. These maps are
+populated by `Algorithm`s, which are shown in Figure 2, and can be invoked by
+the Orchestrator operator.](images/placement_data_structure_orchbase.png)
+
+![Abridged data structure diagram, showing the internal workings of
+placement. When the Orchestrator operator wants to place an algorithm, the
+`Placer` creates an `Algorithm` object of the appropriate type
+(e.g. `SimulatedAnnealing`). The `Placer` then calls the `do_it` method, which
+populates the pair of maps in Figure 1. Each `Algorithm` is stored with a
+`Result` object, which is read when the operator dumps placement
+information. Optionally, `Constraint`s and arguments (stored in `PlaceArgs`)
+can be applied to alter placement
+behaviour.](images/placement_data_structure_internal.png)
 
 ## Placer
 The `Placer` encapsulates placement behaviour in the Orchestrator. The
