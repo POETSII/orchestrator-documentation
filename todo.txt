@@ -1,7 +1,0 @@
-Stuff to do:
-
- - "So, you want to add a new algorithm?"
-
- - "So, you want to add a new constraint?"
-
- - Delete this file
