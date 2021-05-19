@@ -812,13 +812,13 @@ Arguments are staged using the `placement /ARGUMENT = VALUE` operator
 command. The following table lists arguments and their type, as defined in
 `PlaceArgs::setup()`:
 
-+---------------+------------+------------------+
-| Argument name | Value type | Valid algorithms |
-+===============+============+==================+
-| `inpl`        | `bool`     | `sa`, `gc`       |
-+---------------+------------+------------------+
-| `iter`        | `uint`     | `sa`, `gc`       |
-+---------------+------------+------------------+
++---------------+------------+------------+------------------+
+| Argument name | Value type | Default    | Valid algorithms |
++===============+============+============+==================+
+| `inpl`        | `bool`     | `false`    | `sa`, `gc`       |
++---------------+------------+------------+------------------+
+| `iter`        | `uint`     | `int(1e8)` | `sa`, `gc`       |
++---------------+------------+------------+------------------+
 
  - `inpl` (in-place): When applied to an annealing algorithm, defines whether
    or not to anneal on top of an existing placement configuration.
