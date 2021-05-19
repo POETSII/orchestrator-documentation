@@ -105,8 +105,6 @@ application is placed onto. These three maps are intended to be written to only
 by the placer, and read from other systems (there is no access control, because
 time is short).
 
-### Placer and Applications/Algorithms/Constraints
-
 `Placer` objects hold a map of applications that have been placed on them,
 along with the `Algorithm` object that performed the placement
 (`std::map<GraphI_t*, Algorithm*> placedGraphs`). Each application may be
@@ -258,6 +256,31 @@ Given that application graph instances (`GraphI_t`) can share device types
 (`DevT_t`), the placer supports these rules by defining the structure
 `UniqueDevT`, which is a combination of a device's (`DevI_t`) type (`DevT_t`)
 and graph instance (`GraphI_t`).
+
+## Arguments (`PlaceArgs`)
+Some algorithms can be passed arguments to alter their behaviour. The
+`PlaceArgs` object holds all arguments set in its `args` field, which are
+deployed to the next placement algorithm run. Arguments, their values, and
+their permitted types, are all stored as strings. `PlaceArgs` contains three
+maps:
+
+ - `args`: Maps set (verb) arguments to their values. Entries are inserted via
+   the `set` method, which also performs validation (using `validTypes`).
+
+ - `validAlgs`: Maps algorithm names to a set of arguments. For a given
+   algorithm, arguments that aren't in that set aren't valid.
+
+ - `validTypes`: Maps arguments to their types, where types are strings.
+
+When the `Placer` invokes an `Algorithm`, the set arguments (in `args`) are
+checked for validity with respect to the algorithm, using the `validate_args`
+method (which in turn uses `validArgs`). If the operator attempts to set an
+argument with an invalid type, or if an argument is not valid for the
+particular algorithm invoked, then the operator is warned, and no placement is
+performed.
+
+Appendix D contains the list of arguments, their types, and which algorithms
+they apply to.
 
 # How the Operator Interacts with the Placement System
 By way of quick example, to place an application named `APPLICATIONNAME` the
