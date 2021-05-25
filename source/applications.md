@@ -1830,7 +1830,7 @@ SUPSTATE(messagesPerDevice) = \
     std::vector<uint8_t>(GRAPHPROPERTIES(numDevices), 0);
 SUPSTATE(resultFile) = fopen("ring_test_output", "w");
         ]]></OnInit>
-        <SupervisorInPin messageTypeId="exfiltration">
+        <SupervisorInPin id="" messageTypeId="exfiltration">
           <OnReceive><![CDATA[
 /* If the application has failed, don't act on any more messages. */
 if (!SUPSTATE(failed))
@@ -2216,7 +2216,7 @@ SUPSTATE(messagesPerDevice) = \
     std::vector<uint8_t>(GRAPHPROPERTIES(numDevices), 0);
 SUPSTATE(resultFile) = fopen("ring_test_output", "w");
         ]]></OnInit>
-        <SupervisorInPin messageTypeId="exfiltration">
+        <SupervisorInPin id="" messageTypeId="exfiltration">
           <OnReceive><![CDATA[
 /* If the application has failed, don't act on any more messages. */
 if (!SUPSTATE(failed))
