@@ -241,8 +241,9 @@ Once executed, the Orchestrator waits at the Orchestrator operator prompt:
 POETS>
 ~~~
 
-at which commands can be executed. Once you are finished with your Orchestrator
-session, command:
+at which commands can be executed. If `rlwrap` is installed on the machine,
+command history will be remembered, and can be recalled by pressing
+`<UP>`. Once you are finished with your Orchestrator session, command:
 
 ~~~ {.bash}
 exit
