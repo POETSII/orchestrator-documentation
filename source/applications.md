@@ -1785,7 +1785,7 @@ device type alongside the ring element normal device type:
       <DeviceType id="ring_element">
       ...
       </DeviceType>
-      <SupervisorType>
+      <SupervisorType id="">
       </SupervisorType>
     </DeviceTypes>
   </GraphType>
@@ -1804,7 +1804,7 @@ supervisor type definition is:
 
 ~~~ {.xml}
 ...
-      <SupervisorType>
+      <SupervisorType id="">
         <!-- There is one supervisor device type in a given application. This
              particular supervisor is written assuming there is only one
              instance for simplicity.
@@ -2190,7 +2190,7 @@ return DEVICESTATE(sendMessage);
         ]]></OnInit>
       </DeviceType>
 
-      <SupervisorType>
+      <SupervisorType id="">
         <!-- There is one supervisor device type in a given application. This
              particular supervisor is written assuming there is only one
              instance for simplicity.
