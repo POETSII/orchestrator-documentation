@@ -895,5 +895,8 @@ are:
 
  - `sa`: The simulated annealing implementation described in section 5.
 
+ - `spread`: A spreading placement, where devices are distributed as evenly as
+   possible across all threads. This placement mechanism is device-type aware.
+
  - `tfill`: A thread-filling placement, where the threads in the hardware model
    are filled in sequence. This placement mechanism is device-type aware.
