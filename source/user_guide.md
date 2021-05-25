@@ -813,6 +813,9 @@ documentation for a more detailed description of the commands that follow.
    of iterations can be defined at compile time (and will later be more easily
    configurable).
 
+ - `placement /spread`: Given a typelinked application graph (or multiple),
+   places it as evenly as possible over all threads in the entire engine.
+
  - `placement /tfill`: Given a typelinked application graph (or multiple),
    places it onto the hardware by filling each thread in sequence.
 
