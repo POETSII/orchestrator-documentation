@@ -679,9 +679,20 @@ configured staging directory (`Output/Composer` in the default configuration).
    be compiled into application binaries (both for normal devices and
    supervisor devices).
 
- - `compose /build`: Given a generated application graph instance (or
-   multiple), builds instruction and data binaries to be loaded onto the POETS
+ - `compose /compile`: Given a generated application graph instance (or
+   multiple), compiles instruction and data binaries to be loaded onto the POETS
    Engine, and produces a binary representation of the application supervisor.
+
+ - `compose /bypass`: Bypasses most of the compose process provided that the
+   compiled binaries for the application already exist, allowing the operator
+   to reuse binaries from a previous run or to use binaries compiled elsewhere. 
+   The loaded application must be identical in terms of definition and placement 
+   for this to work - there are no checks beyond binary existance.
+
+ - `compose /args`: Allows the operator to pass additional arguments to the
+   compiler(s) used to build the application binaries.
+
+ - `compose /dump`: Dumps diagnostic data regardign the Composer to the microlog.
 
 ## Deploy (`deploy`)
 

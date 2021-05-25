@@ -192,7 +192,7 @@ mutexes):
 
  - The four above methods are also defined for the `MPIApplicationQueue` queue
    (using `PMsg_p` messages), for `BackendOutputQueue` (using
-   `std::pair<uint32_t, P_Pkt_t>` addressed packets), for `BackendInputQueue`
+   `P_Addr_Pkt_t` addressed packets), for `BackendInputQueue`
    (using `P_Pkt_t` packets), and for `DebugInputQueue` (using `P_Debug_Pkt_t`
    debug packets, see the Debugging section).
 
@@ -321,9 +321,8 @@ no other information about the application yet.
 |                 |    `P_Pkt_t> packets` |                                   |
 +-----------------+-----------------------+-----------------------------------+
 | `PKTS`          | 0. `std::vector<`     | Queues a series of destination-   |
-|                 |    `std::pair<`       | hardware-address and packet pairs |
-|                 |    `uint32_t,`        | into the backend.                 |
-|                 |    `P_Pkt_t>> packets`|                                   |
+|                 |    `P_Addr_Pkt_t`     | hardware-address and packet       |
+|                 |    `> packets`        | structs into the backend.         |
 +-----------------+-----------------------+-----------------------------------+
 | `DUMP`          | 0. `std::string path` | Dumps Mothership process state    |
 |                 |                       | to a file at `path`.              |
@@ -616,11 +615,27 @@ Mothership, as well as external devices elsewhere. They are:
 
     - `int (*init)()`: Called when the application is started.
 
-    - `int (*call)(PMsg_p, PMsg_p)`: The entry point for all incoming
-      supervisor packets while the application is running.
+    - `int (*call)(std::vector<P_Pkt_t>&, std::vector<P_Addr_Pkt_t>&)`: The
+      entry point for all incoming supervisor packets while the application is
+      running.
 
     - `SupervisorApi* (*getApi)()`: Used to provision the Supervisor API (see
       below).
+      
+    - `uint64_t (*getAddr)(uint32_t)`: Used to get the full symbolic address
+      of a device from its Supervisor-unique index, which is sent in the
+      `pinAddr` field of each log packet.
+      
+    - `const SupervisorDeviceInstance_t* (*getInstance)(uint32_t)`: Used to  
+      get a pointer to the `SupervisorDeviceInstance_t` struct for the device
+      identified by the specified index. A `SupervisorDeviceInstance_t` 
+      contains the address components (and temporarily the name) of a
+      device.
+      
+    - `void (*getAddrVector)(std::vector<SupervisorDeviceInstance_t>&)`: 
+      Used to populate a vector with a copy of the Supervisor's `DeviceVector`.
+      This method must be used with care as the `DeviceVector` can be very big.
+      
 
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
@@ -684,8 +699,8 @@ Supervisors. It has the following fields:
    the Mothership when the supervisor is loaded. This is called by the
    `post` API call.
 
- - `void (*push_packets)(Mothership* mship, std::vector<std::pair<uint32_t,
-   P_Pkt_t> >& packets)`: A function pointer provisioned by the Mothership when
+ - `void (*push_packets)(Mothership* mship, std::vector<P_Addr_Pkt_t>& packets)`
+   : A function pointer provisioned by the Mothership when
    the supervisor is loaded. Used by non-user-facing logic to send packets from
    the supervisor device into the compute fabric.
 
@@ -722,7 +737,7 @@ manifests as a series of log packets (with a `P_CNC_LOG` opcode) sent from the
 logging device to the Mothership, where multiple packets are sent for each log
 message. The `LogPacketManager` stores these packets until a complete message
 is formed, at which point the message is `Post`-ed and forgotten. Packets are
-stored on a per-compute-thread basis.
+stored on a per-device basis.
 
 # Debugging
 In addition to the acknowledgement messages that the Mothership generates while
