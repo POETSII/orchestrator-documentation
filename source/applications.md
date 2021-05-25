@@ -983,20 +983,6 @@ attributes:
 
  - `id` (must occur exactly once): Currently unused.
 
- - `SupervisorInPin` (must occur at most once): Defines the `:SupervisorType -
-   SupervisorInPin` to be used to consume incoming messages from normal devices
-   over implicit connections. If this attribute is used, it must match the
-   value of the `id` of a `:SupervisorType - SupervisorInPin`. If this
-   attribute is not used, the implicit connections from normal devices to
-   their supervisor device are disabled in this application.
-
- - `SupervisorOutPin` (must occur at most once): Defines the `:SupervisorType -
-   SupervisorOutPin` to be used to send messages to normal devices over
-   implicit connections. If this attribute is used, it must match the value of
-   the `id` of a `:SupervisorType - SupervisorOutPin`. If this attribute is not
-   used, the implicit connections from supervisor devices to their normal
-   devices are disabled in this application.
-
 **Graphs/GraphType/DeviceTypes/SupervisorType/Properties**
 
 Defines supervisor-device-type-level properties (constant throughout
@@ -1029,14 +1015,8 @@ attributes are valid.
 
 Contains elements that together define an input pin type.
 
-This element may occur any number of times in each `:SupervisorType:` section
-(once per output pin type), though each occurence must have a unique `id`
-value. Valid attributes:
-
- - `id` (must occur exactly once): Used by edge instances to define the pin on
-   which a message is to be received by a supervisor device. Also may be used
-   by the `SupervisorInPin` attribute to mark a pin as being the input pin for
-   all implicit connections.
+This element may occur one of fewer times in each `:SupervisorType:`
+section. Valid attributes:
 
  - `messageTypeId` (must occur exactly once): Defines the type of message to be
    received by this pin. Must match with the `id` attribute of a message type
@@ -1058,14 +1038,8 @@ attributed are valid.
 
 Contains elements that together define an output pin type.
 
-This element may occur any number of times in each `:SupervisorType:` section
-(once per output pin type), though each occurence must have a unique `id`
-value. Valid attributes:
-
- - `id` (must occur exactly once): Used by edge instances to define the pin on
-   which a message is to be sent by a supervisor device. Also may be used by
-   the `SupervisorOutPin` attribute to mark a pin as being the output pin for
-   all implicit connections.
+This element may occur one or fewer times in each `:SupervisorType:`
+section. Valid attributes:
 
  - `messageTypeId` (must occur exactly once): Defines the type of message to be
    sent by this pin. Must match with the `id` attribute of a message type
@@ -1811,7 +1785,7 @@ device type alongside the ring element normal device type:
       <DeviceType id="ring_element">
       ...
       </DeviceType>
-      <SupervisorType id="" SupervisorInPin="tracker">
+      <SupervisorType>
       </SupervisorType>
     </DeviceTypes>
   </GraphType>
@@ -1819,18 +1793,18 @@ device type alongside the ring element normal device type:
 </Graphs>
 ~~~
 
-This supervisor type holds a single input pin ("`tracker`"), so that ring
-element devices can send messages to it using their implicit connection. When
-the supervisor device receives a message, it increments a counter indexed by
-the sender. Then, if it has received $N$ messages from all devices, it opens a
-file and writes "1" to it. If the supervisor receives too many messages from a
-given device, it instead opens a file and writes "0" to it, denoting
-application failure. If the application fails in this way, it doesn't process
-any more messages. The full supervisor type definition is:
+This supervisor type holds a single input pin, so that ring element devices can
+send messages to it using their implicit connection. When the supervisor device
+receives a message, it increments a counter indexed by the sender. Then, if it
+has received $N$ messages from all devices, it opens a file and writes "1" to
+it. If the supervisor receives too many messages from a given device, it
+instead opens a file and writes "0" to it, denoting application failure. If the
+application fails in this way, it doesn't process any more messages. The full
+supervisor type definition is:
 
 ~~~ {.xml}
 ...
-      <SupervisorType id="" SupervisorInPin="tracker">
+      <SupervisorType>
         <!-- There is one supervisor device type in a given application. This
              particular supervisor is written assuming there is only one
              instance for simplicity.
@@ -1856,7 +1830,7 @@ SUPSTATE(messagesPerDevice) = \
     std::vector<uint8_t>(GRAPHPROPERTIES(numDevices), 0);
 SUPSTATE(resultFile) = fopen("ring_test_output", "w");
         ]]></OnInit>
-        <SupervisorInPin id="tracker" messageTypeId="exfiltration">
+        <SupervisorInPin messageTypeId="exfiltration">
           <OnReceive><![CDATA[
 /* If the application has failed, don't act on any more messages. */
 if (!SUPSTATE(failed))
@@ -1919,11 +1893,10 @@ which is called when either the Orchestrator is closed down, or the application
 is commanded to stop by the operator (see Orchestrator Documentation Volume
 IV).
 
-The `SupervisorInPin` section introduces an input pin type named "`tracker`",
-which consumes a (new type of) "`exfiltration`" messages. The source in the
-`OnReceive` element, analogous to `OnReceive` elements for normal devices,
-encapsulates the logic the supervisor needs to execute when it receives a
-message.
+The `SupervisorInPin` section introduces an input pin type, which consumes a
+(new type of) "`exfiltration`" messages. The source in the `OnReceive` element,
+analogous to `OnReceive` elements for normal devices, encapsulates the logic
+the supervisor needs to execute when it receives a message.
 
 This logic requires another graph-level property to identify the number of
 normal devices in the application. This property must be initialised without a
@@ -2217,7 +2190,7 @@ return DEVICESTATE(sendMessage);
         ]]></OnInit>
       </DeviceType>
 
-      <SupervisorType id="" SupervisorInPin="tracker">
+      <SupervisorType>
         <!-- There is one supervisor device type in a given application. This
              particular supervisor is written assuming there is only one
              instance for simplicity.
@@ -2243,7 +2216,7 @@ SUPSTATE(messagesPerDevice) = \
     std::vector<uint8_t>(GRAPHPROPERTIES(numDevices), 0);
 SUPSTATE(resultFile) = fopen("ring_test_output", "w");
         ]]></OnInit>
-        <SupervisorInPin id="tracker" messageTypeId="exfiltration">
+        <SupervisorInPin messageTypeId="exfiltration">
           <OnReceive><![CDATA[
 /* If the application has failed, don't act on any more messages. */
 if (!SUPSTATE(failed))
