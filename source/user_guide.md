@@ -435,8 +435,9 @@ load /app = +"ring_test.xml"
 ~~~
 
 The `+` operator informs the Orchestrator to look in the configured directory
-(the root directory of the Orchestrator in the default configuration) for the
-application file. The Orchestrator should respond with something like:
+for the application file. By default, this is the root directory of the
+Orchestrator, but may be configured using the `path /apps` command described in
+Appendix A.
 
 ~~~ {.bash}
 POETS> 14:06:47.57: 235(I) Application file ../ring_test.xml loading...
