@@ -452,11 +452,11 @@ Device behaviours:
    for each device it manages in sequence.
 
  - `OnIdle`: Invoked when there is nothing to receive, and nothing to send. The
-   Softswitch will execute the `OnIdle` behaviour for each device it manages in
-   sequence, until either a packet can be received, or `OnIdle` has been
-   executed for all hosted devices. If any of the `OnIdle`
-   application-writer-supplied fragments returned a non-zero unsigned value,
-   that indicates the device may "want" to send a packet.
+   Softswitch will execute the `OnDeviceIdle` behaviour for each device it
+   manages in sequence, until either a packet can be received, or
+   `OnDeviceIdle` has been executed for all hosted devices. If any of the
+   `OnDeviceIdle` application-writer-supplied fragments returned a non-zero
+   unsigned value, that indicates the device may "want" to send a packet.
 
 #### Properties and State
 
