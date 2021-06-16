@@ -64,7 +64,8 @@ ALL_IMAGE_TARGETS := $(GRAPH_TARGETS_DIR)/addressing_structure.png \
                      $(GRAPH_TARGETS_DIR)/mailbox_board_interaction.png \
                      $(GRAPH_TARGETS_DIR)/mothership_data_structure.png \
                      $(GRAPH_TARGETS_DIR)/mothership_producer_consumer.png \
-                     $(GRAPH_TARGETS_DIR)/placement_design_data_structure.png
+                     $(GRAPH_TARGETS_DIR)/placement_data_structure_orchbase.png \
+                     $(GRAPH_TARGETS_DIR)/placement_data_structure_internal.png
 .NOT_INTERMEDIATE: $(ALL_IMAGE_TARGETS)
 
 # Define targets and backmatter dependencies. Backmatter dependencies are stuck

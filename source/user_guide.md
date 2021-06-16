@@ -812,6 +812,12 @@ documentation for a more detailed description of the commands that follow.
    condition). This is similar to `placement \sa`, but only accepts superior
    mappings.
 
+ - `placement /inpl = ARG`: Prior to running a `sa` or `gc` algorithm, if `ARG`
+   is `true`, that algorithm will operate over an existing placement.
+
+ - `placement /iter = ARG`: Prior to running a `sa` or `gc` algorithm, if `ARG`
+   is an unsigned integer, set the number of iterations for the algorithm.
+
  - `placement /rand`: Given a typelinked application graph (or multiple),
    places it by mapping devices to threads at random.
 

@@ -106,7 +106,6 @@ in a task.<BR ALIGN="TEXT"/>
     Placer[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>Placer</TD></TR>
 <TR><TD ALIGN="LEFT">
-+ constraints : list&lt;Constraint*&gt;<BR ALIGN="LEFT"/>
 + deviceToThread : map&lt;DevI_t*,<BR ALIGN="LEFT"/>
                        P_thread*&gt;<BR ALIGN="LEFT"/>
 + engine : P_engine*<BR ALIGN="LEFT"/>
@@ -116,128 +115,13 @@ in a task.<BR ALIGN="TEXT"/>
 ...<BR ALIGN="TEXT"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
-+ compute_fitness(GraphI_t*) : float<BR ALIGN="LEFT"/>
-+ Dump(FILE*) : void<BR ALIGN="LEFT"/>
-+ load_constraint_file(string) : void<BR ALIGN="LEFT"/>
 + place(GraphI_t*, string) : float<BR ALIGN="LEFT"/>
 + unplace(GraphI_t*) : void<BR ALIGN="LEFT"/>
-- check_all_devices_mapped(GraphI_t*<BR ALIGN="LEFT"/>
-                           vector&lt;DevI_t*&gt;*) : bool<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
 </TD></TR>
 <TR><TD ALIGN="TEXT">
 Manages placement of tasks into<BR ALIGN="TEXT"/>
 the hardware model.
-</TD></TR></TABLE>>];
-
-    MaxDeviceDistance[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>MaxDeviceDistance:Constraint</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-Constrains the maximum distance<BR ALIGN="TEXT"/>
-between two connected devices.<BR ALIGN="TEXT"/>
-</TD></TR></TABLE>>];
-
-    Constraint[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>Constraint</TD></TR>
-<TR><TD ALIGN="LEFT">
-+ category : const constraintCategory<BR ALIGN="LEFT"/>
-+ mandatory: bool<BR ALIGN="LEFT"/>
-+ penalty : float<BR ALIGN="LEFT"/>
-+ satisfied : bool<BR ALIGN="LEFT"/>
-+ gi : GraphI_t* (PNULL is valid)<BR ALIGN="LEFT"/>
-</TD></TR>
-<TR><TD ALIGN="LEFT">
-+ virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
-+ virtual is_satisfied(Placer*) : bool<BR ALIGN="LEFT"/>
-+ virtual is_satisfied_delta(Placer*,<BR ALIGN="LEFT"/>
-                             vector&lt;DevI_t*&gt;) : bool<BR ALIGN="LEFT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-Represents a constraint imposed on the place-<BR ALIGN="TEXT"/>
--ment system (for one task, or for all tasks).<BR ALIGN="TEXT"/>
-</TD></TR></TABLE>>];
-
-    placeholder_1[style="invis"];
-    placeholder_2[style="invis"];
-
-    constraintCategory[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>constraintCategory (enum)</TD></TR>
-<TR><TD ALIGN="LEFT">
-MaxDevicePerThread<BR ALIGN="LEFT"/>
-FixDevice<BR ALIGN="LEFT"/>
-ConstrainDeviceDistance<BR ALIGN="LEFT"/>
-And more I've not<BR ALIGN="LEFT"/>
-thought up yet.<BR ALIGN="LEFT"/>
-</TD></TR></TABLE>>];
-
-    MaxDevicesPerThread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>MaxDevicesPerThread:Constraint</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-Constrains the maximum number of<BR ALIGN="TEXT"/>
-devices that can be placed on any thread.<BR ALIGN="TEXT"/>
-</TD></TR></TABLE>>];
-
-    Algorithm[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>Algorithm</TD></TR>
-<TR><TD ALIGN="LEFT">
-+ placer : Placer*<BR ALIGN="LEFT"/>
-+ result : Result<BR ALIGN="LEFT"/>
-</TD></TR>
-<TR><TD ALIGN="LEFT">
-+ Algorithm(Placer*)<BR ALIGN="LEFT"/>
-+ virtual do_it(GraphI_t*) : float<BR ALIGN="LEFT"/>
-+ virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-Represents the execution<BR ALIGN="TEXT"/>
-of a placement algorithm.<BR ALIGN="TEXT"/>
-</TD></TR></TABLE>>];
-
-    Result[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>Result (struct)</TD></TR>
-<TR><TD ALIGN="LEFT">
-+ maxDevicesPerThread : unsigned<BR ALIGN="LEFT"/>
-+ maxEdgeCost : float<BR ALIGN="LEFT"/>
-+ score : float<BR ALIGN="LEFT"/>
-+ when : string<BR ALIGN="LEFT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-The results of a placement algorithm execution.<BR ALIGN="TEXT"/>
-</TD></TR></TABLE>>];
-
-    SimulatedAnnealing[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>SimulatedAnnealing:Algorithm</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-Does simulated annealing.<BR ALIGN="TEXT"/>
-</TD></TR></TABLE>>];
-
-    ThreadFilling[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
-<TR><TD>ThreadFilling:Algorithm</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
-</TD></TR>
-<TR><TD ALIGN="TEXT">
-Does thread filling.<BR ALIGN="TEXT"/>
 </TD></TR></TABLE>>];
 
     /* Relationship definitions (as graph edges) */
@@ -249,11 +133,8 @@ Does thread filling.<BR ALIGN="TEXT"/>
     {edge[arrowhead="vee"];
         OrchBase -> Placer[label=" OrchBase->pPlacer"];
         Apps_t -> Apps_t[label=" Apps_t::Apps_m"];
-        Constraint -> constraintCategory[label=" Constraint.category"];
-        Algorithm -> Result[label=" Algorithm.result"];
         OrchBase -> P_engine[label=" OrchBase->pE"];
         Placer -> P_engine[label=" Placer->engine"];
-        Algorithm -> Placer[label=" Algorithm->placer"];
     }
 
     /* Containment across ellipsis nodes. */
@@ -272,8 +153,6 @@ Does thread filling.<BR ALIGN="TEXT"/>
     /* One-to-many relationships in a separate block. */
     {edge[arrowhead="diamond"];
         Apps_t -> GraphI_t[label=" Apps_t.GraphI_v"];
-        Placer -> Constraint[label=" Placer.constraints"];
-        Placer -> Algorithm[label=" Placer.placedGraphs"];
         GraphI_t -> DevI_t[label=" GraphI_t.G\n (node)"];
 
         /* Placement! */
@@ -285,15 +164,6 @@ Does thread filling.<BR ALIGN="TEXT"/>
         }
     }
 
-    /* Inheritance */
-    {edge[arrowhead="onormal", label=" (inherits)"];
-        //ThreadFilling -> Algorithm;
-        Algorithm -> ThreadFilling[arrowtail="onormal", dir="back"];
-        SimulatedAnnealing -> Algorithm;
-        MaxDevicesPerThread -> Constraint;
-        MaxDeviceDistance -> Constraint;
-    }
-
     /* Rank hackery */
     {rank="same";
         P_engine -> Apps_t [style="invis"];
@@ -303,19 +173,5 @@ Does thread filling.<BR ALIGN="TEXT"/>
     {rank="same";
         P_thread -> Placer -> DevI_t [style="invis"];
         rankdir="LR";
-    }
-
-
-    {rank="same";
-        MaxDeviceDistance -> Constraint -> placeholder_1 -> Algorithm ->
-            ThreadFilling [style="invis"];
-        rankdir="LR";
-    }
-
-    {edge[style="invis"];
-        ThreadFilling -> SimulatedAnnealing;
-        MaxDeviceDistance -> MaxDevicesPerThread;
-        Placer -> placeholder_1;
-        placeholder_1 -> placeholder_2;
     }
 }
