@@ -1,10 +1,10 @@
 % Design of the Orchestrator Placement System
 
 # Placement Overview and Design Requirements
-This document adheres to the placement system in the Orchestrator. The
-"placement problem" has been well explored in the literature, though there is
-novelty in POETS placement, as the hardware model is hierarchical in nature,
-thus resulting in an unusual search codomain[^programmableRouting]. Placing an
+This document explains the placement system in the Orchestrator. The "placement
+problem" has been well explored in the literature, though there is novelty in
+POETS placement, as the hardware model is hierarchical in nature, thus
+resulting in an unusual search codomain[^programmableRouting]. Placing an
 application (formally, an application graph instnace) requires knowledge of the
 hardware model, as well as the structure and properties of the application.
 
