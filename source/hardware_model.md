@@ -208,9 +208,9 @@ serviced by the first mailbox in the first board (the origin thread), allow
    respective level of the hierarchy.
 
 ## Iteration Example
-In bucket-filling placement, devices are mapped to threads in order (like
-pouring water into a succession of buckets). This placement method must respect
-the constraint that core pairs can only contain the same type of device
+In thread-filling placement, devices are mapped to threads in order (like
+"pouring" devices into threads in succession). This placement method must
+respect the constraint that core pairs can only contain the same type of device
 (because their instruction memory spaces are shared).
 
 Without using `HardwareIterator`, this can be achieved through the following
@@ -1214,11 +1214,11 @@ Members:
    all threads that can be run by this core. Threads are indexed by the thread
    component ($C_{\mathrm{THREAD}}$) of their hardware address.
 
- - `std::string dataBinary`: Holds the path to the data binary (to be)/deployed
-   to this core.
+ - `std::string dataBinary`: Holds the filename of the data binary (to
+   be)/deployed to this core.
 
- - `std::string instructionBinary`: Holds the path to the instruction binary
-   (to be)/deployed to this core.
+ - `std::string instructionBinary`: Holds the filename of the instruction
+   binary (to be)/deployed to this core.
 
  - `unsigned int dataMemory`: Amount of memory available for a data binary.
 

@@ -102,7 +102,8 @@ threads with fast spinners. The threads are:
    poorly-written supervisor[^malicious] floods with MPI messages, it will not
    be possible for the operator to stop the application in reasonable time,
    potentially compromising the running of other applications on the compute
-   fabric. It calls `CommonBase::MPISpinner`. This is a fast spinner.
+   fabric. It calls `CommonBase::MPISpinner` and, when idle, executes idle
+   logic from supervisor devices. This is a fast spinner.
 
  - `MPICncResolver`: Responsible for draining the `MPICncQueue` queue, and
    enacting those messages in sequence as appropriate. This is a slow spinner.
@@ -191,13 +192,20 @@ mutexes):
 
  - The four above methods are also defined for the `MPIApplicationQueue` queue
    (using `PMsg_p` messages), for `BackendOutputQueue` (using
-   `std::pair<uint32_t, P_Pkt_t>` addressed packets), for `BackendInputQueue`
+   `P_Addr_Pkt_t` addressed packets), for `BackendInputQueue`
    (using `P_Pkt_t` packets), and for `DebugInputQueue` (using `P_Debug_Pkt_t`
    debug packets, see the Debugging section).
 
 [^fatalerror]: By "fatal error", I mean that an exception is thrown in the
     thread logic, which is not caught. When this happens, the error is logged,
     and a graceful shutdown is attempted.
+
+Another lock exists on a per-supervisor basis (`pthread_mutex_t
+SuperHolder::lock`), which ensures that only one method from a given supervisor
+is called at a time (to maintain the integrity of properties and state provided
+by the application writer), and ensures that the supervisor is not compromised
+when the application is stopped and started again. All supervisor calls respect
+this lock.
 
 # Command and Control
 The Mothership process exists on the front of two streams of data traffic - the
@@ -224,6 +232,10 @@ no other information about the application yet.
 |                 |                       | shuts down the Mothership         |
 |                 |                       | process as *gracefully* as        |
 |                 |                       | possible.                         |
++-----------------+-----------------------+-----------------------------------+
+| `PATH`          | 0. `std::string`      | Defines the path root for         |
+|                 |    `userOutRoot`      | directory creation. See the       |
+|                 |                       | SupervisorAPI section.            |
 +-----------------+-----------------------+-----------------------------------+
 | `SYST`, `KILL`  | None                  | Stops processing of further       |
 |                 |                       | messages and packets, and shuts   |
@@ -253,7 +265,8 @@ no other information about the application yet.
 | `APP`,  `SUPD`  | 0. `std::string`      | Defines the properties for the    |
 |                 |    `appName`          | supervisor for a given            |
 |                 | 1. `std::string`      | application on this Mothership.   |
-|                 |    `soPath`           |                                   |
+|                 |    `soPath`           | Also loads the supervisor, and    |
+|                 |                       | provisions its API.               |
 +-----------------+-----------------------+-----------------------------------+
 | `CMND`,  `RECL` | 0. `std::string`      | Removes information for an        |
 |                 |    `appName`          | application, by name, from the    |
@@ -308,9 +321,8 @@ no other information about the application yet.
 |                 |    `P_Pkt_t> packets` |                                   |
 +-----------------+-----------------------+-----------------------------------+
 | `PKTS`          | 0. `std::vector<`     | Queues a series of destination-   |
-|                 |    `std::pair<`       | hardware-address and packet pairs |
-|                 |    `uint32_t,`        | into the backend.                 |
-|                 |    `P_Pkt_t> packets` |                                   |
+|                 |    `P_Addr_Pkt_t`     | hardware-address and packet       |
+|                 |    `> packets`        | structs into the backend.         |
 +-----------------+-----------------------+-----------------------------------+
 | `DUMP`          | 0. `std::string path` | Dumps Mothership process state    |
 |                 |                       | to a file at `path`.              |
@@ -347,6 +359,12 @@ done, and are useful for debugging.
 | `MSHP`, `ACK`,  | 0. `std::string`      | Notifies the Root process that    |
 | `STOP`          |    `appName`          | the application has been fully    |
 |                 |                       | stopped.                          |
++-----------------+-----------------------+-----------------------------------+
+| `MSHP`, `REQ`,  | 0. `std::string`      | Requests the Root process to send |
+| `STOP`          |    `appName`          | a stop message to all Motherships |
+|                 |                       | running the application. Used by  |
+|                 |                       | `stop_application` Supervisor API |
+|                 |                       | call.                             |
 +-----------------+-----------------------+-----------------------------------+
 
 Table: Output message key permutations that the Mothership process sends to the
@@ -410,11 +428,12 @@ Notes:
       (though this is not currently used).
 
  - A rogue application can shut down arbitrary applications by using
-   `P_CNC_STOP` packets with different task IDs.
+   `P_CNC_STOP` packets with different application IDs.
 
  - Applications can stop themselves in two ways - either a normal device sends
    a `P_CNC_KILL` packet to the Mothership, or the supervisor calls the `void
-   Super::end()` API method (documented in the Supervisor API section).
+   Super::stop_application()` API method (documented in the Supervisor API
+   section).
 
  - There is no `P_CNC_INIT`. This opcode was used in the barrier-breaking
    packet for normal devices. It is replaced by `P_CNC_BARRIER`.
@@ -549,8 +568,8 @@ detection" by `DebugInputBroker` (see the Debugging section).
 [^last]: This state is only set when the final message is received (see the
     Command and Control section for more information on `APP` messages).
 
-[^none]: "None" here means that `AppDB` and `SBase` do not know about the task,
-    and do not hold any information on it.
+[^none]: "None" here means that `AppDB` and `SBase` do not know about the
+    application, and do not hold any information on it.
 
 # Supervisors
 Supervisors are devices in an application that exist on the Mothership, and can
@@ -559,49 +578,137 @@ Mothership, as well as external devices elsewhere. They are:
 
  - Defined in the application description (XML)
 
- - Compiled into shared object files by `P_Builder`
+ - Compiled into shared object files by the `Composer`
 
  - Deployed to the Mothership process via an (`APP`, `SUPD`) message
 
- - Loaded as part of an application by the Mothership process when the (`CMND`,
-   `INIT`) message is received.
+ - Loaded (it's a shared object) as part of an application by the Mothership
+   process when the (`APP`, `SUPD`) message is received. The shared object is
+   unloaded when the Mothership closes down, and is reloaded when the
+   application is stopped.
+
+ - Provisioned with a connection to the outside world by the Mothership (see
+   the Supervisor API section below).
 
  - Represented by a `SuperHolder` object with the following fields (defined on
    construction - a supervisor that cannot be loaded and is not fully defined
    will cause the Mothership to report and set the application state to
    `BROKEN`):
 
+    - `pthread_mutex_t lock`: Restricts supervisor operations to happen in
+      sequence. For example, this prevents the idle handler being invoked while
+      another call handler is running. It also prevents the shared object from
+      being unloaded while it is being used.
+
     - `std::string path`: Where the supervisor was loaded from.
 
     - `void* so`: The dynamically-loaded supervisor (using `dlopen`), which
       populates the function pointer members.
 
-    - `int (*initialise)()`: Called when the application is started.
+    - `int (*exit)()`: Called when the application is stopped. Be aware that
+      this is not called when the Supervisor is destroyed, either due to a
+      recalled application, or due to a Mothership shutdown.
 
-    - `int (*entryPoint)(PMsg_p, PMsg_p)`: The entry point for all supervisor
-      calls while the application is running.
+    - `int (*idle)()`: Called when the MPI Input Broker thread has no incoming
+      messages to process - that thread iterates over every supervisor in the
+      Mothership and calls this method if the supervisor is not locked.
+
+    - `int (*init)()`: Called when the application is started.
+
+    - `int (*call)(std::vector<P_Pkt_t>&, std::vector<P_Addr_Pkt_t>&)`: The
+      entry point for all incoming supervisor packets while the application is
+      running.
+
+    - `SupervisorApi* (*getApi)()`: Used to provision the Supervisor API (see
+      below).
+      
+    - `uint64_t (*getAddr)(uint32_t)`: Used to get the full symbolic address
+      of a device from its Supervisor-unique index, which is sent in the
+      `pinAddr` field of each log packet.
+      
+    - `const SupervisorDeviceInstance_t* (*getInstance)(uint32_t)`: Used to  
+      get a pointer to the `SupervisorDeviceInstance_t` struct for the device
+      identified by the specified index. A `SupervisorDeviceInstance_t` 
+      contains the address components (and temporarily the name) of a
+      device.
+      
+    - `void (*getAddrVector)(std::vector<SupervisorDeviceInstance_t>&)`: 
+      Used to populate a vector with a copy of the Supervisor's `DeviceVector`.
+      This method must be used with care as the `DeviceVector` can be very big.
+      
 
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
    application name. For an incoming packet, the appropriate supervisor is
    identified from the task component of the software address. If the task
-   component does not correspond to a loaded task, the Mothership `Post`-s an
-   error message, and drops the packet.
+   component does not correspond to a loaded application, the Mothership
+   `Post`-s an error message, and drops the packet. The packet is also dropped
+   if the application is not running.
 
 ## Supervisor API
-The following API is available to application-writers to support functionality
-that is common to certain applications:
+Supervisor shared objects contain an unpopulated `SupervisorAPI` object, which
+is provisioned by the Mothership when the Supervisor shared object is loaded
+(via `Mothership::provision_supervisor_api`). The supervisor API exposes a set
+of functions that can be called from supervisor handler (as described in the
+application definition document). Specifically, a supervisor handler can call
+these functions (where `Super` is a namespace):
 
- - `std::string Super::get_safe_directory()`: Returns the absolute path of a
-   directory on the system that was guaranteed safe to write to as of when the
-   application was compiled by the Orchestrator. If you fill up the disk or
-   change the permissions, it's on you.
+ - `void Super::post(std::string message)`: Posts a message to the logserver.
 
- - `void Super::end()`: Stops the application, by sending a (`CMND`, `STOP`)
-   message to the Mothership process (The Supervisor is running on the
-   Mothership process, but this way the supervisor can be more easily cleaned
-   up, as the application is not stopped while the supervisor handler is
-   in-context.
+ - `void Super::stop_application()`: Stops the application, by sending a
+   (`MSHP`, `REQ`, `STOP`) message to the Root process. The Root process then
+   sends a (`CMND`, `STOP`) message to all Mothership processes running that
+   application.
+
+ - `std::string Super::get_output_directory(std::string suffix="")`: Returns
+   the absolute path of a directory on the disk of the machine hosting the
+   Mothership. This path has the form
+   `/home/$USER/<REMOTE_SAFEDIR>/<APPNAME>/<DATETIME_ISO8601><SUFFIX>`, where:
+
+   - `<REMOTE_SAFEDIR>` is defined in the Orchestrator configuration by field
+     `remote_safedir` in the `[default_paths]` section, or is overridden by the
+     Orchestrator operator. It is held in Mothership::userOutDir, and is
+     populated by `PATH` messages.
+
+   - `<APPNAME>` is the name of the application.
+
+   - `<DATETIME_ISO8601>` is a datetime.
+
+   - `<SUFFIX>` is the `suffix` passed as argument (default empty).
+
+   If an error occurs, this function Posts a message to the Logserver and
+   returns an empty string.
+
+`SupervisorAPI` is a "bridge class" used by both the Mothership, and by
+Supervisors. It has the following fields:
+
+ - `Mothership* mship`: A back-pointer used to send MPI messages to other
+   processes, to queue packets to compute devices, post error messages, and
+   more. Note that nefarious application writers can access this pointer via
+   `Supervisor::__api::mship`, but they'll earn a slap on the wrist if they
+   manage it without first reading about it here.
+
+ - `std::string appName`: The name of the application.
+
+ - `std::string (*get_output_directory)(Mothership* mship, std::string appName,
+   std::string suffix)`: A function pointer provisioned by the Mothership when
+   the supervisor is loaded. This is called by the `get_output_directory` API
+   call.
+
+ - `void (*post)(Mothership*, std::string)`: A function pointer provisioned by
+   the Mothership when the supervisor is loaded. This is called by the
+   `post` API call.
+
+ - `void (*push_packets)(Mothership* mship, std::vector<P_Addr_Pkt_t>& packets)`
+   : A function pointer provisioned by the Mothership when
+   the supervisor is loaded. Used by non-user-facing logic to send packets from
+   the supervisor device into the compute fabric.
+
+ - `void (*stop_application)(Mothership*, std::string)`: A function pointer
+   provisioned by the Mothership when the supervisor is loaded. This is called
+   by the `stop_application` API call.
+
+As a side note, future API methods may include:
 
  - `void Super::message_leader(uint8_t[SOME_NUMBER] payload)`: Packages the
    payload into a `P_Pkt_t`, and sends it using a (`BEND`, `SUPR`) message to
@@ -612,22 +719,16 @@ that is common to certain applications:
    the payload into a `P_Pkt_t`, and sends it using a (`BEND`, `SUPR`) message
    to all supervisors running for this application, except this one.
 
+ - `std::vector<std::string> Super::expose_device_map(const
+   std::vector<DeviceAddress>`: Some method that exposes the name of a device
+   (or set thereof) given a full address. Of particular use when outputting the
+   name of a device, from Supervisor handler, is desired. External devices
+   should still query NameServer to get this information.
+
  - Some method to set an RTCL "wake up call". Such a method could accept a
    paylod that is stored in the Mothership (as opposed to sent over the
-   network), which is read when RTCL issues the "wake up call". What's the
-   usecase again?
-
- - Some method to query the SBase instance held by the Mothership. Perhaps we
-   could provide a closed API that exposes the methods we want? I'm not sure
-   exactly what we would want to expose... help?
-
- - Can you think of any more? There are probably more we need, but we're not
-   going to get them all now. Simply implementing a framework by which this API
-   can be extended should be enough.
-
-Note that this API does not define methods for termination detection. It could
-do (using a Softswitch-based heartbeats mechanism), but it might be best to let
-sleeping dragons lie for now.
+   network), which is read when RTCL issues the "wake up call". Clock ticks in
+   neuromorphic modelling is the usecase for this.
 
 # Logging
 Normal devices in applications can send log messages to the Mothership by using
@@ -636,17 +737,17 @@ manifests as a series of log packets (with a `P_CNC_LOG` opcode) sent from the
 logging device to the Mothership, where multiple packets are sent for each log
 message. The `LogPacketManager` stores these packets until a complete message
 is formed, at which point the message is `Post`-ed and forgotten. Packets are
-stored on a per-compute-thread basis.
+stored on a per-device basis.
 
 # Debugging
 In addition to the acknowledgement messages that the Mothership generates while
-transitioning tasks between states, and the `DUMP` message, it is useful to
-have more fine-grained debugging control over running applications. The Tinsel
-backend provides a debugging interface over its UART backchannel, which can be
-exploited to exfiltrate acknowledgement and debugging information from normal
-devices in the backend. The `DebugInputBroker` acts on packets received by the
-Mothership by `Post`-ing a formatted message to the Logserver, including the
-packet payload and its origin. Debug packets sent in this way are stored as
+transitioning applications between states, and the `DUMP` message, it is useful
+to have more fine-grained debugging control over running applications. The
+Tinsel backend provides a debugging interface over its UART backchannel, which
+can be exploited to exfiltrate acknowledgement and debugging information from
+normal devices in the backend. The `DebugInputBroker` acts on packets received
+by the Mothership by `Post`-ing a formatted message to the Logserver, including
+the packet payload and its origin. Debug packets sent in this way are stored as
 `std::pair<uint32_t, uint8_t>` objects, where the first element of the pair
 represents the hardware address source (decoded using `HostLink::toAddr`), and
 the second element of the pair represents the byte payload. This class is
@@ -658,7 +759,7 @@ Mothership, which are repackaged and forwarded onto the LogServer.
 
 # Instrumentation
 Along with logging, it is useful to understand how the compute backend is
-performing during a given task, to help with optimisation and problem
+performing during a given application, to help with optimisation and problem
 diagnosis. The Mothership object holds an `InstrumentationWriter` instance,
 which consumes instrumentation data sent from the compute backend, and produces
 a set of CSV files at `$HOME/.orchestrator/instrumentation`, one per compute
@@ -742,8 +843,8 @@ ways:
    the same), and acknowledgement messages are sent back from the Mothership
    process to the Root process.
 
- - The data structures for holding task and supervisor information do not use
-   the hardware model, and are constructed from different pieces of
+ - The data structures for holding application and supervisor information do
+   not use the hardware model, and are constructed from different pieces of
    information.
 
  - Quitting and cleanup operates independently of backend traffic. The proposed

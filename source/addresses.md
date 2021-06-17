@@ -1,6 +1,10 @@
-% Software Addresses in the Orchestrator
+% Addresses in the Orchestrator
 
 # Overview
+
+This document introduces address formats used for device-to-device
+communication of applications in the Orchestrator. Detailed understanding of
+how applications are represented as a set of devices and pins is assumed.
 
 Three types of device exist, each of which can participate as part of a POETS
 application running on the Orchestrator:
@@ -11,11 +15,35 @@ application running on the Orchestrator:
  - Supervisor device: A device run on the Mothership (an x86 machine).
 
  - External device: A device run on any hardware, which communicates with other
-   devices through the UserIO process (and the Mothership).
+   devices through the UserIO process and the Mothership (not yet implemented).
 
 All non-trivial applications run using the Orchestrator consist of at least one
-normal device and at least one supervisor device (a default supervisor is used
-if one is not defined by the application writer).
+normal device (but usually many more) and at least one supervisor device (a
+default supervisor is used if one is not defined by the application
+writer). Devices communicate using destination-routed packets, with:
+
+ - A header (96 bits), consisting of:
+
+   - A Hardware address (32 bits), which uniquely identifies the compute thread
+     in the POETS Engine to send the message to (documented in
+     "hardware_model.pdf"). This addresses is used by the Engine to direct the
+     packet.
+
+   - A Software address (32 bits), which uniquely identifies a device in that
+     thread, with some space dedicated to exceptional softswitch operations
+     (documented in the Software Addresses section).
+
+   - A pin target (32 bits), which uniquely identifies the pin on the target
+     device, with some space dedicated to exceptional device operations
+     (documented in the Pin Targets section).
+
+ - A payload (56 bytes)[^This size is designed to hold exactly six
+   double-precision fields and a four byte label, which can neatly represent
+   e.g. position and velocity data for a single point in three-dimensional
+   space.], populated by the sending device created by the application writer,
+   and read by the corresponding receiving device.
+
+# Software Addresses
 
 Software addresses are 32-bit binary strings. Together, a software address and
 a hardware address are sufficient to uniquely identify a device deployed as
@@ -77,12 +105,12 @@ to. A 1 or a 0 in a field indicates an encoding identity for that device type,
 where an ellipsis (...) indicates that the component is free to vary, as long
 as the address as a whole uniquely identifies a device.
 
-# Examples
+## Examples
 
 This section presents some example software addresses, where $\cdot$ represents
 a concatenation.
 
-## Example 1: Normal device
+### Example 1: Normal device
 
 $$0\mathrm{b}\cdot0\cdot0\cdot000011\cdot00000000\cdot0000001000000001
 =0\mathrm{x}03000201
@@ -96,7 +124,7 @@ hardware address. This address may be part of a packet sent to this device by
 another compute device (either another normal device, or an external),
 containing context-sensitive data with which computation will be performed.
 
-## Example 2: Supervisor device
+### Example 2: Supervisor device
 
 $$0\mathrm{b}\cdot1\cdot1\cdot000000\cdot00000100\cdot0000000000000000
 =0\mathrm{x}\mathrm{C}0040000
@@ -110,7 +138,7 @@ method. This address may be part of a packet sent to the supervisor to perform
 a specific control action (or not, it could be anything really, depending on
 what the supervisor is programmed to do).
 
-## Example 3: External device
+### Example 3: External device
 
 $$0\mathrm{b}\cdot1\cdot0\cdot111111\cdot00000000\cdot0011011000010101
 =0\mathrm{x}\mathrm{BF}003615
@@ -121,7 +149,7 @@ $C_\mathrm{CNC}=0$) operating as part of task
 $0\mathrm{b}111111=0\mathrm{d}63$. The ID of this external device is
 $0\mathrm{b}0011011000010101=0\mathrm{d}13845$.
 
-## Example 4: Normal device with command-and-control instruction
+### Example 4: Normal device with command-and-control instruction
 
 $$0\mathrm{b}\cdot0\cdot1\cdot001000\cdot00000001\cdot0000001111101000
 =0\mathrm{x}480103\mathrm{E}8
@@ -136,7 +164,7 @@ command-and-control message ($C_\mathrm{CNC}=1$), and so will be handled by the
 "onCtl" handler of this device, to which the operation code
 $0\mathrm{b}00000001=0\mathrm{d}1$ will be accessible.
 
-## Example 5: An invalid address
+### Example 5: An invalid address
 
 $$0\mathrm{b}\cdot1\cdot1\cdot111111\cdot11111111\cdot1111111111111111
 =0\mathrm{xFFFFFFFF}
@@ -146,7 +174,7 @@ This address is invalid because it appears to target a supervisor device
 ($C_\mathrm{MOTHERSHIP}$ and $C_\mathrm{CNC}$ are both one), but the device
 component $C_\mathrm{DEVICE}$ is nonzero. This is unacceptable as per Table 2.
 
-# Implementation
+## Implementation
 
 The functionality of the software address is encapsulated in the
 `SoftwareAddress` class, which stores the address as a whole in
@@ -260,7 +288,7 @@ Software address at 0x00007ffc5d80ca70 ----------------------------------------
 The `SoftwareAddress` class is tested by the `TestSoftwareAddress.cpp` catch
 test suite.
 
-# Design Notes
+## Design Notes
 
  - The bit ranges are flexible - there are a bunch of spare bits in the device
    field that are unlikely to be used. Bits from there can be pilfered and
@@ -285,3 +313,55 @@ test suite.
    to allow address components to be set in stages to support copy
    construction. If validation of this sort is needed in future, we could
    implement classes for each device type to restrict these combinations.
+
+# Pin Targets
+
+Pin targets, like software addresses, are 32-bit binary strings. Together, a
+pin target, a software address, and a hardware address are sufficient to
+identify a receiving device and the pin it must receive on, which exposes the
+handler to call in response to receiving the message, and the properties and
+state information associated with the edge attached to that pin. All of this
+information is necessary to correctly execute the `OnReceive` handler defined
+for the input pin.
+
+**The form of pin targets differs depending on the sending device, the
+receiving device, and whether or not the packet is a command-and-control
+packet.** For normal packet traffic (i.e. not command-and-control traffic)
+between devices, pin targets are of the form (MSB to LSB):
+
+$$C_{\mathrm{EDGE}}\cdot C_{\mathrm{PIN}}$$
+
+where $\cdot$ represents a concatenation, and where each address component $C$
+is denoted by Table 3.
+
+-------------------------------------------------------------------------------
+Component  Bit range  Description
+$C$
+---------- ---------- ---------------------------------------------------------
+EDGE       0-23 (24b) Index identifying the edge instance in the application,
+                      from the perspective of the device receiving the packet
+                      (defines certain properties and state information).
+
+PIN        24-31 (8b) Index identifying the pin instance on the device
+                      receiving the packet (determines the handler to invoke).
+-------------------------------------------------------------------------------
+
+Table: Bit ranges for each pin target component (MSB to LSB).
+
+For command-and-control traffic from a Softswitch to its corresponding
+Mothership, the two fields $C_{\mathrm{EDGE}}\cdot C_{\mathrm{PIN}}$ are
+combined, and are used to store the 32-bit hardware address of the sending
+device^[Being destination-routed, there is no other way to identify who sent a
+packet, other than through edge/pin information (which is previously encoded),
+or through a hardware address. This is necessary for exfiltrating
+instrumentation data from a softswitch, for example.].
+
+# A Note from GMB
+
+There are a couple of cases where I would like to be able to populate this
+(sic, "pin targets") on a message to a supervisor. The most significant one is
+for log messages from a device. It is easy enough to get the source hardware
+address (by usurping the Pin Target), but short of adding a header that reduces
+the log payload size, there is nowhere to put the source device address. I
+would like (for specific op codes) to be able to use Device to indicate the
+source device address rather than being forced to 0.

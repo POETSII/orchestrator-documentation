@@ -123,7 +123,7 @@ the method in the second. Yellow boxes denote methods that examine subtrees of
 the parse graph. Validation methods are not shown (for
 simplicity).](images/d3_call_graph.png)
 
-# Input File Format (0.5.0)
+# Input File Format (0.5.1)
 This section defines the file format used by the Orchestrator to define its
 internal model of the POETS Engine. The input files satisfy the general
 "Universal Interface Format" (UIF) file format[^uifdocs]. The format supports
@@ -182,7 +182,7 @@ appear in any order, but must be unique within a file. All files must contain a
 +author="Mark Vousden"
 +dialect=1
 +datetime=20200909162500  // YYYYMMDDhhmmss
-+version="0.5.0"
++version="0.5.1"
 +file="my_first_example.uif"
 ```
 
@@ -308,7 +308,7 @@ A defining example follows:
 +author="Mark Vousden"
 +dialect=1
 +datetime=20200909162500
-+version="0.5.0"
++version="0.5.1"
 
 [packet_address_format]
 +mailbox=(4,4)
@@ -746,19 +746,23 @@ Notes:
 
  - Values can be defined in the `default_types` section in any order.
 
-Also note an additional field in mailbox sections:
+Also note additional fields in mailbox sections:
 
 ```
 [mailbox(SomeMailboxType)]
 ...
 +pair_cores="true"
++core_addr_offset=3
 ```
 
 The `pair_cores` field in `mailbox` sections is mandatory, and must have either
 a `"true"` or `"false"` value, indicating whether or not neighbouring cores
 share instruction memory in this engine. For most non-Tinsel architectures this
 should be `"false"`. Note that if this is `"true"`, the value in the `cores`
-field for this mailbox section must be even.
+field for this mailbox section must be even. The `core_addr_offset` field in
+`mailbox` sections is optional, and defines the lowest value for the core
+components of hardware addresses for cores in mailboxes of that type. If not
+defined, the default value for `core_addr_offset` is zero.
 
 ![Weighted graph of boards described by the dialect 3 example, where each board
 is contained in a box. The colour of each item denotes its
@@ -766,7 +770,7 @@ type.](images/dialect_3.png)
 
 Appendix A contains a complete dialect 3 example file representing Coleridge.
 
-# Appendix A: Coleridge Hardware Input Files (0.4.0)
+# Appendix A: Coleridge Hardware Input Files (0.5.1)
 The following subsections of this document contain the content of example
 hardware input files that describe Coleridge (an existing POETS Engine) as of
 the datetime in their header sections. These examples are included to
@@ -781,7 +785,7 @@ is not expected to accurately represent Coleridge in any future state.
 +author="Mark Vousden"
 +dialect=1
 +datetime=20200909162500
-+version="0.5.0"
++version="0.5.1"
 +file="dialect_1"
 
 [packet_address_format]
@@ -830,7 +834,7 @@ is not expected to accurately represent Coleridge in any future state.
 +author="Mark Vousden"
 +dialect=2
 +datetime=20200909162500
-+version="0.5.0"
++version="0.5.1"
 +file="dialect_2"
 
 [packet_address_format]
@@ -932,7 +936,7 @@ Box(addr(0),boards(B0,B1,B2,B3,B4,B5),hostname(coleridge))
 +author="Mark Vousden"
 +dialect=3
 +datetime=20200909162500
-+version="0.5.0"
++version="0.5.1"
 +file="dialect_3"
 
 [packet_address_format]

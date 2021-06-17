@@ -1,0 +1,217 @@
+digraph G {
+    fontname="Inconsolata";
+    fontsize=11;
+    margin=0;
+    nodesep=0.3;
+    rankdir="LR";
+    ranksep=0.2;
+    splines="ortho";
+
+    /* Class definitions (as graph nodes) */
+    node[color="#000055",
+         fillcolor="#DEDBFF:#8FA8FF",
+         fontname="Inconsolata",
+         fontsize=11,
+         gradientangle=270,
+         margin=0,
+         shape="rect",
+         style="filled"];
+
+    Placer[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Placer</TD></TR>
+<TR><TD ALIGN="LEFT">
++ constraints : list&lt;Constraint*&gt;<BR ALIGN="LEFT"/>
++ deviceToThread : map&lt;DevI_t*,<BR ALIGN="LEFT"/>
+                       P_thread*&gt;<BR ALIGN="LEFT"/>
++ placedGraphs : map&lt;GraphI_t*, Algorithm*&gt;<BR ALIGN="LEFT"/>
++ args : placeArgs<BR ALIGN="LEFT"/>
++ threadToDevices : map&lt;P_thread*,<BR ALIGN="LEFT"/>
+                        list&lt;DevI_t*&gt;&gt;<BR ALIGN="LEFT"/>
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ compute_fitness(GraphI_t*) : float<BR ALIGN="LEFT"/>
++ Dump(FILE*) : void<BR ALIGN="LEFT"/>
++ load_constraint_file(string) : void<BR ALIGN="LEFT"/>
++ place(GraphI_t*, string) : float<BR ALIGN="LEFT"/>
++ unplace(GraphI_t*) : void<BR ALIGN="LEFT"/>
+- check_all_devices_mapped(GraphI_t*<BR ALIGN="LEFT"/>
+      vector&lt;DevI_t*&gt;*) : bool<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Manages placement of tasks into<BR ALIGN="TEXT"/>
+the hardware model.
+</TD></TR></TABLE>>];
+
+    node[color="#550000",
+         fillcolor="#FFDBDE:#FFA88F"]
+
+    PlaceArgs[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>PlaceArgs</TD></TR>
+<TR><TD ALIGN="LEFT">
+- args : map&lt;string, string&gt;<BR ALIGN="LEFT"/>
+- validAlgs : map&lt;string, set&lt;string&gt;&gt;<BR ALIGN="LEFT"/>
+- validTypes : map&lt;string, string&gt;<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ copy_to(map&lt;string,string&gt;&amp;) : void<BR ALIGN="LEFT"/>
++ clear() : void<BR ALIGN="LEFT"/>
++ get_bool(string) : bool<BR ALIGN="LEFT"/>
++ get_uint(string) : unsigned<BR ALIGN="LEFT"/>
++ is_set(string) : bool<BR ALIGN="LEFT"/>
++ set(string, string) : bool<BR ALIGN="LEFT"/>
++ validate_args(string) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Holds and validates arguments<BR ALIGN="TEXT"/>
+for placement algorithms.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    MaxDevicesPerThread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>MaxDevicesPerThread:Constraint</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Constrains the number of devices<BR ALIGN="TEXT"/>
+that can be placed on a thread.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Constraint[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Constraint</TD></TR>
+<TR><TD ALIGN="LEFT">
++ category : const constraintCategory<BR ALIGN="LEFT"/>
++ mandatory: bool<BR ALIGN="LEFT"/>
++ penalty : float<BR ALIGN="LEFT"/>
++ satisfied : bool<BR ALIGN="LEFT"/>
++ gi : GraphI_t* (PNULL is valid)<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
++ virtual is_satisfied(Placer*) : bool<BR ALIGN="LEFT"/>
++ virtual is_satisfied_delta(Placer*,<BR ALIGN="LEFT"/>
+      vector&lt;DevI_t*&gt;) : bool<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Represents a constraint imposed on the place-<BR ALIGN="TEXT"/>
+-ment system (for one task, or for all tasks).<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    placeholder_1[style="invis"];
+    placeholder_2[style="invis"];
+
+    constraintCategory[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>constraintCategory (enum)</TD></TR>
+<TR><TD ALIGN="LEFT">
+MaxDevicePerThread<BR ALIGN="LEFT"/>
+FixDevice<BR ALIGN="LEFT"/>
+ConstrainDeviceDistance<BR ALIGN="LEFT"/>
+And more I've not<BR ALIGN="LEFT"/>
+thought up yet.<BR ALIGN="LEFT"/>
+</TD></TR></TABLE>>];
+
+    MaxThreadsPerCore[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>MaxThreadsPerCore:Constraint</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Constrains the maximum number of<BR ALIGN="TEXT"/>
+threads each core can use.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Algorithm[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Algorithm</TD></TR>
+<TR><TD ALIGN="LEFT">
++ placer : Placer*<BR ALIGN="LEFT"/>
++ result : Result<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="LEFT">
++ Algorithm(Placer*)<BR ALIGN="LEFT"/>
++ virtual do_it(GraphI_t*) : float<BR ALIGN="LEFT"/>
++ virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Represents the execution<BR ALIGN="TEXT"/>
+of a placement algorithm.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    Result[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>Result (struct)</TD></TR>
+<TR><TD ALIGN="LEFT">
++ args : map&lt;string, string&gt;<BR ALIGN="LEFT"/>
++ maxDevicesPerThread : unsigned<BR ALIGN="LEFT"/>
++ maxEdgeCost : float<BR ALIGN="LEFT"/>
++ method : string<BR ALIGN="LEFT"/>
++ score : float<BR ALIGN="LEFT"/>
++ startTime : string<BR ALIGN="LEFT"/>
++ endTime : string<BR ALIGN="LEFT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+The results of a placement<BR ALIGN="TEXT"/>
+algorithm execution.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    SimulatedAnnealing[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>SimulatedAnnealing:Algorithm</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Does simulated annealing.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    ThreadFilling[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+<TR><TD>ThreadFilling:Algorithm</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+...<BR ALIGN="TEXT"/>
+</TD></TR>
+<TR><TD ALIGN="TEXT">
+Does thread filling.<BR ALIGN="TEXT"/>
+</TD></TR></TABLE>>];
+
+    /* Relationship definitions (as graph edges) */
+    edge[color="#000000",
+         fontname="Inconsolata",
+         fontsize=11];
+
+    /* Containment. */
+    {edge[arrowhead="vee"];
+        Constraint -> constraintCategory[label="Constraint.category"];
+        Algorithm -> Result[xlabel="Algorithm.result"];
+        Algorithm -> Placer[xlabel="Algorithm->placer"];
+        Placer -> PlaceArgs[xlabel="Placer.args"];
+    }
+
+    /* One-to-many relationships in a separate block. */
+    {edge[arrowhead="diamond"];
+        Placer -> Constraint[label="Placer.constraints", constraint="false"];
+        Placer -> Algorithm[label="Placer.placedGraphs", constraint="false"];
+    }
+
+    /* Inheritance */
+    {edge[arrowhead="onormal"];
+        ThreadFilling -> Algorithm [label="(inherits)"];
+        SimulatedAnnealing -> Algorithm;
+        MaxThreadsPerCore -> Constraint;
+        MaxDevicesPerThread -> Constraint [label="(inherits)"];
+    }
+
+    /* Rank hackery */
+    {rank="same";
+        Algorithm -> Placer -> Constraint [style="invis"];
+        rankdir="UD";
+    }
+}

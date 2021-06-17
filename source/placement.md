@@ -1,40 +1,12 @@
-% Design of the Orchestrator Placement System (2019-09-24)
-
-# Orchestrator State (2020-08-10)
-This document presents the design of the placement system, though the present
-implementation of the Orchestrator does not exactly meet these
-features[^dateThough]. What follows is a comprehensive list of differences
-between the implemented placement system, and the design in this document:
-
-[^dateThough]: As of the date in the title of this section.
-
- - The application graph (`GraphI_t`) and the classes it contains (`DevI_t` and
-   `MsgT_t`) have not been implemented in the Orchestrator. The Orchestrator
-   placement implementation uses the old application graph structure, using
-   `D_graph`, `P_device`, and `P_message` instead.
-
- - The Orchestrator has no mechanism for consuming constraint files. The
-   `placement /constraint` operator command is the only mechanism for
-   introducing constraints at run-time.
-
- - The documentation does not introduce the loading of placement configurations
-   (`placement \load`). This operator commands is presently unsupported.
-
- - The simulated annealing implementation (accessible via `placement \sa=TASK`)
-   and the smart-random implementation (accessible via `placement \rand=TASK`)
-   place devices as advertised, but applications compiled and run using
-   placements from those algorithms are not guaranteed to complete (pending
-   issue #157, which concerns a softswitch fix)
-
- - The simulated annealing implementation does not perform swap selection.
+% Design of the Orchestrator Placement System
 
 # Placement Overview and Design Requirements
-This document defines the design of the placement system in the
-Orchestrator. The "placement problem" has been well explored in the literature,
-though there is novelty in POETS placement, as the hardware model is
-hierarchical in nature, thus resulting in an unusual search
-codomain[^programmableRouting]. Placing an application requires knowledge of
-the hardware model, as well as the structure and properties of the application.
+This document explains the placement system in the Orchestrator. The "placement
+problem" has been well explored in the literature, though there is novelty in
+POETS placement, as the hardware model is hierarchical in nature, thus
+resulting in an unusual search codomain[^programmableRouting]. Placing an
+application (formally, an application graph instnace) requires knowledge of the
+hardware model, as well as the structure and properties of the application.
 
 [^programmableRouting]: With programmable routing in the pipeline, it's become
     a lot more publishable.
@@ -63,10 +35,10 @@ though many more may be contrived. With this in mind, the design requirements
  for the placement system in the Orchestrator are:
 
  - To support different algorithms, selectable at run time by the Orchestrator
-   operator. In early iterations, bucket filling and simulated annealing is
-   sufficient, but the design of the placement system should allow algorithms
-   to be added easily in future iterations to exploit properties specific to
-   the POETS placement problem (papers!).
+   operator. In early iterations, thread (bucket) filling and simulated
+   annealing is sufficient, but the design of the placement system should allow
+   algorithms to be added easily in future iterations to exploit properties
+   specific to the POETS placement problem (papers!).
 
  - To support run-time decisions about how the placement can be constrained,
    using a "walled-garden" set of constraints that can be
@@ -82,64 +54,71 @@ though many more may be contrived. With this in mind, the design requirements
    modifications.
 
 # Data Structures
-This design proposes the introduction of several new data structures in the
-placement system, as well as the modification of some in `OrchBase`. This
-section outlines those structures. A map of the proposed structure is shown in
-Figure 1.
+Figures 1 and 2 show the data structure for the placement system. A description
+of each of these components follows, but read the figure captions for an
+introduction.
 
-![Data structure diagram, showing how placement may be conducted in the
-Orchestrator](images/placement_design_data_structure.png)
+![Abridged data structure diagram, showing how placement is connected to the
+wider Orchestrator. The `Placer` is central to placement in the
+Orchestrator. It holds the relation between devices (`DevI_t`s), and the
+threads they are placed on (`P_thread`), by a pair of maps. These maps are
+populated by `Algorithm`s, which are shown in Figure 2, and can be invoked by
+the Orchestrator operator.](images/placement_data_structure_orchbase.png)
+
+![Abridged data structure diagram, showing the internal workings of
+placement. When the Orchestrator operator wants to place an algorithm, the
+`Placer` creates an `Algorithm` object of the appropriate type
+(e.g. `SimulatedAnnealing`). The `Placer` then calls the `do_it` method, which
+populates the pair of maps in Figure 1. Each `Algorithm` is stored with a
+`Result` object, which is read when the operator dumps placement
+information. Optionally, `Constraint`s and arguments (stored in `PlaceArgs`)
+can be applied to alter placement
+behaviour.](images/placement_data_structure_internal.png)
 
 ## Placer
 The `Placer` encapsulates placement behaviour in the Orchestrator. The
-`OrchBase` class holds a `Placer` member (with name `placer`). When the
-`P_engine` stored by `OrchBase` is changed (i.e. `topology /load`), then
-`OrchBase` replaces its `OrchBase::placer` member. `OrchBase` passes a pointer
-to the `Placer` on construction as a shortcut.
+`OrchBase` class holds a `Placer` member. When the `P_engine` stored by
+`OrchBase` is changed (i.e. `load /engine`), then `OrchBase` replaces its
+`OrchBase::placer` member. `OrchBase` passes a pointer to the `Placer` on
+construction as a shortcut.
 
-`Placer` instances hold two public maps - one which maps device addresses to
-thread addresses, and one which maps thread addresses to a list of device
-addresses:
+`Placer` instances hold two public maps amongst other structures. One of these
+maps device addresses to thread addresses, and the other maps thread addresses
+to a list of device addresses (i.e the "reverse"):
 
 ~~~ {.cpp}
 std::map<P_thread*, std::list<DevI_t*>> Placer::threadToDevices
 std::map<DevI_t*, P_thread*> Placer::deviceToThread
 ~~~
 
-These maps are the primary output of placement, describe the placement of all
-applications in the Orchestrator, and are read by the binary builder to
-establish the relationship between the application and the hardware. This is
-contrary to the previous design of the Orchestrator, where `P_thread` objects
-have a vector within which corresponding `DevI_t*` values are stored, and each
-`DevI_t` holds the corresponding `P_thread`. Advantages of the two-map approach
-over the previous approach are:
+These maps are the primary output of placement. They describe the placement of
+all applications in the Orchestrator, and are read by the Composer to establish
+the relationship between the application and the hardware. One further map of
+use to the binary-building logic is:
 
- - Encapsulation: `Placer` instances do not modify hardware or application data
-   structures. Also makes teardown a little simpler.
+~~~ {.cpp}
+std::map<GraphI_t*, std::set<P_core*> > Placer::giToCores
+~~~
 
- - Modularity, local storage of information.
-
-The disadvantage is that any operation that involves looking up placement
-behaviour as a function of device `DevI_t`, for all devices, is slower (a map
-lookup versus a dereference). Once such case is when a application is
-"un-placed".
-
-### Placer and Applications/Algorithms/Constraints
+which allows the binary-builder to determine the set of cores a given
+application is placed onto. These three maps are intended to be written to only
+by the placer, and read from other systems (there is no access control, because
+time is short).
 
 `Placer` objects hold a map of applications that have been placed on them,
 along with the `Algorithm` object that performed the placement
-(`std::map<P_task*, Algorithm*> placedTasks`). Each application may be placed
-only once without being "unplaced". This map is interacted with by the `float
-Placer::place(P_engine*, P_task*, string)`, which:
+(`std::map<GraphI_t*, Algorithm*> placedGraphs`). Each application may be
+placed only once without being "unplaced". This map is interacted with by the
+`float Placer::place(P_engine*, GraphI_t*, string)`, which:
 
- - Creates an entry in `placedTasks` with the `P_task*` passed as an argument,
-   and a new `Algorithm` instance, which is determined by the string passed as
-   an argument.
+ - Creates an entry in `placedGraphs` with the `GraphI_t*` passed as an
+   argument, and a new `Algorithm` instance, which is determined by the string
+   passed as an argument.
 
  - Runs the algorithm on the application.
 
  - Performs an integrity check (using
-   `Placer::check_all_devices_mapped(P_task*, vector<DevI_t>*)`), which would
+   `Placer::check_all_devices_mapped(GraphI_t*, vector<DevI_t>*)`), which would
    ensure that all devices for a application have been placed.
 
  - If all is well, returns the placement score from the algorithm. Otherwise,
@@ -147,14 +126,14 @@ Placer::place(P_engine*, P_task*, string)`, which:
 
 In this way, the result of the `Algorithm` can be queried by the operator if
 desired. Applications can also be unplaced with `Placer::unplace(P_engine*,
-P_task*)`, which[^load]:
+GraphI_t*)`, which[^load]:
 
  - Iterates through all of the `DevI_t` instances in the application graph and
    removes them from the placement maps.
 
  - Removes all constraints associated with that application.
 
- - Removes the entry for that application from `placedTasks`.
+ - Removes the entry for that application from `placedGraphs`.
 
 [^load]: Clearly this process involves a lot of work (indexing a map for each
     device), but it doesn't matter too much because this operation is
@@ -165,7 +144,7 @@ constraints`, which `Algorithm` objects can query during placement. This list
 is populated by `Placer:load_constraint_file(std::string)`.
 
 `Algorithm`s and `Constraint`s are dynamically allocated, to avoid object
-slicing when derived class instances are stored in the `placedTasks` and
+slicing when derived class instances are stored in the `placedGraphs` and
 `constraints`, respectively. On `Placer` destruction, these objects are
 explicitly `delete`d.
 
@@ -174,13 +153,10 @@ As per the design requirements, constraints can be introduced from three
 sources:
 
  - From a configuration file, applied system-wide (see Appendix A for a
-   format).
+   format). Not yet implemented!
 
- - From an application file, applied to that application only (see Appendix B
-   for a format).
-
- - From the command prompt, applied system-wide (see the "Interaction" section
-   for how this might work).
+ - From the command prompt, applied system-wide (see the "Interaction"
+   section).
 
 Each individual constraint is represented as a `Constraint` object. Constraints
 have the following associated with them:
@@ -189,7 +165,7 @@ have the following associated with them:
    facilitate filtering on a list of constraints (such as the one held by the
    `Placer`) for constraints of a certain "type".
 
- - A pointer to the `P_task` it was loaded from, if it was introduced from an
+ - A pointer to the `GraphI_t` it was loaded from, if it was introduced from an
    application file. This is necessary to check which application it applies
    to.
 
@@ -215,27 +191,30 @@ have the following associated with them:
  - A boolean (`mandatory`), which causes the algorithm to automatically reject
    states that fail this constraint (it's up to the algorithm to respect this).
 
-Possible constraints include (this is by no means an exhaustive list):
+Possible constraints include.
 
  - Restricting the maximum number of devices that can be placed on a thread.
 
- - Fix device (by name) to thread (debugging, timing).
+ - Restricting the number of threads used on a core.
 
- - Restricting two devices to exist on the same thread/core/mailbox/board/box.
+ - Fix device (by name) to thread (debugging, timing). Not yet implemented.
+
+ - Restricting two devices to exist on the same
+   thread/core/mailbox/board/box. Not yet implemented.
 
  - Set the cost between all connected devices to not exceed a certain value
-   (distances are relative, but might be useful...).
+   (distances are relative, but might be useful...). Not yet implemented.
 
-Appendix D contains the list of supported constraints.
+Appendix B contains the list of supported constraints.
 
 ## Algorithms
-Algorithms represent "placement methods", like bucket filling, or simulated
+Algorithms represent "placement methods", like thread filling, or simulated
 annealing. Algorithms control the placement of devices in a given application
 onto the engine, without disrupting the placement of devices from other
 applications (recall that algorithms should act on one application and not be
 predictive, from the design requirements). All algorithms inherit from an
 `Algorithm` class, and they must define the `float Algorithm::do_it(P_engine*,
-P_task*, Placer*)` method. Since `Placer` objects expose the placement
+GraphI_t*, Placer*)` method. Since `Placer` objects expose the placement
 information maps and all constraints, the algorithm has sufficient information
 to do its business. This method returns an arbitrary "score" - the context of
 this is dependent on the algorithm used.
@@ -251,74 +230,132 @@ Algorithm instances store (in a `Result` structure):
  - The greatest "cost" between connected placed devices (stored for easier
    lookup at dump-time)
 
-One may initially elect to represent placement algorithms as `Placer` methods,
-as opposed to classes in their own right. The motivation for defining them as
-classes is to facilitate the use of the command pattern to log a history of
-algorithms-applied-to-applications, so that dumping can be meaningful (i.e. the
-operator can see the order things were placed, what algorithm put them there,
-etc.)
+Algorithms store edge weights in a `Placer` map:
 
-Algorithms store edge weights in `P_task->pD.G` (i.e. in the pdigraph object
-stored in the D_graph object) during computation. The `MsgT_t` class must be
-extended with a `float weight` member to accommodate this[^hypocrisy].
+~~~ {.cpp}
+std::map<GraphI_t*, std::map<std::pair<DevI_t*, DevI_t*>,
+         float> > Placer::giEdgeCosts;
+~~~
 
-[^hypocrisy]: Now I hear you cry "you were going on about modularity earlier,
-    and here you are writing to the application object!", and you would
-    absolutely be correct to call me a hypocrite. However, there are a lot of
-    devices, and it's convenient to look up the costs from both node-pairs
-    (fitness delta) and an edge (fitness total), which `pdigraph` allows us to
-    do pretty quickly (remember, it's maps all the way down...).
+which, given an application, defines the cost connecting two given device
+instances together.
 
-Appendix E contains the list of supported algorithms.
+Appendix C contains the list of supported algorithms.
+
+## Unique Device Types
+
+Placement algorithms must adhere to the following rules:
+
+ - Devices from different applications must not be placed on the same core
+   (`P_core`).
+
+ - Devices of different device types (`DevT_t`) must not be placed on the same
+   core.
+
+Given that application graph instances (`GraphI_t`) can share device types
+(`DevT_t`), the placer supports these rules by defining the structure
+`UniqueDevT`, which is a combination of a device's (`DevI_t`) type (`DevT_t`)
+and graph instance (`GraphI_t`).
+
+## Arguments (`PlaceArgs`)
+Some algorithms can be passed arguments to alter their behaviour. The
+`PlaceArgs` object holds all arguments set in its `args` field, which are
+deployed to the next placement algorithm run. Arguments, their values, and
+their permitted types, are all stored as strings. `PlaceArgs` contains three
+maps:
+
+ - `args`: Maps set (verb) arguments to their values. Entries are inserted via
+   the `set` method, which also performs validation (using `validTypes`).
+
+ - `validAlgs`: Maps algorithm names to a set of arguments. For a given
+   algorithm, arguments that aren't in that set aren't valid.
+
+ - `validTypes`: Maps arguments to their types, where types are strings.
+
+When the `Placer` invokes an `Algorithm`, the set arguments (in `args`) are
+checked for validity with respect to the algorithm, using the `validate_args`
+method (which in turn uses `validArgs`). If the operator attempts to set an
+argument with an invalid type, or if an argument is not valid for the
+particular algorithm invoked, then the operator is warned, and no placement is
+performed.
+
+Appendix D contains the list of arguments, their types, and which algorithms
+they apply to.
 
 # How the Operator Interacts with the Placement System
-By way of quick example, to place an application named `APPLICATION` the
+By way of quick example, to place an application named `APPLICATIONNAME` the
 hardware model using the placement system, limiting it to placing no more than
 14 devices on a thread, and to dump placement information afterwards, command
 in the POETS shell:
 
 ```
 POETS> placement /constraint = "MaxDevicesPerThread", 14
-POETS> placement /bucket = "APPLICATION"
-POETS> placement /dump = "APPLICATION"
+POETS> placement /tfill = "APPLICATIONNAME"
+POETS> placement /dump = "APPLICATIONNAME"
 ```
 
-Operator commands:
+In this example, and the following set of operator commands, `APPLICATIONNAME`
+can have three forms:
+
+ - `*` (as in, just an asterisk), which performs the operation on all
+   application graph instances in the Orchestrator.
+
+ - `APP` (as in, the name associated with an `Apps_t` instance), which performs
+   the operation on all application graph instances associated with that
+   application object.
+
+ - `APP::GRAPH`, which performs the operation on exactly one application graph
+   instance.
+
+Operator commands, in more detail than in volume IV:
 
  - `placement /ALGORITHM = APPLICATIONNAME`: Performs the `ALGORITHM` algorithm
    to place the application named `APPLICATIONNAME` onto the hardware
    model. Writes an error to the operator if:
 
-   - There is no application loaded with the name APPLICATIONNAME.
+   - There is no application loaded with the name `APPLICATIONNAME`.
 
    - There is no hardware model loaded.
 
    - The application could not fit into the hardware model.
 
-   - A application with the name APPLICATIONNAME has already been placed (tells
-     the operator to unplace the application before proceeding).
+   - A application with the name `APPLICATIONNAME` has already been placed
+     (tells the operator to unplace the application before proceeding).
+
+   - An argument has been staged, which is not valid for this algorithm.
 
    Writes warnings to the operator for each constraint that could not be
    satisfied. If there were no errors, writes to the operator confirming the
    completion of placement, along with the time taken.
 
-   Appendix E contains the list of supported algorithms. `ALGORITHM` could be
-   "bucket", "sa" or something else that's implemented [^algorithmName]
+   Appendix C contains the list of supported algorithms. `ALGORITHM` could be
+   `tfill`, `sa` or something else that's implemented[^algorithmName]
 
 [^algorithmName]: Just don't call your algorithm "dump", or "place" (please).
 
- - `link /link = APPLICATIONNAME`: Performs bucket-filling on an
-   application. Included for backwards-compatibility and may be removed in
-   future.
+ - `placement /ARGUMENT = VALUE`: Sets an argument for a the next placement
+   algorithm. Overwrites an existing definition. Writes an error to the
+   operator if:
+
+   - There is no argument with the name `ARGUMENT`.
+
+   - The `VALUE` cannot be interpreted as a value of the correct type, as shown
+     in Appendix D.
+
+   Appendix D contains the list of supported arguments, their types, and the
+   algorithms to which they can be applied.
 
  - `placement /dump = APPLICATIONNAME`: Dumps placement information for the
-   application named `APPLICATIONNAME`, specifically:
+   application named `APPLICATIONNAME` to the `Output/Placement`
+   directory. Specifically:
 
    - Information on how each device in the application has been placed on the
      hardware, line by line. Each record is of the form
      "`<DEVICENAME>\t<THREADNAME>`" (where `<THREADNAME>` is
      hierarchical). This information is dumped to
-     `placement_task_to_hardware_<APPLICATIONNAME>_<ISO8601DT>.txt`.
+     `placement_gi_to_hardware_<APPLICATIONNAME>_<ISO8601DT>.txt`. The reverse
+     map is dumped to
+     `placement_hardware_to_gi_<APPLICATIONNAME>_<ISO8601DT>.txt`.
 
    - Diagnostic information from the algorithm object, dumped to\
      `placement_diagnostics_<APPLICATIONNAME>_<ISO8601DT>.txt`. This
@@ -340,14 +377,20 @@ Operator commands:
        (supplied by the `MsgT_t`s in the application), line by line. Each
        record is of the form `<DEVICENAME>\t<DEVICENAME>\t<COST>`, and is
        dumped to\
-       `placement_task_edges_<APPLICATIONNAME>_<ISO8601DT>.txt`.
+       `placement_gi_edges_<APPLICATIONNAME>_<ISO8601DT>.txt`.
 
    I'd prefer it if the operator could specify paths on the command line, but I
    can't see an elegant way of doing this using the command infrastructure we
    have.
 
-   Writes an error to the operator if no application with name APPLICATIONNAME
-   has been placed.
+   Writes an error to the operator if no application with name
+   `APPLICATIONNAME` has been placed.
+
+ - `placement /load`: This exists, but do not use it without reading the source
+   (and the dire warnings of the consequences of its misuse). It's a prototype
+   placement loading mechanism for reading from dumps.
+
+ - `dump /place`: Equivalent to `placement /dump = *`.
 
  - `placement /unplace = APPLICATIONNAME`: Completely clears placement
    information for a application with name `APPLICATIONNAME`. Writes an error
@@ -357,13 +400,10 @@ Operator commands:
    and unlinks the hardware stack from all devices.
 
  - `placement /constraint = TYPE,ARGS`: Add a hard system-wide constraint to
-   the placer, with a set of arguments. Appendix D contains the list of
+   the placer, with a set of arguments. Appendix B contains the list of
    supported constraints.
 
- - `placement /constraint = PATH`: Loads a system-wide constraint configuration
-   file (using `Placer:load_constraint_file(std::string)`).
-
-# Implementing Simulated Annealing
+# Simulated Annealing (`sa`)
 Simulated annealing is a search method that allows, in the general case,
 exploration of a solution space and selection of a guaranteed local optimum,
 with some concession for global search. This method transitions from
@@ -434,24 +474,14 @@ stores the communication cost from each mailbox to its supervisor. These costs
 would assume the shortest path, and be populated using the Floyd-Warshall
 algorithm.
 
-One might assume the former map would use up "a lot" of memory, but I
-disagree. For the eight-box system, 16 mailboxes-per-board $\times$ 6
-boards-per-box $\times$ 8 boxes $=$ 768 mailboxes. Given a four-byte floats and
-an eight-byte pointers, the values (floats) in the map will claim
-$768\times768\times4\text{bytes}\approx2.4\text{Mbytes}$ of memory, where the
-values (pairs of pointers) will claim
-$768\times768\times8\text{bytes}\approx4.7\text{Mbytes}$ of memory. Even
-incorporating STL overheads, these aren't particularly large numbers (I wrote a
-test program!).
-
 ### Starting State
 "Random" placement is sufficient for this, but I suspect a "smart random"
 placement would be a better starting point - perhaps one which accounts for
-constraints. We could even use a bucket-fill placement as an initial state -
+constraints. We could even use a thread-filled placement as an initial state -
 it's cheap to compute.
 
 A point on random placement - core-pairs share instruction memory. As such, we
-maintain a `std::map<DevT_t*, std::list<P_core*>> validCoresForDeviceType`,
+maintain a `std::map<UniqueDevT, std::list<P_core*>> validCoresForDeviceType`,
 which initially allows all normal devices to be placed on all cores, but cores
 are removed (or added) as devices are moved around.
 
@@ -476,21 +506,14 @@ for:
 
 Point is, this approach is pretty expensive, so we only want to do it as few
 times as possible. This is stored in `SimulatedAnnealing.result.score` during
-computation, and is done by calling `Placer:compute_fitness(P_task*)`.
+computation, and is done by calling `Placer:compute_fitness(GraphI_t*)`.
 
-## Selection - Swap and Move Operations
+## Selection - Move Operations
 Simulated annealing mandates that the selection operation must choose a
-neighbouring state. It can be proven that a combination of move and swap
-operations, both of which select neighbouring states, are sufficient to explore
-the state space.
-
-This mechanism would randomly select a device in the application, a core in the
-hardware model that is valid for devices of this type (from
-`validCoresForDeviceType`), a thread index in the core, and an index `i` in
-[0,1023]. If there aren't `i` devices in the target thread, we move the
-selected device to that thread. If there are `i` devices in the target thread,
-the position of the `i`th device is swapped with the position of the selected
-device.
+neighbouring state. This mechanism would randomly select a device in the
+application, a core in the hardware model that is valid for devices of this
+type (from `validCoresForDeviceType`), and a thread index in the core for a
+thread that is not full. The selected device is moved to that thread.
 
 ## Fitness Evaluation of Selected State
 In short, compute the delta, and assume we're running in serial.
@@ -527,33 +550,30 @@ Simply put, better solutions are always accepted if they're better, and
 sometimes accepted (as a function of the disorder parameter
 `SimulatedAnnealing.disorder`). To accept a solution, the data may change:
 
- - SimulatedAnnealing.result.score
+ - `SimulatedAnnealing.result.score`
 
- - MsgT_t.weight (some of them)
+ - `MsgT_t.weight` (some of them)
 
- - Placer.deviceToThread (some of them)
+ - `Placer.deviceToThread` (some of them)
 
- - Placer.threadToDevice (some of them)
+ - `Placer.threadToDevice` (some of them)
 
- - SimulatedAnnealing.validCoresForDeviceType
+ - `SimulatedAnnealing.validCoresForDeviceType`
 
 ## Termination
 Suitable termination detection is a black art - there are many metrics one can
-use, and they'll all fail in certain cases. We could terminate when:
-
- - Wallclock exceeds a certain threshold.
-
- - Iteration count $n$ exceeds a certain threshold.
-
- - Fitness reaches a certain value as a proportion of the initial value.
-
- - The rate of fitness reduction (over a perious of time) subceeds a certain
-   threshold.
-
-I'll probably use a wallclock threshold as a termination condition to start
-with.
+use, and they'll all fail in certain cases. However, we terminate after a fixed
+number of iterations for simplicity.
 
 ## Extensions
+
+### Alternative Termination Conditions
+Imagine the possibilities:
+
+ - From the fitness history (it's an exponential decay), a certain number of
+   time constants?
+
+ - Given a certain amount of wallclock time has passed.
 
 ### Network Congestion
 As a design assumption, I'm ignoring the "value" of network congestion.  I
@@ -615,71 +635,6 @@ optimum, where it does not necessarily need to be so here.
 
 ### Parallel SA
 Would be pretty cool, eh ADB.
-
-# Roadmap
-This section outlines when Mark expects certain implementation milestones to be
-reached. The dates are (fairly wild) guesses based off when Mark is away, and
-how long he expects certain jobs to take.
-
-: When Mark expects he'll do things by.
-
-+------------+----------------------------------------------------------------+
-| When done  | Job                                                            |
-+============+================================================================+
-| 2019-10-07 | Finalise the design of components design of the placement      |
-|            | system, and have it reviewed by relevant people.\              |
-|            |                                                                |
-+------------+----------------------------------------------------------------+
-| 2019-10-21 | Implement "fundamental" placement data structures, and connect |
-|            | them to existing Orchestrator infrastructure                   |
-|            | (`P_builder`). This includes:                                  |
-|            |                                                                |
-|            |  - `Placer`                                                    |
-|            |  - `Constraint` (and some derivatives, hard-coding their       |
-|            |    (de)activation)                                             |
-|            |  - `constraintCategory`                                        |
-|            |  - `Algorithm` (and bucket-filling)                            |
-|            |  - `Result`                                                    |
-+------------+----------------------------------------------------------------+
-| 2019-10-29 | Implement a fitness evaluator, which accounts for the edges of |
-|            | the application graph, and the costs of any broken             |
-|            | constraints. \                                                 |
-|            |                                                                |
-+------------+----------------------------------------------------------------+
-| 2019-11-14 | Simulated annealing implementation, with:                      |
-|            |                                                                |
-|            |  - Precomputation of mailbox-mailbox communication matrix.     |
-|            |  - Sensible initial placement (probably bucket-filling).       |
-|            |  - Selection operations (swap and move)                        |
-|            |  - Fitness delta computation                                   |
-|            |  - Some elementary termination logic                           |
-+------------+----------------------------------------------------------------+
-| 2019-11-29 | Improve placement accuracy with the time that's left:          |
-|            |                                                                |
-|            | - Divine an accurate communication model                       |
-|            | - Introduce the notion of mailbox-board ports to the hardware  |
-|            |   model, to facilitate more accurate placement calculation.    |
-+------------+----------------------------------------------------------------+
-| 2019-12-16 | Advisory board preparation, tell a good story.\                |
-|            |                                                                |
-+------------+----------------------------------------------------------------+
-| Later      | Implement constraint file parser (formally).\                  |
-|            |                                                                |
-+------------+----------------------------------------------------------------+
-| Later      | Support placement according to supervisor and external         |
-|            | devices. Do this by introducing the notion of a "supervisor    |
-|            | board" to the hardware model, analogous to Tinsel's bridge     |
-|            | board. Include links between supervisor devices and normal     |
-|            | devices in fitness computation.\                               |
-|            |                                                                |
-+------------+----------------------------------------------------------------+
-| Later      | Design the interface for introducing application constraints   |
-|            | (from XML) and operator constraints (from command line), and   |
-|            | implement this interface.\                                     |
-|            |                                                                |
-+------------+----------------------------------------------------------------+
-| Later      | Various simulated annealing extensions (not yet).
-+------------+----------------------------------------------------------------+
 
 # Appendix A: System-wide Constraint File Format (0.0.0)
 This section defines the file format to be used by the Orchestrator to
@@ -811,21 +766,7 @@ parameter="apple1","apple2","apple3"
 cost=500.4  // Arbitrary
 ~~~
 
-# Appendix B: Application (XML) Constraint Format (TODO)
-Some kind of metadata, though where and what format? I note that version 4 of
-the application description XML supports metadata in a variety of places, so
-there's lots of flexibility to be exploited here.
-
-# Appendix C: Proof that Movement and Swapping are Sufficient Selection Operations (TODO)
-It's pretty simple - just demonstrate that the space of solutions (described as
-an ordered set of unordered size-bound sets of devices, where the order
-determines the thread that a device is placed on) can be fully traversed by
-move operations (described as moving a device from one of the contained sets to
-another), given that there's an "empty space" to move to (adhering to the
-size-bound restriction of the contained sets). Introduce the swap operation to
-resolve the "empty space" case, which completes the proof.
-
-# Appendix D: Comprehensive List of Constraints
+# Appendix B: Comprehensive List of Constraints
 Constraints can are introduced at runtime using the `placement /constraint =
 TYPE,ARGS` operator command. The available constraint `TYPE`s are:
 
@@ -841,21 +782,50 @@ TYPE,ARGS` operator command. The available constraint `TYPE`s are:
    entire hardware model will be used for placement (barring regions where
    other applications have been placed).
 
-# Appendix E: Comprehensive List of Algorithms
-Algorithms are run on a loaded task using the `placement /ALGORITHM =
+# Appendix C: Comprehensive List of Algorithms
+Algorithms are run on a loaded graph instance using the `placement /ALGORITHM =
 APPLICATIONNAME` operator command. All algorithms are aware of all constraints
 (hopefully). Algorithms will not place devices on cores that already have
 devices from other applications placed upon them. The available `ALGORITHM`s
 are:
 
- - `bucket`: A bucket-filling placement, where the threads in the hardware
-   model are filled in sequence. This placement mechanism is device-type aware.
+ - `app`: See `tfill`.
+
+ - `bucket`: See `tfill`.
 
  - `gc`: A gradientless climber implementation. Identical to `sa`, but with no
    disorder (so only superior solutions are accepted).
+
+ - `link`: See `tfill`.
 
  - `rand`: A smart-random placement, which is constraint aware, and is aware of
    the placement of other applications. Places devices randomly across the
    engine.
 
  - `sa`: The simulated annealing implementation described in section 5.
+
+ - `spread`: A spreading placement, where devices are distributed as evenly as
+   possible across all threads. This placement mechanism is device-type aware.
+
+ - `tfill`: A thread-filling placement, where the threads in the hardware model
+   are filled in sequence. This placement mechanism is device-type aware.
+
+# Appendix D: Comprehensive List of Arguments
+Arguments are staged using the `placement /ARGUMENT = VALUE` operator
+command. The following table lists arguments and their type, as defined in
+`PlaceArgs::setup()`:
+
++---------------+------------+------------+------------------+
+| Argument name | Value type | Default    | Valid algorithms |
++===============+============+============+==================+
+| `inpl`        | `bool`     | `false`    | `sa`, `gc`       |
++---------------+------------+------------+------------------+
+| `iter`        | `uint`     | `int(1e8)` | `sa`, `gc`       |
++---------------+------------+------------+------------------+
+
+ - `inpl` (in-place): When applied to an annealing algorithm, defines whether
+   or not to anneal on top of an existing placement configuration.
+
+ - `iter` (number of iterations): When applied to an annealing algorithm,
+   defines the number of iterations to anneal for (includes rejected
+   transformations).
