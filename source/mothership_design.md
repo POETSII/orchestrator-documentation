@@ -641,21 +641,20 @@ Mothership, as well as external devices elsewhere. They are:
 
     - `SupervisorApi* (*getApi)()`: Used to provision the Supervisor API (see
       below).
-      
+
     - `uint64_t (*getAddr)(uint32_t)`: Used to get the full symbolic address
       of a device from its Supervisor-unique index, which is sent in the
       `pinAddr` field of each log packet.
-      
-    - `const SupervisorDeviceInstance_t* (*getInstance)(uint32_t)`: Used to  
+
+    - `const SupervisorDeviceInstance_t* (*getInstance)(uint32_t)`: Used to
       get a pointer to the `SupervisorDeviceInstance_t` struct for the device
-      identified by the specified index. A `SupervisorDeviceInstance_t` 
+      identified by the specified index. A `SupervisorDeviceInstance_t`
       contains the address components (and temporarily the name) of a
       device.
-      
-    - `void (*getAddrVector)(std::vector<SupervisorDeviceInstance_t>&)`: 
+
+    - `void (*getAddrVector)(std::vector<SupervisorDeviceInstance_t>&)`:
       Used to populate a vector with a copy of the Supervisor's `DeviceVector`.
       This method must be used with care as the `DeviceVector` can be very big.
-      
 
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
