@@ -22,14 +22,14 @@ digraph G {
 <TR><TD ALIGN="LEFT">
 + pE : P_engine*<BR ALIGN="LEFT"/>
 + pPlacer : Placer*<BR ALIGN="LEFT"/>
- ...<BR ALIGN="TEXT"/>
+ ...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-"Base class" of<BR ALIGN="TEXT"/>
-the Orchestrator.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+"Base class" of<BR ALIGN="CENTER"/>
+the Orchestrator.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     Apps_t[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -37,67 +37,67 @@ the Orchestrator.<BR ALIGN="TEXT"/>
 <TR><TD ALIGN="LEFT">
 + Apps_t::Apps_m : Apps_t*<BR ALIGN="LEFT"/>
 + GraphI_v : vector&lt;GraphI_t*&gt;<BR ALIGN="LEFT"/>
-...<BR ALIGN="TEXT"/>
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Table of loaded applications.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Table of loaded applications.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     P_engine[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>P_engine</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Encapsulates the hardware model.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Encapsulates the hardware model.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     GraphI_t[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>GraphI_t</TD></TR>
-<TR><TD ALIGN="TEXT">
+<TR><TD ALIGN="CENTER">
 + G : pdigraph&lt;nodeType=DevI_t*,<BR ALIGN="LEFT"/>
                edgeType=MsgT_t*,<BR ALIGN="LEFT"/>
                pinType=PinI_t*&gt;<BR ALIGN="LEFT"/>
-...<BR ALIGN="TEXT"/>
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds the graph<BR ALIGN="TEXT"/>
-of devices.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds the graph<BR ALIGN="CENTER"/>
+of devices.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     P_thread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>P_thread</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Represents a thread in<BR ALIGN="TEXT"/>
-the hardware model.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Represents a thread in<BR ALIGN="CENTER"/>
+the hardware model.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     DevI_t[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>DevI_t</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Represents a device<BR ALIGN="TEXT"/>
-in a task.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Represents a device<BR ALIGN="CENTER"/>
+in a task.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     node[color="#000055",
@@ -112,15 +112,15 @@ in a task.<BR ALIGN="TEXT"/>
 + placedGraphs : map&lt;GraphI_t*, Algorithm*&gt;<BR ALIGN="LEFT"/>
 + threadToDevices : map&lt;P_thread*,<BR ALIGN="LEFT"/>
                         list&lt;DevI_t*&gt;&gt;<BR ALIGN="LEFT"/>
-...<BR ALIGN="TEXT"/>
+...<BR ALIGN="CENTER"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + place(GraphI_t*, string) : float<BR ALIGN="LEFT"/>
 + unplace(GraphI_t*) : void<BR ALIGN="LEFT"/>
-...<BR ALIGN="TEXT"/>
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Manages placement of tasks into<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Manages placement of tasks into<BR ALIGN="CENTER"/>
 the hardware model.
 </TD></TR></TABLE>>];
 

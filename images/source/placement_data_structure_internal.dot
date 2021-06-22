@@ -27,7 +27,7 @@ digraph G {
 + args : placeArgs<BR ALIGN="LEFT"/>
 + threadToDevices : map&lt;P_thread*,<BR ALIGN="LEFT"/>
                         list&lt;DevI_t*&gt;&gt;<BR ALIGN="LEFT"/>
-...<BR ALIGN="TEXT"/>
+...<BR ALIGN="CENTER"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + compute_fitness(GraphI_t*) : float<BR ALIGN="LEFT"/>
@@ -38,8 +38,8 @@ digraph G {
 - check_all_devices_mapped(GraphI_t*<BR ALIGN="LEFT"/>
       vector&lt;DevI_t*&gt;*) : bool<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Manages placement of tasks into<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Manages placement of tasks into<BR ALIGN="CENTER"/>
 the hardware model.
 </TD></TR></TABLE>>];
 
@@ -62,22 +62,22 @@ the hardware model.
 + set(string, string) : bool<BR ALIGN="LEFT"/>
 + validate_args(string) : void<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds and validates arguments<BR ALIGN="TEXT"/>
-for placement algorithms.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds and validates arguments<BR ALIGN="CENTER"/>
+for placement algorithms.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     MaxDevicesPerThread[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>MaxDevicesPerThread:Constraint</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Constrains the number of devices<BR ALIGN="TEXT"/>
-that can be placed on a thread.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Constrains the number of devices<BR ALIGN="CENTER"/>
+that can be placed on a thread.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     Constraint[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -95,9 +95,9 @@ that can be placed on a thread.<BR ALIGN="TEXT"/>
 + virtual is_satisfied_delta(Placer*,<BR ALIGN="LEFT"/>
       vector&lt;DevI_t*&gt;) : bool<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Represents a constraint imposed on the place-<BR ALIGN="TEXT"/>
--ment system (for one task, or for all tasks).<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Represents a constraint imposed on the place-<BR ALIGN="CENTER"/>
+-ment system (for one task, or for all tasks).<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     placeholder_1[style="invis"];
@@ -115,15 +115,15 @@ thought up yet.<BR ALIGN="LEFT"/>
 
     MaxThreadsPerCore[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>MaxThreadsPerCore:Constraint</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Constrains the maximum number of<BR ALIGN="TEXT"/>
-threads each core can use.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Constrains the maximum number of<BR ALIGN="CENTER"/>
+threads each core can use.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     Algorithm[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -137,9 +137,9 @@ threads each core can use.<BR ALIGN="TEXT"/>
 + virtual do_it(GraphI_t*) : float<BR ALIGN="LEFT"/>
 + virtual Dump(FILE*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Represents the execution<BR ALIGN="TEXT"/>
-of a placement algorithm.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Represents the execution<BR ALIGN="CENTER"/>
+of a placement algorithm.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     Result[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -153,33 +153,33 @@ of a placement algorithm.<BR ALIGN="TEXT"/>
 + startTime : string<BR ALIGN="LEFT"/>
 + endTime : string<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-The results of a placement<BR ALIGN="TEXT"/>
-algorithm execution.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+The results of a placement<BR ALIGN="CENTER"/>
+algorithm execution.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     SimulatedAnnealing[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>SimulatedAnnealing:Algorithm</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Does simulated annealing.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Does simulated annealing.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     ThreadFilling[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>ThreadFilling:Algorithm</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Does thread filling.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Does thread filling.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     /* Relationship definitions (as graph edges) */
