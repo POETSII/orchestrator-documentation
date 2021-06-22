@@ -268,11 +268,11 @@ no other information about the application yet.
 |                 |    `soPath`           | Also loads the supervisor, and    |
 |                 |                       | provisions its API.               |
 +-----------------+-----------------------+-----------------------------------+
-| `CMND`,  `RECL` | 0. `std::string`      | Removes information for an        |
-|                 |    `appName`          | application, by name, from the    |
-|                 |                       | Mothership. Does nothing on a     |
-|                 |                       | running application (it must be   |
-|                 |                       | stopped first).                   |
+| `CMND`, `BRKN`  | 0. `std::string`      | Marks an application as broken,   |
+|                 |    `appName`          | due to an error happening on      |
+|                 |                       | another Mothership. The           |
+|                 |                       | must be recalled and redeployed   |
+|                 |                       | to be used.                       |
 +-----------------+-----------------------+-----------------------------------+
 | `CMND`, `INIT`  | 0. `std::string`      | Takes a fully-defined             |
 |                 |    `appName`          | application (with state           |
@@ -286,6 +286,14 @@ no other information about the application yet.
 |                 |                       | application is not `DEFINED`      |
 |                 |                       | this message is acted on when it  |
 |                 |                       | reaches that state.               |
++-----------------+-----------------------+-----------------------------------+
+| `CMND`,  `RECL` | 0. `std::string`      | Removes information for an        |
+|                 |    `appName`          | application, by name, from the    |
+|                 |                       | Mothership. Does nothing on a     |
+|                 |                       | running application (it must be   |
+|                 |                       | stopped first) or an initialised  |
+|                 |                       | application (it must be started,  |
+|                 |                       | then stopped).                    |
 +-----------------+-----------------------+-----------------------------------+
 | `CMND`, `RUN`   | 0. `std::string`      | Takes an application held at the  |
 |                 |    `appName`          | softswitch barrier (with state    |
@@ -334,7 +342,9 @@ and what the Mothership does with those messages.
 The Mothership process occasionally also sends messages to the Root
 process. Table 2 denotes subkeys of messages that Mothership processes send to
 Root, along with their intended use. They're mostly acknowledgements of work
-done, and are useful for debugging.
+done, and are useful for debugging and logging. Root maintains a data structure
+to understand when an application has transitioned from one state to another on
+all Motherships.
 
 +-----------------+-----------------------+-----------------------------------+
 | Key Permutation | Arguments             | Reason                            |
@@ -360,11 +370,21 @@ done, and are useful for debugging.
 | `STOP`          |    `appName`          | the application has been fully    |
 |                 |                       | stopped.                          |
 +-----------------+-----------------------+-----------------------------------+
+| `MSHP`, `ACK`,  | 0. `std::string`      | Notifies the Root process that    |
+| `RECL`          |    `appName`          | the application has been          |
+|                 |                       | recalled.                         |
++-----------------+-----------------------+-----------------------------------+
 | `MSHP`, `REQ`,  | 0. `std::string`      | Requests the Root process to send |
 | `STOP`          |    `appName`          | a stop message to all Motherships |
 |                 |                       | running the application. Used by  |
 |                 |                       | `stop_application` Supervisor API |
 |                 |                       | call.                             |
++-----------------+-----------------------+-----------------------------------+
+| `MSHP`, `REQ`,  | 0. `std::string`      | Requests the Root process to send |
+| `BRKN`          |    `appName`          | an error message to all           |
+|                 |                       | Motherships hosting the           |
+|                 |                       | application. Is sent when an      |
+|                 |                       | application breaks or errors.     |
 +-----------------+-----------------------+-----------------------------------+
 
 Table: Output message key permutations that the Mothership process sends to the
