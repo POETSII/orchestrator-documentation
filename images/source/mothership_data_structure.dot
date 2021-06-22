@@ -18,43 +18,43 @@ digraph G {
 
     SBase[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>SBase</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Device/address lookup<BR ALIGN="TEXT"/>
-for externals.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Device/address lookup<BR ALIGN="CENTER"/>
+for externals.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     HostLink[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>HostLink (backend)</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Backend packet<BR ALIGN="TEXT"/>
-interface.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Backend packet<BR ALIGN="CENTER"/>
+interface.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     CommonBase[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
 <TR><TD>CommonBase (MPI-end)</TD></TR>
-<TR><TD ALIGN="TEXT">
-...<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+...<BR ALIGN="CENTER"/>
 </TD></TR>
 <TR><TD ALIGN="LEFT">
 + CommonBase(int, char*, string, string)<BR ALIGN="LEFT"/>
 + Post(int, vector&lt;string&gt;) : bool<BR ALIGN="LEFT"/>
 ! MPISpinner() : void<BR ALIGN="LEFT"/>
-...<BR ALIGN="TEXT"/>
+...<BR ALIGN="CENTER"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-MPI message interface.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+MPI message interface.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     AppState[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -84,8 +84,8 @@ BROKEN<BR ALIGN="LEFT"/>
 + recall_app(AppInfo*) : void<BR ALIGN="LEFT"/>
 + dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds the state of applications for<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds the state of applications for<BR ALIGN="CENTER"/>
 a given Mothership.
 </TD></TR></TABLE>>];
 
@@ -111,10 +111,10 @@ For each command (init, run, stop, recl):<BR ALIGN="LEFT"/>
 + stage_init() : void<BR ALIGN="LEFT"/>
 + is_init_staged() : bool<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds information and state on an<BR ALIGN="TEXT"/>
-application from the perspective<BR ALIGN="TEXT"/>
-of one Mothership object.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds information and state on an<BR ALIGN="CENTER"/>
+application from the perspective<BR ALIGN="CENTER"/>
+of one Mothership object.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     CoreInfo[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -125,12 +125,12 @@ of one Mothership object.<BR ALIGN="TEXT"/>
 + threadsExpected : set&lt;uint32_t&gt;<BR ALIGN="LEFT"/>
 + threadsCurrent : set&lt;uint32_t&gt;<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
+<TR><TD ALIGN="CENTER">
 None
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds information and loading<BR ALIGN="TEXT"/>
-state on a core.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds information and loading<BR ALIGN="CENTER"/>
+state on a core.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     SuperDB[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -145,8 +145,8 @@ state on a core.<BR ALIGN="TEXT"/>
 + unload_supervisor(string) : bool<BR ALIGN="LEFT"/>
 + dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds the state of supervisors for<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds the state of supervisors for<BR ALIGN="CENTER"/>
 a given Mothership.
 </TD></TR></TABLE>>];
 
@@ -164,9 +164,9 @@ a given Mothership.
 + ~SuperHolder()<BR ALIGN="LEFT"/>
 + dump(ofstream*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds a supervisor device for a<BR ALIGN="TEXT"/>
-given application.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds a supervisor device for a<BR ALIGN="CENTER"/>
+given application.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     InstrumentationWriter[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -182,9 +182,9 @@ given application.<BR ALIGN="TEXT"/>
 + consume_instrumentation_packet(P_Pkt_t*) : bool<BR ALIGN="LEFT"/>
 - setup_directory() : void<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Processes instrumentation data from the compute<BR ALIGN="TEXT"/>
-fabric, and writes them to files.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Processes instrumentation data from the compute<BR ALIGN="CENTER"/>
+fabric, and writes them to files.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     ThreadInstrumentationDatum[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -194,13 +194,13 @@ fabric, and writes them to files.<BR ALIGN="TEXT"/>
 + txCount : uint64_t<BR ALIGN="LEFT"/>
 + rxCount : uint64_t<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
+<TR><TD ALIGN="CENTER">
 None
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds cumulative<BR ALIGN="TEXT"/>
-instrumentation data for<BR ALIGN="TEXT"/>
-a thread.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds cumulative<BR ALIGN="CENTER"/>
+instrumentation data for<BR ALIGN="CENTER"/>
+a thread.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     Mothership[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -237,7 +237,7 @@ threads):<BR ALIGN="LEFT"/>
 + handle_pkt_instr(P_Pkt_t*)<BR ALIGN="LEFT"/>
 ... (for each input packet opcode)<BR ALIGN="LEFT"/><BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
+<TR><TD ALIGN="CENTER">
 Holds the state of the Mothership process.
 </TD></TR></TABLE>>];
 
@@ -306,9 +306,9 @@ Starting threads and waiting: <BR ALIGN="LEFT"/>
 - debug_input_broker(Mothership*) : void*<BR ALIGN="LEFT"/>
 -->
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Manages communication between Mothership threads,<BR ALIGN="TEXT"/>
-abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Manages communication between Mothership threads,<BR ALIGN="CENTER"/>
+abstracting the threading logic from handler logic.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     LogPacketManager[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -320,9 +320,9 @@ abstracting the threading logic from handler logic.<BR ALIGN="TEXT"/>
 + consume_log_packet(P_Pkt_t*,<BR ALIGN="LEFT"/>
                      string*) : void<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds intermediate logging data from<BR ALIGN="TEXT"/>
-compute threads.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds intermediate logging data from<BR ALIGN="CENTER"/>
+compute threads.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     ThreadLogDatum[label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
@@ -332,13 +332,13 @@ compute threads.<BR ALIGN="TEXT"/>
 + packetCountExpected : unsigned<BR ALIGN="LEFT"/>
 + payloads : P_Log_Pkt_Pyld_t[]<BR ALIGN="LEFT"/>
 </TD></TR>
-<TR><TD ALIGN="TEXT">
+<TR><TD ALIGN="CENTER">
 None
 </TD></TR>
-<TR><TD ALIGN="TEXT">
-Holds cumulative<BR ALIGN="TEXT"/>
-logging data for<BR ALIGN="TEXT"/>
-a thread.<BR ALIGN="TEXT"/>
+<TR><TD ALIGN="CENTER">
+Holds cumulative<BR ALIGN="CENTER"/>
+logging data for<BR ALIGN="CENTER"/>
+a thread.<BR ALIGN="CENTER"/>
 </TD></TR></TABLE>>];
 
     /* Relationship definitions (as graph edges) */
