@@ -674,24 +674,24 @@ configured staging directory (`Output/Composer` in the default configuration).
    and produces a binary representation of the application supervisor. It
    performs the generation and build steps in sequence.
 
- - `compose /clean`: Given a placed application graph instance (or multiple),
-   clear any compiled binaries composed for that application.
-
  - `compose /decompose`: Given a placed application graph instance (or
    multiple), clear any compiled binaries and generated source files composed
    for that application.
-
- - `compose /degenerate`: Given a placed application graph instance (or
-   multiple), clear any generated source files composed for that application.
 
  - `compose /generate`: Given a placed application graph instance (or
    multiple), generates translation units (source code) from the loaded XML, to
    be compiled into application binaries (both for normal devices and
    supervisor devices).
 
+ - `compose /degenerate`: Given a placed application graph instance (or
+   multiple), clear any generated source files composed for that application.
+
  - `compose /compile`: Given a generated application graph instance (or
    multiple), compiles instruction and data binaries to be loaded onto the POETS
    Engine, and produces a binary representation of the application supervisor.
+
+ - `compose /clean`: Given a placed application graph instance (or multiple),
+   clear any compiled binaries composed for that application.
 
  - `compose /bypass`: Bypasses most of the compose process provided that the
    compiled binaries for the application already exist, allowing the operator
@@ -699,10 +699,36 @@ configured staging directory (`Output/Composer` in the default configuration).
    The loaded application must be identical in terms of definition and placement
    for this to work - there are no checks beyond binary existance.
 
+ - `compose /reset`: Deletes the Composer, clearing all data, and creates a new one.
+
+ - `compose /dump`: Dumps diagnostic data regarding the Composer to the microlog.
+ 
+ Additionally, the behaviour of the generated Softswitch can be controlled by setting
+ Composer parameters:
+
  - `compose /args`: Allows the operator to pass additional arguments to the
    compiler(s) used to build the application binaries.
 
- - `compose /dump`: Dumps diagnostic data regardign the Composer to the microlog.
+ - `compose /inst`: Indicates that the Softswitches should be compiled with 
+   Instrumentation enabled (default).
+
+ - `compose /noinst`: Indicates that the Softswitches should be compiled with 
+   Instrumentation disabled.
+
+ - `compose /buff`: Indicates that the Softswitches should be compiled in the 
+   buffering mode. Refer to Volume III(B) for more information.
+
+ - `compose /nobuff`: Indicates that the Softswitches should be compiled in the 
+   non-buffering mode (default).
+
+ - `compose /logh`: Indicates that the Softswitches should be compiled with 
+   the specified log handler. Options are `none` and `trivial` (default).
+
+ - `compose /logl`: Sets the minimum log level required to emit a log message
+   with `handler_log`. The default value is 2.
+
+ - `compose /rtsb`: Sets the maximum size of the RTS list (or packet buffer in
+   buffering mode). The default value is 4096.
 
 ## Deploy (`deploy`)
 
