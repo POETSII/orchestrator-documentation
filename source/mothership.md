@@ -66,7 +66,7 @@ NB: Terminology in this document:
    to take people from the past to the present after all. I'll try to be
    explicit wherever I use this term.
 
-Figure 1 shows the class structure diagram for the proposed Mothership design.
+Figure 1 shows the class structure diagram for the Mothership.
 
 ![Mothership class structure diagram](images/mothership_data_structure.png)
 
@@ -268,11 +268,11 @@ no other information about the application yet.
 |                 |    `soPath`           | Also loads the supervisor, and    |
 |                 |                       | provisions its API.               |
 +-----------------+-----------------------+-----------------------------------+
-| `CMND`,  `RECL` | 0. `std::string`      | Removes information for an        |
-|                 |    `appName`          | application, by name, from the    |
-|                 |                       | Mothership. Does nothing on a     |
-|                 |                       | running application (it must be   |
-|                 |                       | stopped first).                   |
+| `CMND`, `BRKN`  | 0. `std::string`      | Marks an application as broken,   |
+|                 |    `appName`          | due to an error happening on      |
+|                 |                       | another Mothership. The           |
+|                 |                       | must be recalled and redeployed   |
+|                 |                       | to be used.                       |
 +-----------------+-----------------------+-----------------------------------+
 | `CMND`, `INIT`  | 0. `std::string`      | Takes a fully-defined             |
 |                 |    `appName`          | application (with state           |
@@ -286,6 +286,14 @@ no other information about the application yet.
 |                 |                       | application is not `DEFINED`      |
 |                 |                       | this message is acted on when it  |
 |                 |                       | reaches that state.               |
++-----------------+-----------------------+-----------------------------------+
+| `CMND`,  `RECL` | 0. `std::string`      | Removes information for an        |
+|                 |    `appName`          | application, by name, from the    |
+|                 |                       | Mothership. Does nothing on a     |
+|                 |                       | running application (it must be   |
+|                 |                       | stopped first) or an initialised  |
+|                 |                       | application (it must be started,  |
+|                 |                       | then stopped).                    |
 +-----------------+-----------------------+-----------------------------------+
 | `CMND`, `RUN`   | 0. `std::string`      | Takes an application held at the  |
 |                 |    `appName`          | softswitch barrier (with state    |
@@ -334,7 +342,9 @@ and what the Mothership does with those messages.
 The Mothership process occasionally also sends messages to the Root
 process. Table 2 denotes subkeys of messages that Mothership processes send to
 Root, along with their intended use. They're mostly acknowledgements of work
-done, and are useful for debugging.
+done, and are useful for debugging and logging. Root maintains a data structure
+to understand when an application has transitioned from one state to another on
+all Motherships.
 
 +-----------------+-----------------------+-----------------------------------+
 | Key Permutation | Arguments             | Reason                            |
@@ -360,11 +370,21 @@ done, and are useful for debugging.
 | `STOP`          |    `appName`          | the application has been fully    |
 |                 |                       | stopped.                          |
 +-----------------+-----------------------+-----------------------------------+
+| `MSHP`, `ACK`,  | 0. `std::string`      | Notifies the Root process that    |
+| `RECL`          |    `appName`          | the application has been          |
+|                 |                       | recalled.                         |
++-----------------+-----------------------+-----------------------------------+
 | `MSHP`, `REQ`,  | 0. `std::string`      | Requests the Root process to send |
 | `STOP`          |    `appName`          | a stop message to all Motherships |
 |                 |                       | running the application. Used by  |
 |                 |                       | `stop_application` Supervisor API |
 |                 |                       | call.                             |
++-----------------+-----------------------+-----------------------------------+
+| `MSHP`, `REQ`,  | 0. `std::string`      | Requests the Root process to send |
+| `BRKN`          |    `appName`          | an error message to all           |
+|                 |                       | Motherships hosting the           |
+|                 |                       | application. Is sent when an      |
+|                 |                       | application breaks or errors.     |
 +-----------------+-----------------------+-----------------------------------+
 
 Table: Output message key permutations that the Mothership process sends to the
@@ -621,21 +641,20 @@ Mothership, as well as external devices elsewhere. They are:
 
     - `SupervisorApi* (*getApi)()`: Used to provision the Supervisor API (see
       below).
-      
+
     - `uint64_t (*getAddr)(uint32_t)`: Used to get the full symbolic address
       of a device from its Supervisor-unique index, which is sent in the
       `pinAddr` field of each log packet.
-      
-    - `const SupervisorDeviceInstance_t* (*getInstance)(uint32_t)`: Used to  
+
+    - `const SupervisorDeviceInstance_t* (*getInstance)(uint32_t)`: Used to
       get a pointer to the `SupervisorDeviceInstance_t` struct for the device
-      identified by the specified index. A `SupervisorDeviceInstance_t` 
+      identified by the specified index. A `SupervisorDeviceInstance_t`
       contains the address components (and temporarily the name) of a
       device.
-      
-    - `void (*getAddrVector)(std::vector<SupervisorDeviceInstance_t>&)`: 
+
+    - `void (*getAddrVector)(std::vector<SupervisorDeviceInstance_t>&)`:
       Used to populate a vector with a copy of the Supervisor's `DeviceVector`.
       This method must be used with care as the `DeviceVector` can be very big.
-      
 
  - Stored in the `SuperDB` object (`Mothership.superdb`) within
    `std::map<std::string, SuperHolder> SuperDB.supervisors`, keyed by
@@ -827,59 +846,3 @@ To follow along, use Figure 2 and the Command and Control section.
 
   4. The `BackendOutputBroker` reads from the `BackendOutputQueue`, and pushes
      the packet into the compute backend.
-
-# Appendix B: A Rough Implementation Plan
-This Mothership design differs from the existing Mothership in the following
-ways:
-
- - Threads are all started at the beginning of the Mothership process
-   (i.e. before any messages are received), as opposed to the previous
-   Mothership, which starts Twig (the backend-receiving thread) in
-   advance. Furthermore, the thread that processes backend packets
-   (`BackendInputBroker` vs `Twig`) no longer "resolves" the packet, but simply
-   forwards it on
-
- - MPI messages have different forms and arguments (though backend messages are
-   the same), and acknowledgement messages are sent back from the Mothership
-   process to the Root process.
-
- - The data structures for holding application and supervisor information do
-   not use the hardware model, and are constructed from different pieces of
-   information.
-
- - Quitting and cleanup operates independently of backend traffic. The proposed
-   design does not fail to exit or to terminate an application if it is
-   spamming the Mothership.
-
- - The proposed design introduces intermediate application states for certain
-   stages, respects deploy and command messages arriving out-of-order (i.e. due
-   to traffic), and has a simpler state transition mechanism.
-
- - The backend is now loaded independently of Mothership object construction,
-   and does not prevent the Orchestrator from starting if unable to load.
-
- - Multiple supervisors-per-Mothership (not per application) are now supported,
-   and communication between supervisors is defined (albeit tenuously for now).
-
-Given these differences, this design will be implemented in the following way,
-where each stage represents a reviewable unit (probably by GMB):
-
- 1. An implementation of the core constructs. This implementation will be the
-    minimum possible to replicate the feature set of the existing Mothership as
-    closely as possible.
-
- 2. A performance comparison between the new and old Motherships to check for
-    regression. One key difference expected is that, since Twig calls
-    supervisor logic directly, there will be a slightly increased supervisor
-    message "processing latency", but the backend queue in the new Mothership
-    will be drained more quickly. Any regression issues will be resolved here.
-
- 3. Given that it has been developed, SBase would be integrated next for
-    external device support. This will require a small refactor of the
-    application deployment messages (`APP`, `*`) to identify the most efficient
-    solution.
-
- 4. Implementation of the supervisor API.
-
- 5. True multibox support, including an explicit Box->Mothership map in Root,
-    and HostLink considerations.
