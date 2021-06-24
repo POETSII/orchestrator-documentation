@@ -635,11 +635,49 @@ initialise /app = *
 run /app = *
 ~~~
 
-Note that you will need to exit the Orchestrator once your job has finished, by
-commanding `exit` (this cannot be scripted, as it would result in premature
-termination of your job). It is possible to nest batch files using the `call
-/file` command, and it is possible to prematurely end execution of a batch file
-by calling `return` (from within a batch file).
+It is possible to nest batch files using the `call /file` command, and it is
+possible to prematurely end execution of a batch file by calling `return` (from
+within a batch file).
+
+### Scheduling Orchestrator Shutdown (exit)
+
+Note that, with this script, you will need to exit the Orchestrator once your
+job has finished, by commanding `exit`. Exits can be scheduled using the `exit
+/at` command - here are two examples:
+
+~~~ {.bash}
+// Stage an exit to happen after the final command has been executed.
+exit /at = "end"
+
+// Compile my application, then leave, checking it passes validation.
+load /app = +"ring_test.xml"
+tlink /app = *
+place /tfill = *
+compose /app = *
+~~~
+
+The `exit /at = end` command is not suitable for closing the Orchestrator when
+an application stops running however, because the `deploy`, `init`, and `run`
+commands *stage* those actions on Motherships. To achieve this, use `exit /at =
+stop`, as the next example demonstrates:
+
+~~~ {.bash}
+// Stage an exit to happen when the next application stops.
+exit /at = "stop"
+
+// The same as the initial script.
+load /app = +"ring_test.xml"
+tlink /app = *
+place /tfill = *
+compose /app = *
+deploy /app = *
+initialise /app = *
+run /app = *
+~~~
+
+To make use of this exit feature, the Supervisor in your application will need
+to make use of the `stop_application` Supervisor API call, as described in the
+application documentation.
 
 # Appendix A: Useful Command List
 
@@ -753,7 +791,18 @@ Provides various developer-facing diagnostic information.
 
 ## Exit (`exit`)
 
-Exits the Orchestrator. Cannot be used (meaningfully) inside a batch file.
+Exits the Orchestrator.
+
+ - `exit`: Commands each process in the Orchestrator clean itself up and stop,
+   returning control to the calling shell. Cannot be used within a batch file.
+
+ - `exit /at`: Schedules an exit to trigger in response to something
+   happening. If the first parameter is `end`, the Orchestrator exits when
+   there are no more commands to execute. If the first parameter is `stop`, the
+   Orchestrator exits the next time an application stops; either because it has
+   been commanded to do so using `stop /app`, or because it has called the
+   `stop_application` Supervisor API function as explained in the application
+   documentation.
 
 ## Initialise (`initialise`)
 
@@ -930,7 +979,13 @@ Lower-level system commands.
 
 ## Test (`test`)
 
+Subject to change at any time.
+
  - `test /echo`: Logs and micrologs a message passed as one or more parameters.
+
+ - `test /sleep`: Sleeps the Root process for a given duration, in
+   milliseconds, stopping it from processing further messages (the prompt
+   remains active).
 
 ## Typelink (`tlink`)
 
