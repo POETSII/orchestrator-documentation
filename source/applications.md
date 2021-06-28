@@ -2024,13 +2024,13 @@ incoming messages). Consequently, we instantiate exactly five devices:
 
 ~~~ {.xml}
 ...
-  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type" P="5">
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type" P="{5}">
     <DeviceInstances>
-      <DevI id="0" type="ring_element" P="0"/>
-      <DevI id="1" type="ring_element" P="1"/>
-      <DevI id="2" type="ring_element" P="2"/>
-      <DevI id="3" type="ring_element" P="3"/>
-      <DevI id="4" type="ring_element" P="4"/>
+      <DevI id="0" type="ring_element" P="{0}"/>
+      <DevI id="1" type="ring_element" P="{1}"/>
+      <DevI id="2" type="ring_element" P="{2}"/>
+      <DevI id="3" type="ring_element" P="{3}"/>
+      <DevI id="4" type="ring_element" P="{4}"/>
     </DeviceInstances>
   </GraphInstance>
 ...
@@ -2286,13 +2286,13 @@ fclose(supervisorState->resultFile);
       </SupervisorType>
     </DeviceTypes>
   </GraphType>
-  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type" P="5">
+  <GraphInstance id="ring_test_instance" graphTypeId="ring_test_type" P="{5}">
     <DeviceInstances>
-      <DevI id="0" type="ring_element" P="0"/>
-      <DevI id="1" type="ring_element" P="1"/>
-      <DevI id="2" type="ring_element" P="2"/>
-      <DevI id="3" type="ring_element" P="3"/>
-      <DevI id="4" type="ring_element" P="4"/>
+      <DevI id="0" type="ring_element" P="{0}"/>
+      <DevI id="1" type="ring_element" P="{1}"/>
+      <DevI id="2" type="ring_element" P="{2}"/>
+      <DevI id="3" type="ring_element" P="{3}"/>
+      <DevI id="4" type="ring_element" P="{4}"/>
     </DeviceInstances>
     <EdgeInstances>
       <EdgeI path="1:receiver-0:sender"/>
