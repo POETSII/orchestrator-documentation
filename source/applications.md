@@ -631,6 +631,8 @@ element:
 +--------+-------------------+-----------------+----------------+----------------------+-----------+
 | Graphs | GraphType         | MessageTypes    | **MessageType**|                      |           |
 +--------+-------------------+-----------------+----------------+----------------------+-----------+
+| Graphs | GraphType         | MessageTypes    | MessageType    | *Message*            |           |
++--------+-------------------+-----------------+----------------+----------------------+-----------+
 | Graphs | GraphType         | DeviceTypes     |                |                      |           |
 +--------+-------------------+-----------------+----------------+----------------------+-----------+
 | Graphs | GraphType         | DeviceTypes     | **DeviceType** |                      |           |
@@ -763,8 +765,7 @@ attributes are valid.
 
 **Graphs/GraphType/MessageTypes/MessageType** (`:MessageType:`)
 
-Contains code that populates the fields for the message structure of this
-message type.
+Defines a Message Type and contains a single Message child.
 
 This element may occur any number of times in each `:MessageTypes:` section
 (once per message type), though each occurence must have a unique `id`
@@ -772,6 +773,14 @@ value. Valid attributes:
 
  - `id` (must occur exactly once): Used by pins to define the type of message
    they correspond to, via the `:messageTypeId:` attribute
+
+**Graphs/GraphType/MessageTypes/MessageType/Message** (`:Message:`)
+
+Contains code that populates the fields for the message structure of this
+message type.
+
+This element must occur at most once in each `:MessageType:` section. No
+attributes are valid.
 
 **Graphs/GraphType/DeviceTypes**
 
@@ -1174,15 +1183,15 @@ section. Valid attributes:
      `<DeviceFrom>`.
 
  - `P` (must occur at most once): Property definitions overriding type defaults
-   for the input pin on the receiving device, if the receiving device is a
-   normal device. Define using syntax that is valid in C++14 initialiser lists
-   (e.g. `value,anothervalue` for each property field in order). This attribute
+   for the input pin on the receiving device, if the receiving device is a normal
+   device. Define using braced syntax that is valid in C++14 initialiser lists
+   (e.g. `{value,anothervalue}` for each property field in order). This attribute
    must be undefined if the receiving device is a supervisor device.
 
  - `S` (must occur at most once): Initial state definitions overriding type
    defaults for the input pin on the receiving device, if the receiving device
-   is a normal device. Define using syntax that is valid in C++14 initialiser
-   lists (e.g. `value,anothervalue` for each state field in order). This
+   is a normal device. Define using braced syntax that is valid in C++14 initialiser
+   lists (e.g. `{value,anothervalue}` for each state field in order). This
    attribute must be undefined if the receiving device is a supervisor device.
 
 ## Application Programming Interface (for Source Code Fragments)
@@ -1615,9 +1624,11 @@ value "`ring_propagate`", so a message type must also be defined as follows:
 ~~~ {.xml}
 ...
     <MessageTypes>
-      <MessageType id="ring_propagate"><![CDATA[
+      <MessageType id="ring_propagate">
+          <Message><![CDATA[
 uint8_t lap;
-      ]]></MessageType>
+          ]]></Message>
+      </MessageType>
     </MessageTypes>
     <DeviceTypes>
       <DeviceType id="ring_element">
@@ -1696,9 +1707,11 @@ using the type system. The (incomplete) XML at this stage is:
 uint8_t maxLaps = 9;  /* Zero-based indexing */
     ]]></Properties>
     <MessageTypes>
-      <MessageType id="ring_propagate"><![CDATA[
+      <MessageType id="ring_propagate">
+          <Message><![CDATA[
 uint8_t lap;
-      ]]></MessageType>
+          ]]></Message>
+      </MessageType>
     </MessageTypes>
     <DeviceTypes>
       <DeviceType id="ring_element">
@@ -1924,13 +1937,17 @@ changes are necessary:
   <GraphType id="ring_test_type">
     ...
     <MessageTypes>
-      <MessageType id="exfiltration"><![CDATA[
+      <MessageType id="exfiltration">
+          <Message><![CDATA[
 uint8_t sourceId;
 uint8_t lap;
-      ]]></MessageType>
-      <MessageType id="ring_propagate"><![CDATA[
+          ]]></Message>
+      </MessageType>
+      <MessageType id="ring_propagate">
+          <Message><![CDATA[
 uint8_t lap;
-      ]]></MessageType>
+          ]]></Message>
+      </MessageType>
     </MessageTypes>
     <DeviceTypes>
       <DeviceType id="ring_element">
@@ -2089,16 +2106,20 @@ uint8_t maxLaps = 9;  /* Zero-based indexing */
     ]]></Properties>
     <MessageTypes>
       <!-- Communications between normal devices use this message type. -->
-      <MessageType id="ring_propagate"><![CDATA[
+      <MessageType id="ring_propagate">
+          <Message><![CDATA[
 uint8_t lap;
-      ]]></MessageType>
+          ]]></Message>
+      </MessageType>
       <!-- Communications from normal devices to supervisor devices use this
            message type.
        -->
-      <MessageType id="exfiltration"><![CDATA[
+      <MessageType id="exfiltration">
+          <Message><![CDATA[
 uint8_t sourceId;
 uint8_t lap;
-      ]]></MessageType>
+          ]]></Message>
+      </MessageType>
     </MessageTypes>
 
     <DeviceTypes>
