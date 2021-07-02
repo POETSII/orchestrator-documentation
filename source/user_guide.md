@@ -759,6 +759,12 @@ configured staging directory (`Output/Composer` in the default configuration).
  - `compose /nobuff`: Indicates that the Softswitches should be compiled in the 
    non-buffering mode (default).
 
+ - `compose /reqidle`: Indicates that the Softswitches should be compiled with the
+   Request Idle feature enabled. Refer to Volume III(B) for more information (default).
+
+ - `compose /noreqidle`: Indicates that the Softswitches should be compiled with the
+   Request Idle feature disabled.
+
  - `compose /logh`: Indicates that the Softswitches should be compiled with 
    the specified log handler. Options are `none` and `trivial` (default).
 
