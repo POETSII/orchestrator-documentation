@@ -946,7 +946,7 @@ attributed are valid.
 
 Contains code that reads the state of the device, determines whether any
 messages are to be sent, via the `RTS(x)` and `RTSSUP()` macros, and determines
-whether `OnDeviceIdle` should be called, via the `&requestIdle` bool. If multiple
+whether `OnDeviceIdle` should be called, via the `*requestIdle` bool. If multiple
 messages are to be sent, the order of their sending is undefined. Note that the
 state of the device cannot be modified in this block. Execution of this block
 is dependent on the softswitch used, though the default softswitch executes
@@ -980,7 +980,7 @@ attributes are valid.
 Contains code that is executed by the device when the softswitch is in the
 "idle" state. Under the default softswitch, this block is executed when no
 devices have any messages to receive or send and idle has been requested by
-setting `&requestIdle` to `true` in `ReadyToSend`. If the code in this block
+setting `*requestIdle` to `true` in `ReadyToSend`. If the code in this block
 returns a non-zero unsigned value, the code in the `ReadyToSend` section is 
 executed, which may result in the sending of messages.
 
