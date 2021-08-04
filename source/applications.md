@@ -761,6 +761,8 @@ attributes are valid.
 
 Contains definitions for all payloads of all message types used in an
 application. Message types may have different payload configurations.
+When compiled into a POETS application, the Message types specified
+here are tightly packed in memory with no padding bytes.
 
 This element must occur at most once in each `:GraphType:` section. No
 attributes are valid.
