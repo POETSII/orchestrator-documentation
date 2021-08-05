@@ -747,7 +747,7 @@ properties are defined as `CDATA`. These properties may be overriden using the
 `P` attribute in the graph instance definition (`:GraphInstance:`).
 
 The definition of the generated structure is available to the application writer 
-in all code across all device and the supervisor. The type name has a format of 
+in all code across all devices and the supervisor. The type name has a format of 
 `{graphTypeId}_properties_t` where `graphTypeId` is the `id` attribute of the 
 `GraphType` element.
 
@@ -817,7 +817,7 @@ be accessed by code fragments through the `DEVICEPROPERTIES(x)`
 macro. Individual properties are defined as `CDATA`.
 
 The definition of the generated structure is available to the application writer
-in all code across all device and the supervisor. The type name has a format of 
+in all code across all devices and the supervisor. The type name has a format of 
 `{graphTypeId}_{deviceTypeId}_properties_t` where `graphTypeId` is the `id` 
 attribute of the `GraphType` element and `deviceTypeId` is the `id` attribute of 
 the relevant `DeviceType` element.
@@ -832,7 +832,7 @@ be accessed by code fragments through the `DEVICESTATE(x)` macro. Individual
 state fields are defined as `CDATA`.
 
 The definition of the generated structure is available to the application writer 
-in all code across all device and the supervisor. The type name has a format of 
+in all code across all devices and the supervisor. The type name has a format of 
 `{graphTypeId}_{deviceTypeId}_state_t` where `graphTypeId` is the `id` attribute 
 of the `GraphType` element and `deviceTypeId` is the `id` attribute of the relevant 
 `DeviceType` element.
@@ -917,7 +917,7 @@ accessed by code fragments through the `EDGEPROPERTIES(X)` macro. Individual
 properties are defined as `CDATA`.
 
 The definition of the generated structure is available to the application writer 
-in all code across all device and the supervisor. The type name has a format of
+in all code across all devices and the supervisor. The type name has a format of
 `{graphTypeId}_{deviceTypeId}_{inputPinId}_properties_t` where `graphTypeId` is 
 the `id` attribute of the `GraphType` element, `deviceTypeId` is the `id` attribute 
 of the relevant `DeviceType` element and `inputPinId` is the `id` attribute of 
@@ -933,7 +933,7 @@ accessed by code fragments through the `EDGESTATE(x)` macro. Individual
 state fields are defined as `CDATA`.
 
 The definition of the generated structure is available to the application writer 
-in all code across all device and the supervisor. The type name has a format of 
+in all code across all devices and the supervisor. The type name has a format of 
 `{graphTypeId}_{deviceTypeId}_{inputPinId}_state_t` where `graphTypeId` is the 
 `id` attribute of the `GraphType` element, `deviceTypeId` is the `id` attribute 
 of the relevant `DeviceType` element and `inputPinId` is the `id` attribute of 
