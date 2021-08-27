@@ -256,7 +256,7 @@ no other information about the application yet.
 |                 |    `distCount`        | unique distribution (`APP`,       |
 |                 | 2. `uint8_t`          | `DIST` and `APP`, `SUPD`)         |
 |                 |    `appNumber`        | messages in order to be fully     |
-|                 |                       | defined.                          |
+|                 | 3. `bool soloApp`     | defined.                          |
 +-----------------+-----------------------+-----------------------------------+
 | `APP`,  `DIST`  | 0. `std::string`      | Defines the properties for a      |
 |                 |    `appName`          | given core for a given            |
