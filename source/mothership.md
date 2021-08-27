@@ -477,9 +477,12 @@ information. `AppInfo` is a class with these fields:
 
  - `std::string name`: The name of the application, redundant with the map key.
 
+ - `bool soloApp`: Defines how applications are loaded onto the hardware via
+   the backend. Defined by an (`APP`, `SPEC`) message.
+
  - `AppState state`: The state that the application is in. Table 3 shows how
-     C&C messages consumed by `MPICncResolver` drive application states. These
-     states are enumerated by `AppState` as:
+   C&C messages consumed by `MPICncResolver` drive application states. These
+   states are enumerated by `AppState` as:
 
     - `UNDERDEFINED`: The application has been partly sent to the Mothership
       process, but some cores have not been defined, or their binaries refer to
