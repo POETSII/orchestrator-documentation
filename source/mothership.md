@@ -242,6 +242,14 @@ no other information about the application yet.
 |                 |                       | down the Mothership process as    |
 |                 |                       | *quickly* as possible.            |
 +-----------------+-----------------------+-----------------------------------+
+| `APP`,  `EMPT`  | 0. `std::string`      | Loads all cores with instructions |
+|                 |    `codePath`         | and data from the same binaries.  |
+|                 | 1. `std::string`      | This is only used when the        |
+|                 |    `dataPath`         | Orchestrator is deploying an      |
+|                 |                       | application that uses hardware    |
+|                 |                       | level idle detection. This is not |
+|                 |                       | application-specific.             |
++-----------------+-----------------------+-----------------------------------+
 | `APP`,  `SPEC`  | 0. `std::string`      | Defines that an application on    |
 |                 |    `appName`          | the receiving Mothership process  |
 |                 | 1. `uint32_t`         | must have received `distCount`    |
