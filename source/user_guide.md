@@ -987,6 +987,9 @@ Lower-level system commands.
 
 Subject to change at any time.
 
+ - `test /badpacket`: Sends a logging packet with no initialised content to the
+   Mothership. This logging packet has an invalid task ID value.
+
  - `test /echo`: Logs and micrologs a message passed as one or more parameters.
 
  - `test /sleep`: Sleeps the Root process for a given duration, in
