@@ -220,7 +220,9 @@ you are ready to use the Orchestrator on POETS hardware.
    shipped in the Common Object File Format (COFF). For use with Borland C++
    and Embarcadero C++ (at least), these need to be translated to Object Module
    Format (OMF). The utility `COFF2OMF` is freely available (and is included
-   with Borland C++).
+   with Borland C++). Also note that the supplied Borland build files may be
+   incompatible between versions, and so may require some sanitising to work on
+   certain installations.
 
 # Usage
 
