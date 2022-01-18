@@ -746,6 +746,11 @@ accessed by code fragments through the `GRAPHPROPERTIES(x)` macro. Individual
 properties are defined as `CDATA`. These properties may be overriden using the
 `P` attribute in the graph instance definition (`:GraphInstance:`).
 
+The definition of the generated structure is available to the application writer 
+in all code across all devices and the supervisor. The type name has a format of 
+`{graphTypeId}_properties_t` where `graphTypeId` is the `id` attribute of the 
+`GraphType` element.
+
 This element must occur at most once in each `:GraphType:` section. No
 attributes are valid.
 
@@ -761,6 +766,8 @@ attributes are valid.
 
 Contains definitions for all payloads of all message types used in an
 application. Message types may have different payload configurations.
+When compiled into a POETS application, the Message types specified
+here are tightly packed in memory with no padding bytes.
 
 This element must occur at most once in each `:GraphType:` section. No
 attributes are valid.
@@ -809,6 +816,12 @@ Defines device-type-level properties (constant throughout execution), which can
 be accessed by code fragments through the `DEVICEPROPERTIES(x)`
 macro. Individual properties are defined as `CDATA`.
 
+The definition of the generated structure is available to the application writer
+in all code across all devices and the supervisor. The type name has a format of 
+`{graphTypeId}_{deviceTypeId}_properties_t` where `graphTypeId` is the `id` 
+attribute of the `GraphType` element and `deviceTypeId` is the `id` attribute of 
+the relevant `DeviceType` element.
+
 This element must occur at most once in each `:DeviceType:` section. No
 attributes are valid.
 
@@ -817,6 +830,12 @@ attributes are valid.
 Defines device-type-level state (that can vary throughout execution), which can
 be accessed by code fragments through the `DEVICESTATE(x)` macro. Individual
 state fields are defined as `CDATA`.
+
+The definition of the generated structure is available to the application writer 
+in all code across all devices and the supervisor. The type name has a format of 
+`{graphTypeId}_{deviceTypeId}_state_t` where `graphTypeId` is the `id` attribute 
+of the `GraphType` element and `deviceTypeId` is the `id` attribute of the relevant 
+`DeviceType` element.
 
 This element must occur at most once in each `:DeviceType:` section. No
 attributes are valid.
@@ -897,6 +916,13 @@ Defines pin-type-level properties (constant throughout execution), which can be
 accessed by code fragments through the `EDGEPROPERTIES(X)` macro. Individual
 properties are defined as `CDATA`.
 
+The definition of the generated structure is available to the application writer 
+in all code across all devices and the supervisor. The type name has a format of
+`{graphTypeId}_{deviceTypeId}_{inputPinId}_properties_t` where `graphTypeId` is 
+the `id` attribute of the `GraphType` element, `deviceTypeId` is the `id` attribute 
+of the relevant `DeviceType` element and `inputPinId` is the `id` attribute of 
+the relevant `InputPin`.
+
 This element must occur at most once in each `:InputPin:` section. No
 attributes are valid.
 
@@ -905,6 +931,13 @@ attributes are valid.
 Defines pin-type-level state (that can vary throughout execution), which can be
 accessed by code fragments through the `EDGESTATE(x)` macro. Individual
 state fields are defined as `CDATA`.
+
+The definition of the generated structure is available to the application writer 
+in all code across all devices and the supervisor. The type name has a format of 
+`{graphTypeId}_{deviceTypeId}_{inputPinId}_state_t` where `graphTypeId` is the 
+`id` attribute of the `GraphType` element, `deviceTypeId` is the `id` attribute 
+of the relevant `DeviceType` element and `inputPinId` is the `id` attribute of 
+the relevant `InputPin`.
 
 This element must occur at most once in each `:InputPin:` section. No
 attributes are valid.

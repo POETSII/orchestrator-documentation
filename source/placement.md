@@ -351,7 +351,7 @@ Operator commands, in more detail than in volume IV:
 
    - Information on how each device in the application has been placed on the
      hardware, line by line. Each record is of the form
-     "`<DEVICENAME>\t<THREADNAME>`" (where `<THREADNAME>` is
+     "`<DEVICENAME>,<THREADNAME>`" (where `<THREADNAME>` is
      hierarchical). This information is dumped to
      `placement_gi_to_hardware_<APPLICATIONNAME>_<ISO8601DT>.txt`. The reverse
      map is dumped to
@@ -375,7 +375,7 @@ Operator commands, in more detail than in volume IV:
 
      - Detailed information about "cost" between each application graph edge
        (supplied by the `MsgT_t`s in the application), line by line. Each
-       record is of the form `<DEVICENAME>\t<DEVICENAME>\t<COST>`, and is
+       record is of the form `<DEVICENAME>,<DEVICENAME>,<COST>`, and is
        dumped to\
        `placement_gi_edges_<APPLICATIONNAME>_<ISO8601DT>.txt`.
 
