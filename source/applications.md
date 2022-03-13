@@ -527,19 +527,15 @@ to allow application writers to:
 Supervisor devices support the `OnInit`, `OnStop`, and `OnIdle` behaviours as
 with normal devices.
 
-Figure 7 shows how supervisor devices exist in the application model
-constructed thus far. **Implicit supervisor pins** and **implicit supervisor
-edges** facilitate communication between normal devices and their supervisor
-device. All normal devices and supervisor devices optionally have one implicit
-supervisor output pin and one implicit supervisor input pin, and the
-send/receive logic is defined using `OnSend` and `OnReceive` behaviours. Being
-implicit, **this concept connects all normal devices to their supervisor, and
-vice versa**, supporting exfiltration and infiltration of data. As with usual
-input and output pins, **POETS requires that the type of the packet associated
-with the pins on each end of an edge are the same.**
-
-![Graph components, with supervisor and implicit edges, and with data
-areas.](images/app_concepts/supervisors.pdf)
+**Implicit supervisor pins** and **implicit supervisor edges** facilitate
+communication between normal devices and their supervisor device. All normal
+devices and supervisor devices optionally have one implicit supervisor output
+pin and one implicit supervisor input pin, and the send/receive logic is
+defined using `OnSend` and `OnReceive` behaviours. Being implicit, **this
+concept connects all normal devices to their supervisor, and vice versa**,
+supporting exfiltration and infiltration of data. As with usual input and
+output pins, **POETS requires that the type of the packet associated with
+the pins on each end of an edge are the same.**
 
 Unlike normal devices, a supervisor device can send data, using it's implicit
 output pin, in two ways:
