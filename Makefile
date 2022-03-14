@@ -44,11 +44,20 @@ endef
 # warnings on every platform I've tried. So we're using PNGs. Nobody is happy
 # to make everybody happy, I suppose.
 #
+# The somewhat complicated shell line that calls GRAPH_BUILDER (repeatably)
+# fails the build if GRAPH_BUILDER writes anything over stdout or
+# stderr (including warnings), and writes anything found to stderr.
+#
 # Takes no arguments.
 define dot_build
 	@$(PRINT) "[....] Building \"$@\"..."
 	@$(MD) "$(GRAPH_TARGETS_DIR)"
-	@$(GRAPH_BUILDER) -Tpng -Gdpi=300 "$^" -o "$@"
+	@OUT=$$($(GRAPH_BUILDER) -Tpng -Gdpi=300 "$^" -o "$@" 2>&1); \
+        if [ -n "$${OUT}" ]; then \
+            $(RM) "$@"; \
+            $(PRINT) "\n$${OUT}\n" > /dev/stderr; \
+            exit 1; \
+        fi
 	@$(PRINT) "\r[DONE] Building \"$@\".\n"
 endef
 
