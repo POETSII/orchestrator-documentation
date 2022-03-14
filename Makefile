@@ -1,6 +1,7 @@
 # Makes PDFs from all markdown files in the root directory.
 
 # Requirements:
+#  - A POSIX-compliant shell.
 #  - pandoc (https://pandoc.org).
 #  - A dot processor (I use graphviz). Syntax must be compatible with the
 #    'dot_build' routine,
@@ -8,8 +9,22 @@
 #    - LaTeX (I use texlive, texlive-latex-extra is almost sufficient).
 #    - fvextra (you can get this from https://github.com/gpoore/fvextra.git)
 
+# An installation of git is an optional requirement for incorporating
+# versioning information into the document metadata. If this source has been
+# downloaded directly (as opposed to being cloned as part of a repository),
+# or if no installation of git exists, this metadata is not included.
+GIT := $(shell command -v git 2> /dev/null)
+ifdef GIT
+GIT_REVISION := $(shell $(GIT) rev-parse --short HEAD 2> /dev/null)
+ifneq ($(strip $(GIT_REVISION)),)
+GIT_REVISION_META :=  Revision: $(GIT_REVISION)
+endif
+endif
+
 BUILDER := "pandoc"
-BUILDER_FLAGS := "--toc --number-sections --highlight-style tango --metadata author="Compiled: `date -Idate`. Revision: `git rev-parse --short HEAD`""
+BUILDER_METADATA := "Compiled: $(shell date -Idate). $(GIT_REVISION_META)"
+BUILDER_FLAGS := "--toc --number-sections --highlight-style tango \
+    --metadata author=$(BUILDER_METADATA)"
 TEXT_SOURCES_DIR := source
 TEXT_TARGETS_DIR := build
 
