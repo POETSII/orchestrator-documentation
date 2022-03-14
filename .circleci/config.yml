@@ -5,7 +5,7 @@ jobs:
       - image: pandoc/core
     steps:
       - checkout
-      - run: "apk add graphviz make texlive-full"
+      - run: "apk add git graphviz make texlive-full"
 
       # Build our documents.
       - run: make all
