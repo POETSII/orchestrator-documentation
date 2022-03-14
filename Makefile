@@ -14,6 +14,7 @@ TEXT_SOURCES_DIR := source
 TEXT_TARGETS_DIR := build
 
 GRAPH_BUILDER := "dot"
+GRAPH_BUILDER_FLAGS := -Tpng -Gdpi=300
 GRAPH_SOURCES_DIR := images/source
 GRAPH_TARGETS_DIR := images
 
@@ -52,7 +53,7 @@ endef
 define dot_build
 	@$(PRINT) "[....] Building \"$@\"..."
 	@$(MD) "$(GRAPH_TARGETS_DIR)"
-	@OUT=$$($(GRAPH_BUILDER) -Tpng -Gdpi=300 "$^" -o "$@" 2>&1); \
+	@OUT=$$($(GRAPH_BUILDER) $(GRAPH_BUILDER_FLAGS) "$^" -o "$@" 2>&1); \
         if [ -n "$${OUT}" ]; then \
             $(RM) "$@"; \
             $(PRINT) "\n$${OUT}\n" > /dev/stderr; \
