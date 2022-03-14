@@ -5,7 +5,6 @@ digraph G {
     nodesep=0.3;
     rankdir="LR";
     ranksep=0.2;
-    splines="ortho";
 
     /* Class definitions (as graph nodes) */
     node[color="#000055",
@@ -190,15 +189,15 @@ Does thread filling.<BR ALIGN="CENTER"/>
     /* Containment. */
     {edge[arrowhead="vee"];
         Constraint -> constraintCategory[label="Constraint.category"];
-        Algorithm -> Result[xlabel="Algorithm.result"];
-        Algorithm -> Placer[xlabel="Algorithm->placer"];
-        Placer -> PlaceArgs[xlabel="Placer.args"];
+        Algorithm -> Result[label="Algorithm.result"];
+        Algorithm -> Placer;
+        Placer -> PlaceArgs[label="Placer.args"];
     }
 
     /* One-to-many relationships in a separate block. */
     {edge[arrowhead="diamond"];
         Placer -> Constraint[label="Placer.constraints", constraint="false"];
-        Placer -> Algorithm[label="Placer.placedGraphs", constraint="false"];
+        Placer -> Algorithm[constraint="false"];
     }
 
     /* Inheritance */
