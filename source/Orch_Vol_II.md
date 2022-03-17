@@ -368,7 +368,7 @@ fairness. At the highest level, the design targets are to:
 
  - Drain the network of packets as fast as possible, to help maximise global
    throughput.
- - Prevent any single device from 'hogging' softswitch cycles, in terms of (i)
+ - Prevent any single device from 'hogging' Softswitch cycles, in terms of (i)
    incoming packet processing (ii) core processing and (iii) sending packets.
 
 The Softswitch interfaces between the application-writer's device code, and the
@@ -978,7 +978,7 @@ messages are to be sent, via the `RTS(x)` and `RTSSUP()` macros, and determines
 whether `OnDeviceIdle` should be called, via the `*requestIdle` bool. If multiple
 messages are to be sent, the order of their sending is undefined. Note that the
 state of the device cannot be modified in this block. Execution of this block
-is dependent on the softswitch used, though the default softswitch executes
+is dependent on the Softswitch used, though the default Softswitch executes
 this block:
 
  - After a message has been received and handled by the behaviour code in
@@ -1006,8 +1006,8 @@ attributes are valid.
 
 **Graphs/GraphType/DeviceTypes/DeviceType/OnDeviceIdle** (`:OnDeviceIdle:`)
 
-Contains code that is executed by the device when the softswitch is in the
-"idle" state. Under the default softswitch, this block is executed when no
+Contains code that is executed by the device when the Softswitch is in the
+"idle" state. Under the default Softswitch, this block is executed when no
 devices have any messages to receive or send and idle has been requested by
 setting `*requestIdle` to `true` in `ReadyToSend`. If the code in this block
 returns a non-zero unsigned value, the code in the `ReadyToSend` section is
@@ -1561,7 +1561,7 @@ uint8_t id;
  * message. No other device does this. */
 if (DEVICEPROPERTIES(id) == 0) DEVICESTATE(sendMessage) = 1;
 
-/* A return of one invokes ReadyToSend (in the default softswitch), whereas a
+/* A return of one invokes ReadyToSend (in the default Softswitch), whereas a
  * return of zero does not. */
 return DEVICESTATE(sendMessage);
       ]]></OnInit>
@@ -1791,7 +1791,7 @@ if (DEVICESTATE(sendMessage) == 1) RTS(sender);
  * message. No other device does this. */
 if (DEVICEPROPERTIES(id) == 0) DEVICESTATE(sendMessage) = 1;
 
-/* A return of one invokes ReadyToSend (in the default softswitch), whereas a
+/* A return of one invokes ReadyToSend (in the default Softswitch), whereas a
  * return of zero does not. */
 return DEVICESTATE(sendMessage);
         ]]></OnInit>
@@ -2238,7 +2238,7 @@ if (DEVICESTATE(sendMessage) == 1)
  * message. No other device does this. */
 if (DEVICEPROPERTIES(id) == 0) DEVICESTATE(sendMessage) = 1;
 
-/* A return of one invokes ReadyToSend (in the default softswitch), whereas a
+/* A return of one invokes ReadyToSend (in the default Softswitch), whereas a
  * return of zero does not. */
 return DEVICESTATE(sendMessage);
         ]]></OnInit>

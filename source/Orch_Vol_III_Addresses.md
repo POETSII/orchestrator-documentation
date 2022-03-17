@@ -10,7 +10,7 @@ Three types of device exist, each of which can participate as part of a POETS
 application running on the Orchestrator:
 
  - Normal device: Compute devices deployed onto threads in Tinsel cores,
-   serviced by a softswitch.
+   serviced by a Softswitch.
 
  - Supervisor device: A device run on the Mothership (an x86 machine).
 
@@ -30,7 +30,7 @@ writer). Devices communicate using destination-routed packets, with:
      packet.
 
    - A Software address (32 bits), which uniquely identifies a device in that
-     thread, with some space dedicated to exceptional softswitch operations
+     thread, with some space dedicated to exceptional Softswitch operations
      (documented in the Software Addresses section).
 
    - A pin target (32 bits), which uniquely identifies the pin on the target
@@ -354,7 +354,7 @@ combined, and are used to store the 32-bit hardware address of the sending
 device^[Being destination-routed, there is no other way to identify who sent a
 packet, other than through edge/pin information (which is previously encoded),
 or through a hardware address. This is necessary to exfiltrate instrumentation
-data from a softswitch, for example.].
+data from a Softswitch, for example.].
 
 # A Note from GMB
 

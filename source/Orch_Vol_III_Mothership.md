@@ -282,7 +282,7 @@ no other information about the application yet.
 |                 |                       | appropriate boards, loads         |
 |                 |                       | supervisors, and holds execution  |
 |                 |                       | of normal devices at the          |
-|                 |                       | softswitch barrier. If the        |
+|                 |                       | Softswitch barrier. If the        |
 |                 |                       | application is not `DEFINED`      |
 |                 |                       | this message is acted on when it  |
 |                 |                       | reaches that state.               |
@@ -296,7 +296,7 @@ no other information about the application yet.
 |                 |                       | then stopped).                    |
 +-----------------+-----------------------+-----------------------------------+
 | `CMND`, `RUN`   | 0. `std::string`      | Takes an application held at the  |
-|                 |    `appName`          | softswitch barrier (with state    |
+|                 |    `appName`          | Softswitch barrier (with state    |
 |                 |                       | `READY`, and "starts" it by       |
 |                 |                       | sending a barrier-breaking        |
 |                 |                       | message (`P_CNC_BARRIER`) to all  |
@@ -410,7 +410,7 @@ in-source) are routed to the supervisor as (`BEND`, `SUPR`) messages:
    to the Logserver.
 
  - `P_CNC_BARRIER`: A packet that, when received, informs the Mothership that a
-   given thread has reached the softswitch barrier. If the state of the
+   given thread has reached the Softswitch barrier. If the state of the
    application to which this device belongs is `LOADING`, the field
    `Mothership.appdb.coreInfos[coreAddr].threadsCurrent` (where `coreAddr` is a
    `uint32_t` hardware address) for the core in question has the address of the
@@ -444,7 +444,7 @@ Notes:
 
     - `P_CNC_STOP`, sent by (`CMND`, `STOP`))
 
-    - `P_CNC_INSTR` to request instrumentation information from a softswitch
+    - `P_CNC_INSTR` to request instrumentation information from a Softswitch
       (though this is not currently used).
 
  - A rogue application can shut down arbitrary applications by using

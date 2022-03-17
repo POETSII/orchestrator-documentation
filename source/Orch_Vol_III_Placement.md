@@ -501,7 +501,7 @@ for:
  - Communication congestion (i.e. same links being used multiple times, see the
    Extensions section)
 
- - Context switching (i.e. overworked, underpaid softswitches, but we can
+ - Context switching (i.e. overworked, underpaid Softswitches, but we can
    constrain this)
 
 Point is, this approach is pretty expensive, so we only want to do it as few
