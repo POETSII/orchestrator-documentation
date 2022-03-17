@@ -171,7 +171,7 @@ The above variables are private, and can be accessed by the following getters
 and setters in `Mothership::ThreadComms` (which manipulate the queues and
 mutexes):
 
- - `void set_quit()`: Sets `quit` (and also sends a logserver message).
+ - `void set_quit()`: Sets `quit` (and also sends a Logserver message).
 
  - `void is_it_time_to_go()`: Reads `quit`.
 
@@ -672,7 +672,7 @@ of functions that can be called from supervisor handler (as described in the
 application definition document). Specifically, a supervisor handler can call
 these functions (where `Super` is a namespace):
 
- - `void Super::post(std::string message)`: Posts a message to the logserver.
+ - `void Super::post(std::string message)`: Posts a message to the Logserver.
 
  - `void Super::stop_application()`: Stops the application, by sending a
    (`MSHP`, `REQ`, `STOP`) message to the Root process. The Root process then
@@ -774,7 +774,7 @@ type-defined as `P_Debug_Pkt_t`.
 
 Applications can also call the `void handler_log(int level, const char* text)`
 free function in a handler, which sends a series of `P_CNC_LOG` packets to the
-Mothership, which are repackaged and forwarded onto the LogServer.
+Mothership, which are repackaged and forwarded onto the Logserver.
 
 # Instrumentation
 Along with logging, it is useful to understand how the compute backend is

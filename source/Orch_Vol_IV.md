@@ -313,7 +313,7 @@ POETS> 13:11:17.37:  20(I) The microlog for the command 'test /echo = "Hello wor
 POETS> 13:11:17.37:   1(I) Hello world
 ~~~
 
-This output from the Orchestrator is created by the LogServer, and is written
+This output from the Orchestrator is created by the Logserver, and is written
 both to your prompt (on `stdout`) and to a log file at `Output/POETS.log`. Each
 line corresponds to a different logging entry. Using the first line of the
 above as an example:
