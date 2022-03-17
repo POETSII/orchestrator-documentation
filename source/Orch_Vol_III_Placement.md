@@ -1,4 +1,5 @@
 % Orchestrator Documentation Volume III Annex: The Placement System
+\thispagestyle{fancy}
 
 # Placement Overview and Design Requirements
 This document explains the placement system in the Orchestrator. The "placement

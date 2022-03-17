@@ -1,4 +1,5 @@
 % Orchestrator Documentation Volume II: Application Definition
+\thispagestyle{fancy}
 
 # Introduction
 

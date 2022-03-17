@@ -1,4 +1,5 @@
 % Orchestrator Documentation Volume III Annex: The Launcher
+\thispagestyle{fancy}
 
 # Overview
 
@@ -264,3 +265,5 @@ debug`), which ultimately does the same thing. Debug mode:
    http://valgrind.org/docs/manual/manual-core-adv.html (or Google).
 
  - Use a proper SSH library (libssh). I just ran out of time.
+
+![](images/white_px.png)

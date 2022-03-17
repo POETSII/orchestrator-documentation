@@ -1,4 +1,5 @@
 % Orchestrator Documentation Volume III Annex: Hardware Description Mechanism
+\thispagestyle{fancy}
 
 # Overview
 This document defines the input file (hardware description file) format for
@@ -557,7 +558,7 @@ to visualisation tools.
 ![Weighted graph of boards described by the dialect 2 example, where each board
 (red) is contained in a box (blue). All boxes and all boards are of the same
 "type" (see the Dialect 3 Section for information on
-types).](images/dialect_2.png)
+types).](images/dialect_2.png){width=90%}
 
 Appendix A contains a complete dialect 2 example file representing Coleridge.
 

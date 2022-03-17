@@ -1,4 +1,5 @@
 % Orchestrator Documentation Volume IV: User Guide
+\thispagestyle{fancy}
 
 # Overview
 

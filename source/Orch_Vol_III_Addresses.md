@@ -1,4 +1,5 @@
 % Orchestrator Documentation Volume III Annex: Addresses in the Orchestrator
+\thispagestyle{fancy}
 
 # Overview
 
@@ -365,3 +366,5 @@ address (by usurping the Pin Target), but short of adding a header that reduces
 the log payload size, there is nowhere to put the source device address. I
 would like (for specific op codes) to be able to use Device to indicate the
 source device address rather than being forced to 0.
+
+![](images/white_px.png)
