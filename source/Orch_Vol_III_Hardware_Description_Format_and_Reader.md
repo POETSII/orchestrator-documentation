@@ -1,4 +1,4 @@
-% How to Describe Hardware to the Orchestrator
+% Orchestrator Documentation Volume III Annex: Hardware Description Mechanism
 
 # Overview
 This document defines the input file (hardware description file) format for

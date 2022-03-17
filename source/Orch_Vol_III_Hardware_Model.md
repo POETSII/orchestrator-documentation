@@ -1,4 +1,4 @@
-% How the Orchestrator Models the Compute Hardware
+% Orchestrator Documentation Volume III Annex: Software Representation of Hardware
 
 # The Hardware Model
 This document introduces the design of the hardware model, and explains
