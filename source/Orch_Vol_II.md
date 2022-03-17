@@ -455,8 +455,8 @@ Device behaviours:
    Softswitch will execute the `OnDeviceIdle` behaviour for each device it
    manages that has requested idle in its `ReadyToSend` handler, unless request
    idle has been disabled. The Softswitch will iterate over its hosted devices
-   until either a packet can be received, or it has attempted to execute 
-   `OnDeviceIdle` for each device. If any of the `OnDeviceIdle` 
+   until either a packet can be received, or it has attempted to execute
+   `OnDeviceIdle` for each device. If any of the `OnDeviceIdle`
    application-writer-supplied fragments returned a non-zero unsigned value,
    that indicates the device may "want" to send a packet.
 
@@ -742,9 +742,9 @@ accessed by code fragments through the `GRAPHPROPERTIES(x)` macro. Individual
 properties are defined as `CDATA`. These properties may be overridden using the
 `P` attribute in the graph instance definition (`:GraphInstance:`).
 
-The definition of the generated structure is available to the application writer 
-in all code across all devices and the supervisor. The type name has a format of 
-`{graphTypeId}_properties_t` where `graphTypeId` is the `id` attribute of the 
+The definition of the generated structure is available to the application writer
+in all code across all devices and the supervisor. The type name has a format of
+`{graphTypeId}_properties_t` where `graphTypeId` is the `id` attribute of the
 `GraphType` element.
 
 This element must occur at most once in each `:GraphType:` section. No
@@ -813,9 +813,9 @@ be accessed by code fragments through the `DEVICEPROPERTIES(x)`
 macro. Individual properties are defined as `CDATA`.
 
 The definition of the generated structure is available to the application writer
-in all code across all devices and the supervisor. The type name has a format of 
-`{graphTypeId}_{deviceTypeId}_properties_t` where `graphTypeId` is the `id` 
-attribute of the `GraphType` element and `deviceTypeId` is the `id` attribute of 
+in all code across all devices and the supervisor. The type name has a format of
+`{graphTypeId}_{deviceTypeId}_properties_t` where `graphTypeId` is the `id`
+attribute of the `GraphType` element and `deviceTypeId` is the `id` attribute of
 the relevant `DeviceType` element.
 
 This element must occur at most once in each `:DeviceType:` section. No
@@ -827,10 +827,10 @@ Defines device-type-level state (that can vary throughout execution), which can
 be accessed by code fragments through the `DEVICESTATE(x)` macro. Individual
 state fields are defined as `CDATA`.
 
-The definition of the generated structure is available to the application writer 
-in all code across all devices and the supervisor. The type name has a format of 
-`{graphTypeId}_{deviceTypeId}_state_t` where `graphTypeId` is the `id` attribute 
-of the `GraphType` element and `deviceTypeId` is the `id` attribute of the relevant 
+The definition of the generated structure is available to the application writer
+in all code across all devices and the supervisor. The type name has a format of
+`{graphTypeId}_{deviceTypeId}_state_t` where `graphTypeId` is the `id` attribute
+of the `GraphType` element and `deviceTypeId` is the `id` attribute of the relevant
 `DeviceType` element.
 
 This element must occur at most once in each `:DeviceType:` section. No
@@ -912,11 +912,11 @@ Defines pin-type-level properties (constant throughout execution), which can be
 accessed by code fragments through the `EDGEPROPERTIES(X)` macro. Individual
 properties are defined as `CDATA`.
 
-The definition of the generated structure is available to the application writer 
+The definition of the generated structure is available to the application writer
 in all code across all devices and the supervisor. The type name has a format of
-`{graphTypeId}_{deviceTypeId}_{inputPinId}_properties_t` where `graphTypeId` is 
-the `id` attribute of the `GraphType` element, `deviceTypeId` is the `id` attribute 
-of the relevant `DeviceType` element and `inputPinId` is the `id` attribute of 
+`{graphTypeId}_{deviceTypeId}_{inputPinId}_properties_t` where `graphTypeId` is
+the `id` attribute of the `GraphType` element, `deviceTypeId` is the `id` attribute
+of the relevant `DeviceType` element and `inputPinId` is the `id` attribute of
 the relevant `InputPin`.
 
 This element must occur at most once in each `:InputPin:` section. No
@@ -928,11 +928,11 @@ Defines pin-type-level state (that can vary throughout execution), which can be
 accessed by code fragments through the `EDGESTATE(x)` macro. Individual
 state fields are defined as `CDATA`.
 
-The definition of the generated structure is available to the application writer 
-in all code across all devices and the supervisor. The type name has a format of 
-`{graphTypeId}_{deviceTypeId}_{inputPinId}_state_t` where `graphTypeId` is the 
-`id` attribute of the `GraphType` element, `deviceTypeId` is the `id` attribute 
-of the relevant `DeviceType` element and `inputPinId` is the `id` attribute of 
+The definition of the generated structure is available to the application writer
+in all code across all devices and the supervisor. The type name has a format of
+`{graphTypeId}_{deviceTypeId}_{inputPinId}_state_t` where `graphTypeId` is the
+`id` attribute of the `GraphType` element, `deviceTypeId` is the `id` attribute
+of the relevant `DeviceType` element and `inputPinId` is the `id` attribute of
 the relevant `InputPin`.
 
 This element must occur at most once in each `:InputPin:` section. No
@@ -1010,7 +1010,7 @@ Contains code that is executed by the device when the softswitch is in the
 "idle" state. Under the default softswitch, this block is executed when no
 devices have any messages to receive or send and idle has been requested by
 setting `*requestIdle` to `true` in `ReadyToSend`. If the code in this block
-returns a non-zero unsigned value, the code in the `ReadyToSend` section is 
+returns a non-zero unsigned value, the code in the `ReadyToSend` section is
 executed, which may result in the sending of messages.
 
 This element must occur at most once in each `:DeviceType:` section. No

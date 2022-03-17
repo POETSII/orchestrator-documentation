@@ -742,23 +742,23 @@ configured staging directory (`Output/Composer` in the default configuration).
  - `compose /reset`: Deletes the Composer, clearing all data, and creates a new one.
 
  - `compose /dump`: Dumps diagnostic data regarding the Composer to the microlog.
- 
+
  Additionally, the behaviour of the generated Softswitch can be controlled by setting
  Composer parameters:
 
  - `compose /args`: Allows the operator to pass additional arguments to the
    compiler(s) used to build the application binaries.
 
- - `compose /inst`: Indicates that the Softswitches should be compiled with 
+ - `compose /inst`: Indicates that the Softswitches should be compiled with
    Instrumentation enabled (default).
 
- - `compose /noinst`: Indicates that the Softswitches should be compiled with 
+ - `compose /noinst`: Indicates that the Softswitches should be compiled with
    Instrumentation disabled.
 
- - `compose /buff`: Indicates that the Softswitches should be compiled in the 
+ - `compose /buff`: Indicates that the Softswitches should be compiled in the
    buffering mode. Refer to Volume III(B) for more information.
 
- - `compose /nobuff`: Indicates that the Softswitches should be compiled in the 
+ - `compose /nobuff`: Indicates that the Softswitches should be compiled in the
    non-buffering mode (default).
 
  - `compose /reqidle`: Indicates that the Softswitches should be compiled with the
@@ -767,7 +767,7 @@ configured staging directory (`Output/Composer` in the default configuration).
  - `compose /noreqidle`: Indicates that the Softswitches should be compiled with the
    Request Idle feature disabled.
 
- - `compose /logh`: Indicates that the Softswitches should be compiled with 
+ - `compose /logh`: Indicates that the Softswitches should be compiled with
    the specified log handler. Options are `none` and `trivial` (default).
 
  - `compose /logl`: Sets the minimum log level required to emit a log message
