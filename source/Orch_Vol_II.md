@@ -139,7 +139,7 @@ operational envelope for POETS assumes that[^limits]:
 [^limits]: Limits on the numbers of devices, types, and pins are
     Orchestrator-enforced.
 
-### Temporal Idiosynchrases
+### Temporal Idiosyncrasies
 
 Building on the abstraction described in the previous Section, here we allow
 physical limitations to impact on the progress of the application.
@@ -558,11 +558,11 @@ you scroll down past the source listing.]. Values here are correct as of Tinsel
 0.8.
 
 Tinsel is the overlay architecture used on POETS hardware. The Tinsel system
-operates on a series of connected FPGA boards, and implements a subset of the
-RISCV32IMF instruction set profile. **This subset notably omits integer divison
-(and the modulo operator as a consequence), and floating-point fused
-instructions** (as the ALU doesn't support them). See the Tinsel documentation
-for the full set of forbidden instructions.
+operates on a series of connected FPGA boards, and implements a subset of
+the RISCV32IMF instruction set profile. **This subset notably omits integer
+division (and the modulo operator as a consequence), and floating-point
+fused instructions** (as the ALU doesn't support them). See the Tinsel
+documentation for the full set of forbidden instructions.
 
 Each board consists of two 2GB DDR3 DRAMs and four 8MB QDRII+ SRAMs, which are
 shared evenly throughout the POETS Engine. The Softswitch (see
@@ -576,7 +576,7 @@ Instruction memory is stored in on-chip RAM (8kB) shared between core pairs. As
 such, **all threads across each pair of cores share the same instruction
 memory**. Put another way, this means that a given "neighbouring" pair of cores
 in the POETS Engine can have only one type of device placed upon it (but can
-have many instances of those types). This provides an intrisic communications
+have many instances of those types). This provides an intrinsic communications
 benefit to devices of the same type: since they can be placed on the same core
 (pair), their communication is less latent. **Application writers must ensure
 their application (and the supporting Softswitch infrastructure) together
@@ -739,7 +739,7 @@ attributes:
 
 Defines graph-level properties (constant throughout execution), which can be
 accessed by code fragments through the `GRAPHPROPERTIES(x)` macro. Individual
-properties are defined as `CDATA`. These properties may be overriden using the
+properties are defined as `CDATA`. These properties may be overridden using the
 `P` attribute in the graph instance definition (`:GraphInstance:`).
 
 The definition of the generated structure is available to the application writer 
@@ -773,7 +773,7 @@ attributes are valid.
 Defines a Message Type and contains a single Message child.
 
 This element may occur any number of times in each `:MessageTypes:` section
-(once per message type), though each occurence must have a unique `id`
+(once per message type), though each occurrence must have a unique `id`
 value. Valid attributes:
 
  - `id` (must occur exactly once): Used by pins to define the type of message
@@ -799,7 +799,7 @@ attributes are valid.
 Contains the definitions for a single normal device type.
 
 This element may occur any number of times in each `:DeviceTypes:` section
-(once per normal device type), though each occurence must have a unique `id`
+(once per normal device type), though each occurrence must have a unique `id`
 value. Valid attributes:
 
  - `id` (must occur exactly once): Used by a device instantiation list to
@@ -895,7 +895,7 @@ attributes are valid.
 Contains elements that together define an input pin type.
 
 This element may occur any number of times in each `:DeviceType:` section
-(once per input pin type), though each occurence must have a unique `name`
+(once per input pin type), though each occurrence must have a unique `name`
 value. Valid attributes:
 
  - `name` (must occur exactly once): Used by edge instances to define the pin
@@ -952,7 +952,7 @@ attributed are valid.
 Contains elements that together define an output pin type.
 
 This element may occur any number of times in each `:DeviceType:` section
-(once per output pin type), though each occurence must have a unique `name`
+(once per output pin type), though each occurrence must have a unique `name`
 value. Valid attributes:
 
  - `name` (must occur exactly once): Used by edge instances to define the pin
@@ -1297,7 +1297,7 @@ if (DEVICESTATE(lemon) == "fruit")  // Reading
 | `MSG(x)`                  | Access field `x` of an incoming (for reading)   |
 |                           | or outgoing (for writing) field of a packet.    |
 +---------------------------+-------------------------------------------------+
-| `PKT(x)`                  | Synoynm of `MSG(x)`.                            |
+| `PKT(x)`                  | Synonym of `MSG(x)`.                            |
 +---------------------------+-------------------------------------------------+
 
 Table: Explanation of accessibility macros and functions in `CDATA` code common
@@ -1643,7 +1643,7 @@ if (DEVICESTATE(sendMessage) == 1) RTS(sender);
 
 Note that the `name` attribute on the output pin is "`sender`", which
 corresponds to the argument to the "`RTS(sender)`" macro, called in the
-`ReadyToSend` beheaviour. This is essential to ensure that the correct pin is
+`ReadyToSend` behaviour. This is essential to ensure that the correct pin is
 selected to send the message. Output pins define an `OnSend` behaviour - in
 this case, the behaviour clears the `sendMessage` state set by `OnInit` (or
 another behaviour, later on). It also defines the `lap` field in the payload of
@@ -2440,7 +2440,7 @@ Application:
 Behaviour:
 
 : A set of instructions, provided by the application writer as C++14 source
-  code, to be invoked in response to an event occuring. See all terms ending
+  code, to be invoked in response to an event occurring. See all terms ending
   in "(behaviour)".
 
 Device:

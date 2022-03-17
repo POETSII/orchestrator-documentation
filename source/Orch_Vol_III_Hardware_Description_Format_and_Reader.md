@@ -12,8 +12,8 @@ populated. This document is describes the `HardwareFileReader` pathway,
 triggered by `task /load`.
 
 ![Hardware model interaction diagram. The operator loads a file using `topology
-\load`. Dialect 1 files provision a Dialect1Deployer, which create and populate
- an Engine. Dialect 3 files are used to provision an Engine
+\load`. Dialect 1 files provision a `Dialect1Deployer`, which creates and
+populates an Engine. Dialect 3 files are used to provision an Engine
 directly. Dialect 2 files are not supported.](images/interaction_diagram.png)
 
 # The Orchestrator's Hardware File Reader
@@ -29,12 +29,7 @@ files. A high-level description of the loading procedure follows:
  - The parse tree is explored by `HardwareFileReader` logic, which validates
    the semantics of the input file, defines the `P_engine`, and creates and
    defines the items in the hardware stack. This semantic validation fails
-   slow, and throws a `HardwareSemanticException` on failure. Detailed design
-   notes for this are available on request, but may be horrendously out of date
-   and arcane to normal humans[^where].
-
-[^where]: If you are MLV, you'll find the notes you are looking for in your
-    repo. If not, talk to MLV.
+   slow, and throws a `HardwareSemanticException` on failure.
 
 A minimal, unsafe use of the reader is:
 
@@ -119,7 +114,7 @@ be of use to you.
 class-level data, where edges to/from indicate data write/read
 dependencies. Boxes denote methods in `HardwareFileReader` prefixed with `d3_`,
 where an edge to another box indicates that the method in the first box calls
-the method in the second. Yellow boxes denote methods that examine subtrees of
+the method in the second. Yellow boxes denote methods that examine sub-trees of
 the parse graph. Validation methods are not shown (for
 simplicity).](images/d3_call_graph.png)
 
@@ -212,7 +207,7 @@ Points to note:
 
    - `hardware`: The version of hardware used to generate this file.
 
-   - `file`: The handle of the file in the filesystem[^fileMismatchWarning].
+   - `file`: The handle of the file in the file system[^fileMismatchWarning].
 
  - The `[header]` section may be opened with a description,
    e.g. `[header(Hafez)]` (where the description here is `Hafez`), as long as

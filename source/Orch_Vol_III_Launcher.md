@@ -10,7 +10,7 @@ operator. Specifically, the Launcher allows:
  - Paths for executables and libraries that are defined at compile-time to be
    easily passed to the Orchestrator processes that need it.
 
- - An arbitrary number of motherships to be spawned either on different
+ - An arbitrary number of Motherships to be spawned either on different
    machines or on the local machine.
 
  - A batch script to be executed on the root process once all processes have
@@ -64,12 +64,12 @@ The **Launcher Proper** follows this rough program flow, once it enters
 ## Parse the arguments
 
 The **Launcher Proper** initialises by parsing the arguments from the
-command-line via `Launcher::ParseArgs`. To do this, it uses the Cli class
+command-line via `Launcher::ParseArgs`. To do this, it uses the `Cli` class
 (`Generics/Cli.{cpp,h}`), documented in the `Generics` directory of the
 Orchestrator. This is also where help is printed if requested. The Launcher
 fails fast if the command-line arguments are malformed.
 
-## Determine the set of hosts to spawn motherships on
+## Determine the set of hosts to spawn Motherships on
 
 The Launcher follows this logic, breaking after each "If so" clause:
 

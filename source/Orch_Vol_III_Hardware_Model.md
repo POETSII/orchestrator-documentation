@@ -14,7 +14,7 @@ are:
    multiple application graphs (from XML files) onto the POETS Engine.
 
  - Robustness to Hardware Failure: The Orchestrator must react to failures or
-   misconfigurations in hardware, so that compute jobs complete successfully in
+   misconfiguration in hardware, so that compute jobs complete successfully in
    reasonable time.
 
 To support these features, the Orchestrator requires an accurate model of the
@@ -41,7 +41,7 @@ indicate containment.](images/engine_structure_simple.png)
 
  - A "Mailbox" (`P_mailbox`) is a component of compute FPGA boards, and is
    partly responsible for routing packets traversing the POETS
-   Engine. Mailboxes are "defined" when the board is synthesized. Mailboxes
+   Engine. Mailboxes are "defined" when the board is synthesised. Mailboxes
    service a series of cores.
 
  - A "Core" (`P_core`) is a compute core in an FPGA board, serviced by a
@@ -214,7 +214,7 @@ respect the constraint that core pairs can only contain the same type of device
 (because their instruction memory spaces are shared).
 
 Without using `HardwareIterator`, this can be achieved through the following
-naive[^naive] pseudocode:
+naive[^naive] pseudo-code:
 
 [^naive]: This of course does not perform any other constraint management, and
     only assumes one application is being mapped. It is only included to
@@ -294,7 +294,7 @@ $$T_{\mathrm{BOARD,Y}}\cdot T_{\mathrm{BOARD,X}}\cdot T_{\mathrm{CORE}}\cdot
 T_{\mathrm{THREAD}}$$
 
 where $T$ represents a component of the Tinsel hardware address, and "$\cdot$"
-represents concatenation. The Orchestrator generalizes this concept of an
+represents concatenation. The Orchestrator generalises this concept of an
 address to:
 
 $$C_{\mathrm{BOARD}}\cdot C_{\mathrm{MAILBOX}}\cdot C_{\mathrm{CORE}}
@@ -1348,7 +1348,7 @@ Methods:
 
  - `P_link::P_link(float weight, NameBase* parent)`: Constructor, sets `weight`
    and a `NameBase` parent using the input argument `name` (`P_link`s are
-   typically autonamed).
+   typically named automatically).
 
 An example dump (`P_link::Dump()`) follows.
 
@@ -1380,7 +1380,7 @@ Methods:
  - `P_port::P_port()`: Empty constructor.
 
  - `P_port::P_port(NameBase* parent)`: Constructor, sets a `NameBase` parent
-   using the input argument `parent`, and autonames this `P_port`.
+   using the input argument `parent`, and automatically names this `P_port`.
 
 An example dump (`P_port::Dump()`) follows.
 

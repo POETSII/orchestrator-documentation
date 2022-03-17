@@ -353,8 +353,8 @@ Mothership, the two fields $C_{\mathrm{EDGE}}\cdot C_{\mathrm{PIN}}$ are
 combined, and are used to store the 32-bit hardware address of the sending
 device^[Being destination-routed, there is no other way to identify who sent a
 packet, other than through edge/pin information (which is previously encoded),
-or through a hardware address. This is necessary for exfiltrating
-instrumentation data from a softswitch, for example.].
+or through a hardware address. This is necessary to exfiltrate instrumentation
+data from a softswitch, for example.].
 
 # A Note from GMB
 

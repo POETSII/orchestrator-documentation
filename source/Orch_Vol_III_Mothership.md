@@ -1,4 +1,4 @@
-% Orchestrator Documentation Volume III Annex: The Mothership, and it's Interface with Supervisors
+% Orchestrator Documentation Volume III Annex: The Mothership, and its Interface with Supervisors
 
 # Overview
 This document describes the Mothership, which is the Orchestrator process that

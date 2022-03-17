@@ -26,11 +26,11 @@ Figure 1 shows the POETS stack; POETS consists of major three layers, one of
 which is the Orchestrator. The other layers are:
 
  - Application Layer: The application is domain-specific problem (with
-   context), which is to be solved on the POETS Engine. The role of the
-   Application Layer is provide an interface for the user to translate their
-   problem into an application, which is a contextless graph of connected
-   devices. These devices are units of compute that can send signals to other
-   devices in the graph to solve a problem.
+   context), which is to be solved on the POETS Engine (the event-driven compute
+   hardware). The role of the Application Layer is provide an interface for the
+   user to translate their problem into an application, which is a contextless
+   graph of connected devices. These devices are units of compute that can
+   send signals to other devices in the graph to solve a problem.
 
  - Engine Layer: The highly-distributed hardware on which the application is
    solved. The POETS Engine (or just "Engine") has no idea about context. The
@@ -91,7 +91,7 @@ applications include:
    from other components, either for post-mortem purposes, or for elementary
    real-time system observation.
 
- - "Mothership": The Orchestrator plays host to a number of mothership
+ - "Mothership": The Orchestrator plays host to a number of Mothership
    processes, which must operate on the various boxes of the Engine. The
    Mothership process is primarily responsible for managing communications
    between the Orchestrator processes (MPI), and the hardware (packets), and
@@ -295,7 +295,7 @@ Command `./orchestrate.sh --help`.
 Orchestrator operator commands take the form "`Command /Clause =
 OperatorParameter`". Multiple parameters can be passed to a given clause
 (`Command /Clause = Operator0Parameter0, Operator1Parameter1`), and multiple
-clauses can be bassed to a given command (`Command /Clause0 = Parameter0
+clauses can be based to a given command (`Command /Clause0 = Parameter0
 /Clause1 = Parameter1`).
 
 As an example, command the following at the `POETS>` prompt:
@@ -379,7 +379,7 @@ messages), with each parameter passed to it.
 
 ### An Exemplary Orchestrator Session
 
-This section presents an examplar Orchestrator session, where we will pass a
+This section presents an exemplar Orchestrator session, where we will pass a
 packet around a devices in the POETS Engine, and track its progress using a
 supervisor device. This requires you to:
 
@@ -737,7 +737,7 @@ configured staging directory (`Output/Composer` in the default configuration).
    compiled binaries for the application already exist, allowing the operator
    to reuse binaries from a previous run or to use binaries compiled elsewhere.
    The loaded application must be identical in terms of definition and placement
-   for this to work - there are no checks beyond binary existance.
+   for this to work - there are no checks beyond binary existence.
 
  - `compose /reset`: Deletes the Composer, clearing all data, and creates a new one.
 

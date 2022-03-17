@@ -5,7 +5,7 @@ This document explains the placement system in the Orchestrator. The "placement
 problem" has been well explored in the literature, though there is novelty in
 POETS placement, as the hardware model is hierarchical in nature, thus
 resulting in an unusual search codomain[^programmableRouting]. Placing an
-application (formally, an application graph instnace) requires knowledge of the
+application (formally, an application graph instance) requires knowledge of the
 hardware model, as well as the structure and properties of the application.
 
 [^programmableRouting]: With programmable routing in the pipeline, it's become
@@ -712,7 +712,7 @@ following variables:
    constraint, the selected solution cannot be used[^infiniteFitness].
 
 [^infiniteFitness]: Setting `mandatory` equal to true is different from setting
-    cost equal to some effecively infinite number for methods that rely on
+    cost equal to some effectively infinite number for methods that rely on
     gradient descent.
 
 What follows is a list of all constraint types supported by the system-wide
@@ -793,7 +793,7 @@ are:
 
  - `bucket`: See `tfill`.
 
- - `gc`: A gradientless climber implementation. Identical to `sa`, but with no
+ - `gc`: A gradient-less climber implementation. Identical to `sa`, but with no
    disorder (so only superior solutions are accepted).
 
  - `link`: See `tfill`.
