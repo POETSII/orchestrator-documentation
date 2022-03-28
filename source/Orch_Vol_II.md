@@ -1264,6 +1264,10 @@ or are named:
 CDATA sections will result in undefined behaviour.** Also see Appendix A for a
 list of legacy variables.
 
+### Attributes
+
+Application XML does not support newline characters (`\n`) in attribute values.
+
 ### Accessibility Macros and Functions
 
 Tables 2, 3, and 4 lists all macros and functions used to access device properties,
