@@ -24,10 +24,14 @@ The documentation for the Orchestrator is structured into volumes:
  - Volume IV: User Guide (how the operator interacts with the Orchestrator)
 
 Some of this documentation exists in word-processing document format (`*.doc`),
-while others exist in Pandoc markdown (`*.md`). Word-processing documents
-exist in the `word-processed` directory of this repository, under
-[large file storage](https://git-lfs.github.com/), alongside their (`*.pdf`)
-equivalents.
+while others exist in Pandoc markdown (`*.md`).
+
+## Word-Processed Documents
+
+Word-processing documents exist in the `word-processed` directory of this
+repository, under [large file storage](https://git-lfs.github.com/), alongside
+their (`*.pdf`) equivalents. Each word-processed document maintains its own
+version within the document.
 
 ## Markdown
 
@@ -40,3 +44,6 @@ generally the Makefile requires the following to function as intended:
  - Pandoc (obviously)
  - A dot processor for images
  - LaTeX (we use texlive)
+
+Pandoc markdown documents use the git revision as a version, though releases
+are given their own semantic version.
