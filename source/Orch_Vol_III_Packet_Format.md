@@ -1,11 +1,13 @@
-% Orchestrator Documentation Volume III Annex: Addresses in the Orchestrator
+% Orchestrator Documentation Volume III Annex: Packet Format
 \thispagestyle{fancy}
 
 # Overview
 
-This document introduces address formats used for device-to-device
-communication of applications in the Orchestrator. Detailed understanding of
-how applications are represented as a set of devices and pins is assumed.
+This document describes packets, which are the medium of communication for
+devices in POETS. All packets follow a consistent format. This document also
+introduces address formats used for device-to-device communication of
+applications in the Orchestrator. Detailed understanding of how applications
+are represented as a set of devices and pins is assumed - refer to Volume II.
 
 Three types of device exist, each of which can participate as part of a POETS
 application running on the Orchestrator:
@@ -21,13 +23,26 @@ application running on the Orchestrator:
 All non-trivial applications run using the Orchestrator consist of at least one
 normal device (but usually many more) and at least one supervisor device (a
 default supervisor is used if one is not defined by the application
-writer). Devices communicate using destination-routed packets, with:
+writer).
+
+# Packets
+
+Packets are distinct to the MPI messages used in the rest of the Orchestrator,
+and are used for all application and command-and-control communication within
+the POETS compute fabric. Compared with messages, packets have a smaller, more
+simple header format designed for faster processing on the compute fabric, at
+the cost of run-time flexibility. The default compute backend (Tinsel) supports
+packets that are up to 64 bytes long. At a hardware level, Tinsel divides
+packets into 16-byte flits, which are transmitted and received in sequence - up
+to four per packet.
+
+Devices communicate using destination-routed packets, with:
 
  - A header (96 bits), consisting of:
 
    - A Hardware address (32 bits), which uniquely identifies the compute thread
      in the POETS Engine to send the message to (refer to the Hardware Model
-     annex). This addresses is used by the Engine to direct the packet.
+     annex).
 
    - A Software address (32 bits), which uniquely identifies a device in that
      thread, with some space dedicated to exceptional Softswitch operations
@@ -35,7 +50,9 @@ writer). Devices communicate using destination-routed packets, with:
 
    - A pin target (32 bits), which uniquely identifies the pin on the target
      device, with some space dedicated to exceptional device operations
-     (documented in the Pin Targets section).
+     (documented in the Pin Targets section). Note that the existence of this
+     field means that the sender needs to know about the pin and edge
+     assignments of the receiving device.
 
  - A payload (56 bytes)[^This size is designed to hold exactly six
    double-precision fields and a four byte label, which can neatly represent
@@ -43,19 +60,42 @@ writer). Devices communicate using destination-routed packets, with:
    space.], populated by the sending device created by the application writer,
    and read by the corresponding receiving device.
 
+Table 1 shows how these components are arranged pictorially.
+
+------------------------------------
+Component                Byte range
+------------------------ -----------
+Header: Hardware Address 0-3 (4B)
+
+Header: Software Address 4-7 (4B)
+
+Header: Pin Address      8-11 (4B)
+
+Payload                  12-63 (56B)
+------------------------------------
+
+Table: Byte ranges for each section of a packet (MSB to LSB).
+
+The rest of this document consists of descriptions of the Orchestrator-facing
+header components: The software and pin addresses, and any implementation
+details concerning them. This document does not further discuss payload format,
+as applications are free to define the format of any payload they send. It also
+does not discuss hardware address format, as this is covered in the Hardware
+Model annex.
+
 # Software Addresses
 
 Software addresses are 32-bit binary strings. Together, a software address and
 a hardware address are sufficient to uniquely identify a device deployed as
 part of a POETS application. Unlike hardware addresses, software addresses are
-defined by a series of fixed-at-compile-time-width fields. Software addresses
-are of the form (MSB to LSB):
+defined by a series of fields that are fixed at compile time. Software
+addresses are of the form (MSB to LSB):
 
 $$C_{\mathrm{MOTHERSHIP}}\cdot C_{\mathrm{CNC}}\cdot C_{\mathrm{TASK}}\cdot
 C_{\mathrm{OPCODE}}\cdot C_{\mathrm{DEVICE}}$$
 
 where $\cdot$ represents a concatenation, and where each address component $C$
-is denoted by Table 1. Table 2 shows, for each device type, how address
+is denoted by Table 2. Table 3 shows, for each device type, how address
 components may vary.
 
 -------------------------------------------------------------------------------
@@ -66,12 +106,12 @@ MOTHERSHIP 0 (1b)    Is 1 if the hardware address that accompanies this
                      software address is the Tinsel address of a Mothership,
                      and 0 otherwise. The existence of this bit, together with
                      $C_{\mathrm{CNC}}$, allows the device type to be
-                     determined from the software address (see Table 2).
+                     determined from the software address (see Table 3).
 
 CNC        1 (1b)    Is 1 if a device is a command-and-control (CNC) device,
                      and 0 otherwise. The existence of this bit, together with
                      $C_{\mathrm{MOTHERSHIP}}$, allows the device type to be
-                     determined from the software address (see Table 2). If a
+                     determined from the software address (see Table 3). If a
                      normal device is targeted with $C_{\mathrm{CNC}}=1$, its
                      `OnCtl` handler is invoked.
 
@@ -105,12 +145,77 @@ to. A 1 or a 0 in a field indicates an encoding identity for that device type,
 where an ellipsis (...) indicates that the component is free to vary, as long
 as the address as a whole uniquely identifies a device.
 
+## Exceptions
+
+The address **0xFFFF** (`P_ADDR_BROADCAST`) is a reserved software address for
+packets sent to a normal device. When received by a Softswitch (running on a
+thread, determined by the hardware address), the packet is burst to all devices
+under the control of that Softswitch. The `P_ADDR_BROADCAST` address is only
+used to send packets from a Mothership to one of the Softswitches that it is
+hosting.
+
+## Opcodes
+
+Opcodes (operation codes, one of the fields in Table 2) are used to perform
+command-and-control operations, with each opcode corresponding to a separate
+operation. Table 4 lists all valid opcodes. Note the opcode range 0x01-0xEF,
+which supports application-level command-and-control (not yet
+implemented). Refer to the Mothership annex for a detailed description for how
+some of these opcodes are respected in the Mothership, and when they are used.
+
+-------------------------------------------------------------------------------
+Opcode Name            $\to$ Softswitch            $\to$ Mothership
+------ --------------- --------------------------- ----------------------------
+0x00   No operation    Only supported if CNC = 0.  Only supported if CNC = 0.
+
+0x01 - App operation   Not yet implemented.        Not yet implemented.
+0xEF
+
+0xF0 - Reserved        Not yet implemented.        Not yet implemented.
+0xF9
+
+0xFA   `P_CNC_IMPL`    Indicates that the packet   Indicates that the packet
+                       should be handled by a      should be handled by the
+                       device's implicit           Supervisor's implicit
+                       Supervisor receive          receive handler.
+                       handler.
+
+0xFB   `P_CNC_INSTR`   Requests that the           Records instrumentation
+                       Softswitch sends its        data, or forwards it to a
+                       instrumentation data to     Monitor process (not yet
+                       the Mothership.             implemented).
+
+0xFC   `P_CNC_LOG`     Unused                      Converts the packet content
+                                                   into a message for the
+                                                   Logserver, used for
+                                                   application-level logging.
+
+0xFD   `P_CNC_BARRIER` Requests that the           Confirms receipt of a
+                       Softswitch should           previously-sent barrier
+                       progress past the           breaking packet (this is
+                       barrier to start the        an acknowledgement).
+                       application.
+
+0xFE   `P_CNC_STOP`    Stops execution of the      Confirms receipt of a
+                       Softswitch gracefully.      previously-sent stop packet
+                                                   (this is an
+                                                   acknowledgement).
+
+0xFF   `P_CNC_KILL`    Unused                      The sending Softswitch has
+                                                   encountered a critical error
+                                                   and that execution cannot
+                                                   proceed. The application is
+                                                   ordered to stop.
+-------------------------------------------------------------------------------
+
+Table: Opcodes and their uses.
+
 ## Examples
 
 This section presents some example software addresses, where $\cdot$ represents
 a concatenation.
 
-### Example 1: Normal device
+### Example 1: Normal Device
 
 $$0\mathrm{b}\cdot0\cdot0\cdot000011\cdot00000000\cdot0000001000000001
 =0\mathrm{x}03000201
@@ -124,7 +229,7 @@ hardware address. This address may be part of a packet sent to this device by
 another compute device (either another normal device, or an external),
 containing context-sensitive data with which computation will be performed.
 
-### Example 2: Supervisor device
+### Example 2: Supervisor Device
 
 $$0\mathrm{b}\cdot1\cdot1\cdot000000\cdot00000100\cdot0000000000000000
 =0\mathrm{x}\mathrm{C}0040000
@@ -138,7 +243,7 @@ method. This address may be part of a packet sent to the supervisor to perform
 a specific control action (or not, it could be anything really, depending on
 what the supervisor is programmed to do).
 
-### Example 3: External device
+### Example 3: External Device
 
 $$0\mathrm{b}\cdot1\cdot0\cdot111111\cdot00000000\cdot0011011000010101
 =0\mathrm{x}\mathrm{BF}003615
@@ -149,7 +254,7 @@ $C_\mathrm{CNC}=0$) operating as part of task
 $0\mathrm{b}111111=0\mathrm{d}63$. The ID of this external device is
 $0\mathrm{b}0011011000010101=0\mathrm{d}13845$.
 
-### Example 4: Normal device with command-and-control instruction
+### Example 4: Normal Device with Command-and-Control Instruction
 
 $$0\mathrm{b}\cdot0\cdot1\cdot001000\cdot00000001\cdot0000001111101000
 =0\mathrm{x}480103\mathrm{E}8
@@ -164,7 +269,7 @@ command-and-control message ($C_\mathrm{CNC}=1$), and so will be handled by the
 "onCtl" handler of this device, to which the operation code
 $0\mathrm{b}00000001=0\mathrm{d}1$ will be accessible.
 
-### Example 5: An invalid address
+### Example 5: An Invalid Address
 
 $$0\mathrm{b}\cdot1\cdot1\cdot111111\cdot11111111\cdot1111111111111111
 =0\mathrm{xFFFFFFFF}
@@ -172,9 +277,9 @@ $$0\mathrm{b}\cdot1\cdot1\cdot111111\cdot11111111\cdot1111111111111111
 
 This address is invalid because it appears to target a supervisor device
 ($C_\mathrm{MOTHERSHIP}$ and $C_\mathrm{CNC}$ are both one), but the device
-component $C_\mathrm{DEVICE}$ is nonzero. This is unacceptable as per Table 2.
+component $C_\mathrm{DEVICE}$ is nonzero. This is unacceptable as per Table 3.
 
-## Implementation
+## Implementation Notes
 
 The functionality of the software address is encapsulated in the
 `SoftwareAddress` class, which stores the address as a whole in
@@ -332,7 +437,7 @@ between devices, pin targets are of the form (MSB to LSB):
 $$C_{\mathrm{EDGE}}\cdot C_{\mathrm{PIN}}$$
 
 where $\cdot$ represents a concatenation, and where each address component $C$
-is denoted by Table 3.
+is denoted by Table 5.
 
 -------------------------------------------------------------------------------
 Component  Bit range  Description
@@ -355,6 +460,67 @@ device^[Being destination-routed, there is no other way to identify who sent a
 packet, other than through edge/pin information (which is previously encoded),
 or through a hardware address. This is necessary to exfiltrate instrumentation
 data from a Softswitch, for example.].
+
+## Implementation Notes
+
+For device-to-device packets, `pinAddr` contains the target pin index and
+destination edge index as described in Table 5. Target Pin (`TGTPIN`) indicates
+the index of the destination pin in the device type’s input pin list. This is
+used by the receiving Softswitch to select the correct receive handler to use
+to process the packet. Destination Edge Index (`DESTEDGEINDEX`) indicates the
+index of the edge in the input pin’s edge list and is used to select the
+correct set of properties and state for the edge.
+
+For device-to-supervisor packets sent via the implicit supervisor output pin or
+emitted by `handler_log()`, `pinAddr` contains an index that uniquely
+identifies the device within the box. The Supervisor contains a lookup table to
+convert this index into a 64-bit full symbolic address. This limits the number
+of devices serviced by a single supervisor to $2^32$ (~699,000 per thread with
+the current hardware assuming one supervisor per box), which is significantly
+more than will ever be realised for other practical reasons.
+
+# Packet-Level Implementation Notes
+
+Helper structs, masks, and definitions for the packet format are implemented in
+the source file `common/poets_pkt.h`. The helper structures are listed in Table
+6.
+
+-------------------------------------------------------------------------------
+Short Name           Long Name           Description
+-------------------- ------------------- --------------------------------------
+`P_Pkt_Hdr_t`        `poets_packet_`     Standard packet header. Includes the
+                     `header`            software address and pin address.
+
+`P_Pkt_t`            `poets_packet`      Standard packet format. Contains a
+                                         standard header (`header`) and an
+                                         unformatted payload (`payload`)
+                                         realised as an array of `uint8_t`s.
+                                         The size of the payload is defined as
+                                         `P_PKT_MAX_SIZE-sizeof(P_Pkt_Hdr_t)`.
+
+`P_Addr_Pkt_t`       `poets_address_`    Includes a hardware address (`hwAddr`)
+                     `packet`            and a standard packet (`packet`). Used
+                                         within the Mothership for outbound
+                                         packets.
+
+`P_Debug_Pkt_t`      `poets_debug_`      Includes a source hardware address
+                     `packet`            (`origin`) and a byte of data
+                                         (`payload`). Used with the Mothership
+                                         to hold Debuglink/UART data.
+
+`P_Log_Pkt_Pyld_t`   `poets_log_packet_` Payload formatting for packets emitted
+                     `payload`           by `handler_log()`. Includes a
+                                         sequence number (`seq`) and an
+                                         unformatted payload realised as an
+                                         array of `uint8_t`s.
+
+`P_Instr_Pkt_Pyld_t` `poets_instr_`      Payload formatting for instrumentation
+                     `packet_payload`    packets. Refer to the Softswitch,
+                                         Supervisor, and Composer annex for
+                                         more details.
+-------------------------------------------------------------------------------
+
+Table: Helper structures defined in `poets_pkt.h`.
 
 # A Note from GMB
 
