@@ -217,17 +217,16 @@ an executable Softswitch by POETS[^gpu].
 ### Type Linking
 
 Type linking, Figure 3, refers to the act of defining an application graph
-using a type tree. This is done explicitly by a command (see the User Guide
-documentation), and the reason for this separation of activity is purely
-pragmatic: useful application graphs will typically be enormous, and will take
-considerable time to load. Type trees, on the other hand, will be small and
-easy to load/unload (see the design envelope in the Idealisation Section). The
-use case where explicit manual typelinking is helpful is as follows: the
-Orchestrator operator loads a graph (slow) and a type tree (fast), typelinks
-and performs some experiment. The results are not satisfactory/useful. The
-Orchestrator operator can then unlink the tree (fast), load an additional tree
-(fast), re-typelink (fast) and repeat the analysis, without having to
-load/unload the graph (slow).
+using a type tree. This is done explicitly by a command (refer to Volume IV),
+and the reason for this separation of activity is purely pragmatic: useful
+application graphs will typically be enormous, and will take considerable time
+to load. Type trees, on the other hand, will be small and easy to load/unload
+(see the design envelope in the Idealisation Section). The use case where
+explicit manual typelinking is helpful is as follows: the Orchestrator operator
+loads a graph (slow) and a type tree (fast), typelinks and performs some
+experiment. The results are not satisfactory/useful. The Orchestrator operator
+can then unlink the tree (fast), load an additional tree (fast), re-typelink
+(fast) and repeat the analysis, without having to load/unload the graph (slow).
 
 ![Typelinking: an application graph linked to a type
 tree](images/app_concepts/app_concepts_04.pdf)
@@ -345,9 +344,10 @@ devices executing in parallel, this enforced serialisation may have an effect
 on the overall operation of the system[^occupancy].
 
 [^occupancy]: Whilst it is possible to both control the placement and thread
-    occupancy of the compute elements (see the Placement documentation) and
-    monitor Softswitch operation in real time (see the Softswitch
-    documentation), this is a subtlety which requires careful handling.
+    occupancy of the compute elements (refer to the Placement annex) and
+    monitor Softswitch operation in real time (refer to the the Softswitch,
+    Supervisor, and Composer annex), this is a subtlety which requires careful
+    handling.
 
 ### The Softswitch, and Fairness
 
@@ -398,8 +398,8 @@ invocation of the **OnRecieve**, **OnIdle** and **OnSend** bundles (these are
 abstract concepts here) can be altered by Orchestrator switches. Performance
 monitors (mainly in the form of loop cycle counters) are available at the
 points "I" in the figure. Details of their utility and access are in the
-Softswitch documentation (Experience has shown that these are extremely useful
-in performance tuning and debugging.)
+Softswitch, Supervisor, and Composer annex (Experience has shown that these are
+extremely useful in performance tuning and debugging.)
 
 Key points - performant applications must be robustly written to account for
 these effects:
@@ -414,9 +414,10 @@ these effects:
 
 ![Abstract Softswitch model. `On*` blocks represent code supplied by the
 application writer. Consuming packets is preferred over sending, in order to
-drain the network as quickly as possible. See the Softswitch documentation for
-a more detailed explanation, and for a similar model incorporating more
-possible device behaviours.](images/app_concepts/app_concepts_08.pdf)
+drain the network as quickly as possible. Refer to the Softswitch, Supervisor,
+and Composer annex for a more detailed explanation, and for a similar model
+incorporating more possible device
+behaviours.](images/app_concepts/app_concepts_08.pdf)
 
 ### Defining Device and Pin Behaviours
 
@@ -430,9 +431,10 @@ are "pasted" into the Softswitch source prior to compilation. We use the term
 This section introduces these behaviours at a high-level, in a shallow,
 Softswitch-sympathetic manner. See the "Expected Semantic Structure" Section
 for a comprehensive, detailed definition of these behaviours, and how they are
-incorporated into application files (also introduced later). See the Softswitch
-documentation for precise definitions on how these behaviours are coupled. The
-behaviour of the default (non-buffering) Softswitch is described here.
+incorporated into application files (also introduced later). Refer to the
+Softswitch, Supervisor, and Composer annex for precise definitions on how these
+behaviours are coupled. The behaviour of the default (non-buffering) Softswitch
+is described here.
 
 Pin behaviours:
 
@@ -1333,8 +1335,8 @@ to normal devices (running in a Softswitch) and Supervisor devices.
 +---------------------------+-------------------------------------------------+
 | `handler_log(int level,`  | Sends a logging packet from a normal device to  |
 | `const char* text)`       | the Orchestrator, with log level `level`, and   |
-|                           | content `text`. For more information, see the   |
-|                           | Softswitch documentation.                       |
+|                           | content `text`. For more information, refer to  |
+|                           | the Softswitch, Supervisor, and Composer annex. |
 +---------------------------+-------------------------------------------------+
 
 Table: Explanation of accessibility macros and functions in `CDATA` for normal
@@ -2108,9 +2110,8 @@ Now we have created a fully-defined application with both a graph type
 definition (detailing the behaviour of normal devices, supervisor devices, and
 their communication), and an instantiation (a given number of devices in a
 certain configuration). The resulting file (see listing below) can be loaded in
-the Orchestrator and run as a complete application (see the Usage
-documentation, or Orchestrator Volume IV, for further information on how to do
-this).
+the Orchestrator and run as a complete application (refer to Volume IV for
+information on how to do this).
 
 Further examples accompany the Orchestrator, and are available at
 <https://github.com/POETSII/Orchestrator_examples>.

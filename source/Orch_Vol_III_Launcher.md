@@ -46,8 +46,8 @@ The Launcher is comprised of two components, the **Setup Script**, and the
    executables) with the name `orchestrate`. It's quite complicated, hence this
    documentation.
 
-See the "Setup" section in the usage documentation for more information on how
-to build these Launcher components.
+See the "Setup" section in Volume IV for more information on how to build these
+Launcher components.
 
 ## Switches (options, command-line arguments)
 
@@ -83,8 +83,8 @@ The Launcher follows this logic, breaking after each "If so" clause:
  - Then, has the caller provided a hardware description file path? If so, read
    it to get the hosts to spawn Mothership processes on via
    `Launcher::GetHosts`, failing fast if the file doesn't exist or is
-   malformed. See the hardware description file documentation for information
-   on how these hosts are stored.
+   malformed. Refer to the Hardware Description File and Reader annex for
+   information on how these hosts are stored.
 
  - Then, is there a hardware description file at the default path (presently\
    `/local/orchestrator-common/hdf.uif`) If so, read it to get the hosts to
@@ -161,7 +161,7 @@ The inputs:
 
  - `/o = byron`: I want to start one Mothership process on Byron, and no other
    Mothership processes. I've configured an entry for `byron` in my SSH
-   configuration file (`.ssh/config`) as per the usage documentation.
+   configuration file (`.ssh/config`) as per Volume IV.
 
 The outputs:
 

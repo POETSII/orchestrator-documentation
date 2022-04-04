@@ -4,9 +4,9 @@
 # Overview
 This document defines the input file (hardware description file) format for
 describing the hardware stack on which the Orchestrator operates, and how the
-file is read by the Orchestrator. I recommend reading the hardware model
-documentation before proceeding. The hardware file reader mechanism is
-supplemented by a reference definition in Appendix A.
+file is read by the Orchestrator. I recommend reading the Hardware Model
+annex before proceeding. The hardware file reader mechanism is supplemented by a
+reference definition in Appendix A.
 
 Figure 1 shows the variety of ways in which the hardware model can be
 populated. This document is describes the `HardwareFileReader` pathway,

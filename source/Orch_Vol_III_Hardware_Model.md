@@ -127,8 +127,8 @@ cost" of a packet traversing that edge. Pins are represented by `P_port`
 objects, which are stubs. `P_link` and `P_port` objects in these graphs are
 indexed atomically per graph instance. Figure 4 shows an example graph of
 boards, connected to `P_port` pins, which are in turn connected by `P_link`
-edges. For more information on graphs, see the `pdigraph` documentation in the
-source.
+edges. For more information on graphs, see the `pdigraph` documentation (in
+Generics).
 
 [^undirected]: Although the data representation is a digraph, the undirected
     nature of the graph is captured using complement edges.
@@ -390,8 +390,8 @@ operator can define the model in two ways:
 
  - Input file: The operator can command `topology /load =
    topology_description.poets` to load the topology described in the file
-   `topology_description.poets` (alternative paths can be specified). See the
-   hardware description file documentation for a description of how input
+   `topology_description.poets` (alternative paths can be specified). Refer to
+   the Hardware Description File and Reader annex for a description of how input
    topology files must be constructed, and how they are read.
 
 Once an Engine has been populated, the operator can then interact with the

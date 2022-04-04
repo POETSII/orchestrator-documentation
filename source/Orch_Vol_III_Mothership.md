@@ -395,13 +395,13 @@ Root process, and why.
 
 Softswitches in the compute backend can send C&C packets to the Mothership
 process. These packets, in addition to being addressed to the supervisor, have
-a value defined in their `opcode` field in the software address (see the
-Software Addresses documentation). Such packets are packaged and queued for the
-Mothership in the MPI backend by `BackendInputBroker` as (`BEND`, `CNC`)
-messages. The sender of each packet is uniquely identified in `MPICncResolver`
-from the `pinAddr` component in the software address. Packets received by the
-Mothership with opcode values not defined by this list of constants (defined
-in-source) are routed to the supervisor as (`BEND`, `SUPR`) messages:
+a value defined in their `opcode` field in the software address (refer to the
+Packet Format annex). Such packets are packaged and queued for the Mothership in
+the MPI backend by `BackendInputBroker` as (`BEND`, `CNC`) messages. The sender
+of each packet is uniquely identified in `MPICncResolver` from the `pinAddr`
+component in the software address. Packets received by the Mothership with
+opcode values not defined by this list of constants (defined in-source) are
+routed to the supervisor as (`BEND`, `SUPR`) messages:
 
  - `P_CNC_INSTR`: A packet with instrumentation data. See the Instrumentation
    section.
@@ -669,9 +669,9 @@ Mothership, as well as external devices elsewhere. They are:
 Supervisor shared objects contain an unpopulated `SupervisorAPI` object, which
 is provisioned by the Mothership when the Supervisor shared object is loaded
 (via `Mothership::provision_supervisor_api`). The supervisor API exposes a set
-of functions that can be called from supervisor handler (as described in the
-application definition document). Specifically, a supervisor handler can call
-these functions (where `Super` is a namespace):
+of functions that can be called from supervisor handler (as described in Volume
+II). Specifically, a supervisor handler can call these functions (where `Super`
+is a namespace):
 
  - `void Super::post(std::string message)`: Posts a message to the Logserver.
 
@@ -752,12 +752,12 @@ As a side note, future API methods may include:
 
 # Logging
 Normal devices in applications can send log messages to the Mothership by using
-the `handler_log` method described in the Softswitch documentation. This
-manifests as a series of log packets (with a `P_CNC_LOG` opcode) sent from the
-logging device to the Mothership, where multiple packets are sent for each log
-message. The `LogPacketManager` stores these packets until a complete message
-is formed, at which point the message is `Post`-ed and forgotten. Packets are
-stored on a per-device basis.
+the `handler_log` method described in the Softswitch, Supervisor, and Composer
+annex. This manifests as a series of log packets (with a `P_CNC_LOG` opcode)
+sent from the logging device to the Mothership, where multiple packets are sent
+for each log message. The `LogPacketManager` stores these packets until a
+complete message is formed, at which point the message is `Post`-ed and
+forgotten. Packets are stored on a per-device basis.
 
 # Debugging
 In addition to the acknowledgement messages that the Mothership generates while
@@ -787,10 +787,10 @@ thread, describing the performance. `InstrumentationWriter` has no `dump`
 method, because it writes data to a file on receipt of a packet anyway.
 
 This topic is explained further, from the perspective of the Softswitch, in the
-Softswitch documentation. Eventually, instrumentation will be handled by the
-Monitor process, which will collect instrumentation data and generate
-visualisations in real-time; the Mothership process will continue to act as a
-broker between the compute backend and the Orchestrator in this regard.
+Softswitch, Supervisor, and Composer annex. Eventually, instrumentation will be
+handled by the Monitor process, which will collect instrumentation data and
+generate visualisations in real-time; the Mothership process will continue to
+act as a broker between the compute backend and the Orchestrator in this regard.
 
 # Appendix A: Message/Packet Handling Examples
 To follow along, use Figure 2 and the Command and Control section.

@@ -26,9 +26,8 @@ writer). Devices communicate using destination-routed packets, with:
  - A header (96 bits), consisting of:
 
    - A Hardware address (32 bits), which uniquely identifies the compute thread
-     in the POETS Engine to send the message to (documented in
-     "hardware_model.pdf"). This addresses is used by the Engine to direct the
-     packet.
+     in the POETS Engine to send the message to (refer to the Hardware Model
+     annex). This addresses is used by the Engine to direct the packet.
 
    - A Software address (32 bits), which uniquely identifies a device in that
      thread, with some space dedicated to exceptional Softswitch operations

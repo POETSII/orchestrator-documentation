@@ -8,8 +8,8 @@ and introduces the Orchestrator from the perspective of a user. It defines what
 the Orchestrator is, and some of its components. This document then provides a
 walkthrough for setting up the Orchestrator running on POETS hardware, and a
 walkthrough demonstrating basic usage. For a more developer-facing view of the
-Orchestrator, or for information on more advanced Orchestrator usage, consult
-Volume II (implementation documentation).
+Orchestrator, or for information on more advanced Orchestrator usage, refer to
+Volume II.
 
 This document does not:
 
@@ -543,20 +543,20 @@ place /dump = *
 ~~~
 
 Which writes a series of files to `Output/Placement` (under default
-configuration). For more information on how to interpret these dumps, and for a
-comprehensive explanation of placement algorithms, consult the placement
-documentation.
+configuration). Refer to the Placement annex for more information on how to
+interpret these dumps, and for a comprehensive explanation of placement
+algorithms.
 
 #### Building binaries for devices and supervisors (compilation)
 
 The application definition is comprised of the application graph instance (how
 devices are connected to each other, and how they communicate), and the device
-logic (the C fragments that define what each device does). See Volume II of the
-documentation for more information on defining POETS applications for the
-Orchestrator. Given the hardware mapping from the placement step, the
-Orchestrator can now produce binary files to execute on the cores of the POETS
-engine, and binary files to act as supervisor devices. To build these binaries
-in an idempotent manner, command:
+logic (the C fragments that define what each device does). Refer to Volume II
+for more information on defining POETS applications for the Orchestrator. Given
+the hardware mapping from the placement step, the Orchestrator can now produce
+binary files to execute on the cores of the POETS engine, and binary files to
+act as supervisor devices. To build these binaries in an idempotent manner,
+command:
 
 ~~~ {.bash}
 compose /app = *
@@ -679,8 +679,8 @@ run /app = *
 ~~~
 
 To make use of this exit feature, the Supervisor in your application will need
-to make use of the `stop_application` Supervisor API call, as described in the
-application documentation.
+to make use of the `stop_application` Supervisor API call, as described in
+Volume II.
 
 # Appendix A: Useful Command List
 
@@ -688,8 +688,7 @@ What follows is a list of the most useful operator commands supported by the
 present working version of the Orchestrator. Other commands exist, though are
 either internally used by other systems (`*`, `return`), or are for testing
 (basically everything in `system`). For a more detailed, developer-facing
-description of the more complicated commands, consult Volume II (implementation
-documentation).
+description of certain more complicated commands, consult Volume III.
 
 ## Call (`call`)
 
@@ -810,8 +809,7 @@ Exits the Orchestrator.
    there are no more commands to execute. If the first parameter is `stop`, the
    Orchestrator exits the next time an application stops; either because it has
    been commanded to do so using `stop /app`, or because it has called the
-   `stop_application` Supervisor API function as explained in the application
-   documentation.
+   `stop_application` Supervisor API function as explained in Volume II.
 
 ## Initialise (`initialise`)
 
@@ -872,8 +870,8 @@ argument, and these paths are relative to the `bin` directory.
 ## Place (`place`)
 
 Place commands operate on the placement subsystem of the Orchestrator, which is
-responsible for mapping applications to the compute hardware. See the placement
-documentation for a more detailed description of the commands that follow.
+responsible for mapping applications to the compute hardware. Refer to the
+Placement annex for a more detailed description of the commands that follow.
 
  - `placement /app`: Synonym for `placement /tfill`.
 
