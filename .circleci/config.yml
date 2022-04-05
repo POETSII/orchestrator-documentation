@@ -4,8 +4,9 @@ jobs:
     docker:
       - image: pandoc/core
     steps:
-      - checkout
       - run: "apk add git graphviz make openssh-client texlive-full ttf-inconsolata"
+
+      - checkout
 
       # Build our documents.
       - run: make all
