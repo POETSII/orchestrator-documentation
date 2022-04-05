@@ -35,7 +35,7 @@ Layout subject to change.
 From the root directory of the Orchestrator:
 
 Batch/?                         # User-generated batch files invoked from here.
-bin/~                           # Executable binaries placed here:
+bin/~                           # Executable binaries placed here by the build process:
     dummy~                      # - process for stress-testing
     injector~                   # - process for advanced C&C
     logserver~                  # - process for centralised logging
@@ -45,6 +45,7 @@ bin/~                           # Executable binaries placed here:
     rtcl~                       # - process for resolving clock events
 Build/                          # Compilation/linking logic for Orchestrator executables:
     Borland/                    # - build profiles for the Borland toolchain
+        Objects/                #   - compiled objects are written here
     gcc/                        # - build profiles for the Make/GCC toolchain
         Dependency_lists/~      #   - procedurally-generated source dependency
                                 #     lists
