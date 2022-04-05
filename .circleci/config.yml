@@ -5,7 +5,7 @@ jobs:
       - image: pandoc/core
     steps:
       - checkout
-      - run: "apk add git graphviz make texlive-full ttf-inconsolata"
+      - run: "apk add git graphviz make openssh-client texlive-full ttf-inconsolata"
 
       # Build our documents.
       - run: make all
