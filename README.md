@@ -28,10 +28,10 @@ while others exist in Pandoc markdown (`*.md`).
 
 ## Word-Processed Documents
 
-Word-processing documents exist in the `word-processed` directory of this
-repository, under [large file storage](https://git-lfs.github.com/), alongside
-their (`*.pdf`) equivalents. Each word-processed document maintains its own
-version within the document.
+Word-processing documents exist alongside their (`*.pdf`) equivalents, on the
+University of Southampton network store at
+`//Poetsproject.files.soton.ac.uk/Poetsproject/POETS/Orchestrator/Orchestrator/Docs`. Each
+word-processed document maintains its own version within the document.
 
 ## Markdown
 
