@@ -245,9 +245,13 @@ Once executed, the Orchestrator waits at the Orchestrator operator prompt:
 POETS>
 ~~~
 
-at which commands can be executed. If `rlwrap` is installed on the machine,
-command history will be remembered, and can be recalled by pressing
-`<UP>`. Once you are finished with your Orchestrator session, command:
+at which commands can be executed. Some operating systems - not all - will
+allow the command history to be recalled by pressing `<UP>` or
+`<DOWN>`[^rlwrap]. Once you are finished with your Orchestrator session,
+command:
+
+[^rlwrap]: Linux operating systems may support this recollection if `rlwrap` is
+installed.
 
 ~~~ {.bash}
 exit
