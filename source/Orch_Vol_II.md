@@ -890,7 +890,7 @@ attributes:
 Contains code that may populate an outbound message to the supervisor, and may
 change the state of the device.
 
-This element must occur exactly once in each `:SupervisorInPin:` section. No
+This element must occur exactly once in each `:SupervisorOutPin:` section. No
 attributes are valid.
 
 **Graphs/GraphType/DeviceTypes/DeviceType/InputPin** (`:InputPin:`)

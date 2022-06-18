@@ -533,8 +533,8 @@ place /tfill = *
 The Orchestrator prints:
 
 ~~~ {.bash}
-POETS> 14:45:14.77: 309(I) Attempting to place graph instance 'test_ring_instance' using the 'tfil' method...
-POETS> 14:45:14.77: 302(I) Graph instance 'test_ring_instance' placed successfully.
+POETS> 14:45:14.77: 309(I) Attempting to place graph instance 'ring_test_instance' using the 'tfil' method...
+POETS> 14:45:14.77: 302(I) Graph instance 'ring_test_instance' placed successfully.
 ~~~
 
 This command invokes the thread-filling algorithm in the placement system. Each
