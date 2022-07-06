@@ -245,9 +245,13 @@ Once executed, the Orchestrator waits at the Orchestrator operator prompt:
 POETS>
 ~~~
 
-at which commands can be executed. If `rlwrap` is installed on the machine,
-command history will be remembered, and can be recalled by pressing
-`<UP>`. Once you are finished with your Orchestrator session, command:
+at which commands can be executed. Some operating systems - not all - will
+allow the command history to be recalled by pressing `<UP>` or
+`<DOWN>`[^rlwrap]. Once you are finished with your Orchestrator session,
+command:
+
+[^rlwrap]: Linux operating systems may support this recollection if `rlwrap` is
+installed.
 
 ~~~ {.bash}
 exit
@@ -529,8 +533,8 @@ place /tfill = *
 The Orchestrator prints:
 
 ~~~ {.bash}
-POETS> 14:45:14.77: 309(I) Attempting to place graph instance 'test_ring_instance' using the 'tfil' method...
-POETS> 14:45:14.77: 302(I) Graph instance 'test_ring_instance' placed successfully.
+POETS> 14:45:14.77: 309(I) Attempting to place graph instance 'ring_test_instance' using the 'tfil' method...
+POETS> 14:45:14.77: 302(I) Graph instance 'ring_test_instance' placed successfully.
 ~~~
 
 This command invokes the thread-filling algorithm in the placement system. Each
